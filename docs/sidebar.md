@@ -23,9 +23,16 @@
     * [Webview](Android/wv.md)
     * [OkHttp](Android/oh.md)
   * <font color=blue>多媒体</font>
+    * [摄像头与照片](Android/photo.md)
+    * [音视频](Android/msc.md)
   * <font color=blue>UI界面</font>
   * <font color=blue>其他</font>
     * [蓝牙](Android/bt.md)
+* <font color=red>**Linux指令**</font>
+  * [基础指令](Linux/basicom.md) 
+* <font color=red>**MySQL入门**</font>
+  * [基础指令](MySQL/basicom.md) 
+  * [表的操作](MySQL/tables.md)
 * <font color=red>**数据结构**</font>
   * [数据结构概述](/DataStructure/1.数据结构概述.md)
   * [线性表](DataStructure/2.线性表.md)
@@ -33,15 +40,15 @@
   * [串](DataStructure/4.串.md)
   * [数组和广义表](DataStructure/5.数组和广义表.md)
 * <font color=red>**算法**</font>
-  * [二分查找]()
-  * [选择排序]()
-  * [递归]()
-  * [快速排序]()
-  * [广度优先搜索]()
-  * [Dijkstra算法]()
-  * [贪婪算法]()
-  * [动态规划]()
-  * [K最近邻算法]()
+  * [二分查找](Algorithm/binasearch.md)
+  * [选择排序](Algorithm/selesort.md)
+  * [递归](Algorithm/recursion.md)
+  * [快速排序](Algorithm/quicksort.md)
+  * [广度优先搜索](Algorithm/bfs.md)
+  * [Dijkstra算法](Algorithm/dij.md)
+  * [贪婪算法](Algorithm/greedy.md)
+  * [动态规划](Algorithm/dp.md)
+  * [K最近邻算法](Algorithm/knn.md)
 * <font color=red>**设计模式**</font>
   * [设计模式概述](DesignPattern/概述.md)
   * [创建型设计模式](DesignPattern/创建型设计模式.md)

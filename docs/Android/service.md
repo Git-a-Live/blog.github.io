@@ -217,3 +217,54 @@ public void handleMessage(Message msg) {
 在实际开发中，不建议通过绑定Service的方式启动IntentService，因为IntentService源码中的onBind()默认返回null， 不适合那么干。如果一定要使用onBind()，那么最好还是使用普通的Service。这一点在前文等其他地方中也有强调，对应的东西要在对应的场合去使用， 否则会给开发人员带来困扰。
 
 IntentService中使用Handler、Looper以及MessageQueue机制把消息发送到线程中去执行， 所以多次启动IntentService虽然不会创建新的服务和新的线程，但是会把消息加入到消息队列中等待执行， 而服务一旦停止，就会清除消息队列中的消息，里面等待执行的事件也就得不到执行。 但是当前正在执行的事件（线程）要等到执行完毕之后才会结束，不受服务停止的影响。
+
+## 通知
+
+在介绍前台服务的时候，对于通知的使用已经有过初步的涉及，现在要稍微深入一下。 通知一般用于应用程序在后台运行的情形，可以在Activity、Broadcast以及Service中创建使用，比较灵活。 此外，不管是在哪里创建使用，方式都基本相同。
+
+首先回顾一下Android 8.0及以上的前台服务创建和使用过程：
+
+```
+val CHANNEL_ID = "CHANNEL_ID"
+val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){ //判断系统是否为Android 8.0以上，提高兼容性
+    val CHANNEL_NAME = "CHANNEL_NAME"
+    val IMPORTANCE = NotificationManager.IMPORTANCE_XXX //通知的重要程度，通常由系统提供使用
+    val notificationChannel = NotificationChannel(CHANNEL_ID,CHANNEL_NAME,IMPORTANCE)
+    manager.createNotificationChannel(notificationChannel)
+}
+
+val intent = Intent(applicationContext,SOME_ACTIVITY::class.java)
+val pendingIntent = PendingIntent.getActivity(applicationContext,REQUEST_CODE,intent,FLAGS)
+//在合适的时机去执行某个动作，简而言之就是延迟执行的Intent
+//REQUEST_CODE是自己设置的，通常设为0
+//FLAGS用于指定PendingIntent的行为，也可以设置为0
+val notification = NotificationCompat.Builder(applicationContext,CHANNEL_ID) //与上面的CHANNEL_ID保持一致
+            .setContentTitle(TITLE) //设置状态栏通知标题
+            .setContentText(TEXT) //设置状态栏通知内容
+            .setWhen(System.currentTimeMillis()) //设置通知被创建的时间
+            .setSmallIcon(ICON) //设置状态栏图标
+            .setLargeIcon(BitmapFactory.decodeResource(resources,ICON)) //设置状态栏下拉后的图标
+            .setContentIntent(pendingIntent) //设置点击通知后的动作
+            ··· //其他设置
+            .build()
+startForeground(ID,notification) //启动前台Service，ID为每个通知的唯一标识符，是一个整数
+```
+
+显示通知的方式非常简单，就是将startForeground(ID,notification)改成manager.notify(ID,notification)。 
+
+如果希望通知在被用户点击之后消失，那么可以采用两种方式：一种是在创建NotificationCompat实例的时候， 在链式设置中使用.setAutoCancel(true)，另一种方法是调用用manager.cancel(ID)，ID的含义和上文相同。
+
+前台服务部分已经介绍过NotificationChannel的常用方法，下面介绍NotificationCompat.Builder的常用方法：
+
+>setSound() //提供一个Uri，用于在通知发布到此频道时播放声音
+
+>setVibrate() //设置来通知时的手机振动，需要声明权限
+
+>setLights() //设置消息通知灯
+
+>setDefault() //使用默认的声音、振动和消息灯设置
+
+>setStyle(NotificationCompat.···) //设置在通知中可使用长文字和大图片，可通过BigTextStyle().bigText()或者BigPictureStyle().bigPicture()分别传入长文字内容以及图片，下拉之后可查看，长文字和大图片同时使用时，只有最靠近.build()的setStyle()会被应用；长文字和.setContentText()同时使用时，前者会取代后者显示在通知中
+
+>setPriority(NotificationCompat.PRIORITY_XXX) //设置通知优先级，有MAX、HIGH、LOW、MIN和DEFAULT五个等级，DEFAULT的效果等同于不设置优先级
