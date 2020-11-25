@@ -28,11 +28,29 @@
   * <font color=blue>UI界面</font>
   * <font color=blue>其他</font>
     * [蓝牙](Android/bt.md)
+* <font color=red>**Gradle入门**</font>
+  * <font color=blue>Groovy语言</font>
+    * [基础语法](Gradle/Groovy语言入门_基本语法.md)
+    * [进阶语法](Gradle/Groovy语言入门_进阶语法.md) 
+  * <font color=blue>Gradle脚本</font>
+    * [基础部分](Gradle/Gradle脚本编写_入门部分.md)
+* <font color=red>**Maven入门**</font>
+  * [Maven的使用](Maven/maven.md)
 * <font color=red>**Linux指令**</font>
   * [基础指令](Linux/basicom.md) 
 * <font color=red>**MySQL入门**</font>
   * [基础指令](MySQL/basicom.md) 
   * [表的操作](MySQL/tables.md)
+  * [基本查询指令](MySQL/query.md)
+  * [运算符](MySQL/opr.md)
+  * [聚合与排序](MySQL/agg&sort.md)
+  * [数据更新](MySQL/dataud.md)
+  * [复杂查询](MySQL/cplxq.md)
+  * [函数](MySQL/func.md)
+  * [谓词](MySQL/pred.md)
+  * [CASE表达式](MySQL/case.md)
+  * [集合运算](MySQL/set.md)
+  * [窗口函数](MySQL/window.md)
 * <font color=red>**数据结构**</font>
   * [数据结构概述](/DataStructure/1.数据结构概述.md)
   * [线性表](DataStructure/2.线性表.md)
@@ -62,9 +80,3 @@
   * [基础语法](Swift/Swift语言入门_基础语法.md)
   * [数据类型（1）](Swift/Swift语言入门_数据类型_1.md)
   * [数据类型（2）](Swift/Swift语言入门_数据类型_2.md)
-* <font color=red>**Gradle入门**</font>
-  * <font color=blue>Groovy语言</font>
-    * [基础语法](Gradle/Groovy语言入门_基本语法.md)
-    * [进阶语法](Gradle/Groovy语言入门_进阶语法.md) 
-  * <font color=blue>Gradle脚本</font>
-    * [基础部分](Gradle/Gradle脚本编写_入门部分.md)
