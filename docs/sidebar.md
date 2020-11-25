@@ -58,15 +58,17 @@
   * [串](DataStructure/4.串.md)
   * [数组和广义表](DataStructure/5.数组和广义表.md)
 * <font color=red>**算法**</font>
-  * [二分查找](Algorithm/binasearch.md)
-  * [选择排序](Algorithm/selesort.md)
-  * [递归](Algorithm/recursion.md)
-  * [快速排序](Algorithm/quicksort.md)
-  * [广度优先搜索](Algorithm/bfs.md)
-  * [Dijkstra算法](Algorithm/dij.md)
-  * [贪婪算法](Algorithm/greedy.md)
-  * [动态规划](Algorithm/dp.md)
-  * [K最近邻算法](Algorithm/knn.md)
+  * <font color=blue>搜索</font>
+    * [二分查找](Algorithm/binasearch.md)
+    * [广度优先搜索](Algorithm/bfs.md)
+  * <font color=blue>排序</font>
+    * [选择排序](Algorithm/selesort.md)
+    * [快速排序](Algorithm/quicksort.md)
+  * <font color=blue>规划</font>
+    * [动态规划](Algorithm/dp.md)
+    * [Dijkstra算法](Algorithm/dij.md)
+    * [贪婪算法](Algorithm/greedy.md)
+    * [K最近邻算法](Algorithm/knn.md)
 * <font color=red>**设计模式**</font>
   * [设计模式概述](DesignPattern/概述.md)
   * [创建型设计模式](DesignPattern/创建型设计模式.md)
