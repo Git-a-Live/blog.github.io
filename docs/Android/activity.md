@@ -1,18 +1,194 @@
+## Activity的创建使用
+
+Activity是Android应用开发中使用到的**最普遍**、**最基础**的组件。任何新建的项目，只要没有选择“No Activity”之类的选项，都会自带一个MainActivity。Activity同时也是UI界面展示的基础，没有Activity也就不会有应用界面可以展示。
+
+### 创建
+
+Activity的创建方式主要有两种：
+
+1. 通过Android Studio的`File`➡`New`➡`Activity`的途径，配置和创建Activity；
+2. 手动创建继承`AppCompatActivity`的子类，<font color=red>并且要在AndroidManifest文件中手动注册该Activity</font>。
+
+在实际开发中，一般更推荐使用第一种方式，因为手动创建既麻烦，又容易忘记注册Activity导致应用崩溃。
+
+### 基本使用
+
+Activity通过在`onCreate()`方法中调用`setContentView()`来设置对应的布局文件（有关布局文件的内容会在<font color=blue>UI界面</font>部分进行详细阐述），进而实现界面的展示。同时，`onCreate()`以及其他主要方法也是<u>实现许多业务逻辑</u>的重点所在。
+
+#### 界面组件响应
+
+常用的引用界面组件的方式为调用`findViewById()`。Kotlin中通过导入`kotlinx.android.synthetic`实现直接调用组件（但本质上也是使用了`findViewById()`），而Google官方目前推荐使用[ViewBinding](Android/vb)方式来调用界面组件。
+
+```
+//使用findViewById()获取组件引用，有几个组件就调用几次
+val control = findViewById(R.id.xxx) 
+```
+
+例如界面上的Button组件，在Activity取得其引用之后，就可以调用`setOnClickListener`来监听点击动作，并在里面编写业务代码，点击后就会执行某些任务。其他组件也有自己的监听方法可以调用，此处不作赘述。
+
+#### Toast的使用
+
+Toast用于展示内容较少的提示信息，不仅会自动消失，而且不需要在布局文件上编写专门的组件。其具体使用方式为：
+
+```
+Toast.makeText(Context, Content, Duration).show
+```
+
+通过调用`makeText()`来设置上下文Context、提示内容Content以及展示时长Duration，最后调用`show()`来展示Toast。
+
+#### Menu的使用
+
+Menu分为布局文件和业务逻辑两部分，布局文件的内容详见<font color=blue>UI界面</font>，这里主要介绍如何在Activity中设置和使用Menu。
+
+设置Menu需要重写`onCreateOptionsMenu()`方法，例如：
+
+```
+override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+    menuInflater.inflate(R.menu.xxx, menu) //menuInflater是Activity自带的属性
+    return true
+}
+```
+
+`menuInflater.inflate()`的作用和`setContentView()`类似，都是要设置对应的布局文件。
+
+重写完成并且编译运行之后，应用界面右上角就会出现Menu的图标，但是此时点击Menu的具体项目还不会有响应，因此需要重写`onOptionsItemsSelected()`，例如：
+
+```
+override fun onOptionsItemSelected(item: MenuItem): Boolean {
+    when (item.itemId) {
+        R.id.xxx -> //TODO
+        R.id.xxx -> //TODO
+        ···
+    }
+    return true
+}
+```
+
+#### Activity间跳转
+
+Activity间依靠Intent实现跳转，根据是否指明目标Activity，可以分为显式Intent和隐式Intent。
+
++ **显式Intent**
+
+显式Intent需要指定目标Activity：
+
+```
+val intent = Intent(this, someActivity::class.java)
+startActivity(intent)
+```
+
++ **隐式Intent**
+
+隐式Intent则是指定一系列<font color=red>抽象的action和category信息</font>，只要有Activity在AndroidManifest文件中注册时，设置了对应的\<action>和\<category>标签内容，那么它就可以被跳转到。隐式Intent的使用方式如下：
+
+```
+val intent = Intent("ActionTag")
+intent.addCategory("CategoryTag")
+startActivity(intent)
+```
+
+AndroidManifest的设置：
+
+```
+<activity ··· >
+    <intent-filter>
+          <action android:name="ActionTag" /> 
+          <category android:name="CategoryTag" />
+          <!--action只有一个，但是category可以有很多个-->
+    </intent-filter>
+</activity>
+```
+
+>注意：ActionTag和CategoryTag当中，必须有一个是使用系统默认值，否则可能会无法跳转。通常情况下是将CategoryTag设为系统默认的`android.intent.category.DEFAULT`，而ActionTag设置为自定义的。
+
+Intent还有许多属性和用法，接下来再介绍两个常用的重要用法。
+
++ **传递数据**
+
+利用Intent传递数据需要调用`putExtra()`方法，其具体的做法如下：
+
+```
+//传递方：
+val intent = Intent(···)
+intent.putExtra(key, value)
+startActivity(intent)
+
+//接收方：
+val value = intent.getXXXExtra(key) //Activity自带了一个intent属性，XXX表示value类型，如String，Int等
+```
+
++ **返回结果**
+
+从一个Activity返回上一个Activity时，如果需要返回结果，那么需要编写如下代码：
+
+需要返回结果的Activity：
+
+```
+val intent = Intent()
+intent.putExtra(key, value)
+setResult(RESULT_OK, intent) //一般只用RESULT_OK或RESULT_CANCELED
+```
+
+期望获得结果的Activity：
+
+```
+//调用startActivityForResult()：
+val intent = Intent(···)
+startActivityForResult(intent, reqCode) //reqCode是全局唯一的自定义请求码，用于判断是哪个Intent需要返回结果
+
+//从onActivityResult()中获取结果：
+override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+    super.onActivityResult(requestCode, resultCode, data)
+    when (requestCode) {
+        reqCode -> if (resultCode == RESULT_OK) {
+            val value = data?.getXXXExtra(key) 
+            //TODO
+        }
+        ···
+    }
+}
+```
+
+#### Activity的销毁
+
+要销毁单个Activity，只需要在合适的位置调用`finish()`即可。而如果要统一销毁多个Activity，推荐的方法是使用一个集合进行管理，示例如下：
+
+```
+object ActivitiesCollector {
+    private val activities = ArrayList<Activity>()
+
+    fun addActivity(activity: Activity) {
+        activities.add(activity)
+    }
+
+    fun removeActivity(activity: Activity) {
+        activities.remove(activity)
+    }
+
+    fun finishAll() {
+        for (activity in activities) {
+            if (!activity.isFinishing) {
+                activity.finish()
+            }
+        }
+        activities.clear()
+    }
+}
+```
+
+示例中的ActivitiesCollector是一个单例类，单例类的具体用法可以参考[这里](Swift/Swift语言入门_数据类型_1?id=方法)。
+
 ## Activity生命周期
 
-Activity的生命周期包括：onCreate、onStart、onResume、onPause、onStop、onRestart以及onDestroy。
+Activity的生命周期包括：`onCreate()`、`onStart()`、`onResume()`、`onPause()`、`onStop()`、`onRestart()`以及`onDestroy()`。具体调用时机如下图所示：
 
-（1）第一次启动Activity：onCreate -> onStart -> onResume
+![](pics/activity_lifecycle.png)
 
-（2）切出当前Activity：onPause -> onStop（切到透明Activity不调用） 
+由上图可以获得Activity的三种生存期：
 
-（3）切回原Activity：onRestart -> onStart -> onResume
-
-（4）退出当前Activity：onPause -> onStop -> onDestroy
-
-onStart 和 onStop 配对使用，主要是出于<font color=red> ***Activity是否可见*** </font>的角度；
-onResume 和 onPause 配对使用，主要是出于<font color=red> ***Activity是否位于前台*** </font>的角度。
-***
++ <font color=red>完整生存期</font>：从`onCreate()`到`onDestroy()`。前者多进行**初始化**操作，后者多进行**内存释放**操作
++ <font color=red>可见生存期</font>：从`onStart()`到`onStop()`。前者多进行**资源加载**操作，后者多进行**资源释放**操作
++ <font color=red>前台生存期</font>：从`onResume()`到`onPause()`。这里有两种情形，一种是Activity**可以和用户交互**，另一种则是Activity被其他Activity**部分遮挡**。
 
 ## 源码层面解析
 
@@ -44,38 +220,37 @@ Launcher作为一个应用程序，本身有包含Activity，因此它的启动�
 ![](https://gitee.com/dellg3/images/raw/master/Classes.png)
 <font color=red><center>`图4.涉及到的关键类和方法`</center></font>
 
-如果是<font color=red>***从一个应用进程中的Activity启动另一个Activity***</font>，因为不涉及到Launcher创建应用进程，所以大概的过程如下图所示：
+如果是<font color=red>从一个应用进程中的Activity启动另一个Activity</font>，因为不涉及到Launcher创建应用进程，所以大概的过程如下图所示：
 
 ![](https://gitee.com/dellg3/images/raw/master/activity2.png)
 <font color=red><center>`图5.普通Activity启动示意图`</center></font>
-***
 
 ## Activity任务栈
 
-### ***1. 任务栈模型***
+### 任务栈模型
 
 如图6 所示，Activity任务栈主要由三种重要的数据结构组成：ActivityStack、TaskRecord以及ActivityRecord。Activity的栈管理就是建立在这个模型的基础之上。
 
 ![](https://gitee.com/dellg3/images/raw/master/activity_stack.png)
 <font color=red><center>`图6.Activity任务栈模型`</center></font>
 
-### ***2. 三种数据结构解析***
+### 三种数据结构解析
 
-<font size=4>`· ActivityRecord`</font>
++ **ActivityRecord**
 
 ActivityRecord类用来<font color=purple>记录一个Activity的所有信息，描述一个Activity</font>。一个ActivityRecord只能对应一个Activity，而一个Activity根据启动模式的不同，可能有多个ActivityRecord（比如standard模式的Activity可能会被重复创建）。它的部分重要成员变量如下表所示：
 
-| 名称          | 类型          | 说明  |
-|:------------- |:-------------|:-----:|
-| service       | ActivityManagerService | AMS的引用 |
-| info          | ActivityInfo      |  Activity中的代码和AndroidManifest文件设置的节点信息 |
-| launchedFromPackage | String      |    启动Activity的包名 |
-| taskAffinity | String      |    Activity希望归属的任务栈 |
-| task | TaskRecord      |    ActivityRecord所在的TaskRecord |
-| app | ProcessRecord      |    ActivityRecord所在的应用程序进程 |
-| state | ActivityState      |    当前Activity状态 |
-| icon | int      |    Activity图标资源标识符 |
-| theme | int      |    Activity主题资源标识符 |
+| 名称                | 类型                   |                        说明                         |
+| :------------------ | :--------------------- | :-------------------------------------------------: |
+| service             | ActivityManagerService |                      AMS的引用                      |
+| info                | ActivityInfo           | Activity中的代码和AndroidManifest文件设置的节点信息 |
+| launchedFromPackage | String                 |                 启动Activity的包名                  |
+| taskAffinity        | String                 |              Activity希望归属的任务栈               |
+| task                | TaskRecord             |           ActivityRecord所在的TaskRecord            |
+| app                 | ProcessRecord          |          ActivityRecord所在的应用程序进程           |
+| state               | ActivityState          |                  当前Activity状态                   |
+| icon                | int                    |               Activity图标资源标识符                |
+| theme               | int                    |               Activity主题资源标识符                |
 
 ActivityRecord通过task与TaskRecord建立联系。
 
@@ -85,26 +260,26 @@ ActivityRecord通过task与TaskRecord建立联系。
 
 （2）当taskAffinity与allowTaskReparenting配合使用时，若allowTaskReparenting设置为true，则Activity具有转移的能力，亦即启动该Activity时，会优先加入包含该Activity的应用（具有相同taskAffinity）所在的任务栈。
 
-<font size=4>`· TaskRecord`</font>
++ **TaskRecord**
 
 TaskRecord用来<font color=purple>表示Activity的任务栈（这个才是真正意义上的任务栈）</font>，管理ActivityRecord（Activity）。它的部分重要成员变量如下表所示：
 
-| 名称          | 类型          | 说明  |
-|:------------- |:-------------|:-----:|
-| taskID       | int | 任务栈的唯一标识符 |
-| affinity       | String | 该Task中第一个Activity |
-| intent       | Intent | 启动这个任务栈的Intent |
-| mActivities       | ArrayList< ActivityRecord > | 按历史顺序排列的Activity记录 |
-| mStack       | ActivityStack | 当前归属的ActivityStack |
-| mService       | ActivityManagerService | AMS的引用 |
-|mCallingPackage | String | 调用者的包名 |
+| 名称            | 类型                        |             说明             |
+| :-------------- | :-------------------------- | :--------------------------: |
+| taskID          | int                         |      任务栈的唯一标识符      |
+| affinity        | String                      |    该Task中第一个Activity    |
+| intent          | Intent                      |    启动这个任务栈的Intent    |
+| mActivities     | ArrayList< ActivityRecord > | 按历史顺序排列的Activity记录 |
+| mStack          | ActivityStack               |   当前归属的ActivityStack    |
+| mService        | ActivityManagerService      |          AMS的引用           |
+| mCallingPackage | String                      |         调用者的包名         |
 
 一般情况下，在启动App的第一个Activity时，AMS为其创建一个TaskRecord，当然启动后也可能创建新的TaskRecord,比如启动一个指定了不同taskAffinity的singleTask类型的Activity，这时候也会创建一个新的TaskRecord，因此一个App是可能有多个TaskRecord存在的，这取决于应用的使用场景和需求。
 
 当启动模式设定为singleTask后，通过findTaskLocked来为启动的Activity寻找TaskRecord，如果找到则返回它顶部的Activity所对应的ActivityRecord。在findTaskLocked中，我们会比较要启动的Activity和Task的affinity，如果匹配就返回TaskRecord顶部的ActivityRecord，如果最终没找到则返回null。如果返回值intentActivity为null，那么
 addingToTask和reuseTask都不会设置，这时候会通过createTaskRecord创建TaskRecord并设置到ActivityRecord之中。在大多数情况下，Activity都会复用TaskRecord,也就是说Activity会添加到相同的TaskRecord之中，除了应用第一次启动或者taskAffinity不同之外。如果上一步中通过findTaskLocked返回的intentActivity不为空，这表示为singleTask类型的activity找到了一个可复用的TaskRecord。
 
-<font size=4>`· ActivityStack`</font>
++ **ActivityStack**
 
 ActivityStack是一个用于管理系统所有的Activity的堆栈机制，由ActivityStackSupervisor进行管理。ActivityStack在ActivityStackSupervisor中有以下几种重要实例：
 
@@ -113,7 +288,6 @@ ActivityStack是一个用于管理系统所有的Activity的堆栈机制，由Ac
 `mFocusedStack：当前正在接收输入或启动下一个Activity的所有Activity（非Launcher）`
 
 `mLastFocusedStack：之前接收输入的所有Activity`
-***
 
 ## Activity启动模式
 
@@ -129,25 +303,25 @@ Activity有四种启动模式：
 
 这四种模式可以在AndroidManifest文件中设置lauchMode进行声明，也可以在代码中调用Intent对象的addFlags方法来设置。后者优先级<font color=red>高于</font>前者，当同时使用两种方式设置启动模式时，以后者为准。当然，还有一种方式是在AndroidManifest文件中设置taskAffinity属性，指定Activity所属的任务栈，但是对SingleInstance模式无效。除了Standard之外，其他三种启动模式的存在目的，都是为了解决<font color=red>***如何避免同一Activity重复创建多个实例***</font>的问题。
 
-### ***1. Standard模式***
+### Standard模式
 
 Standard模式是启动Activity的默认模式，没有任何特殊配置的Activity，会默认以Standard模式启动。在这种模式下，<font color=green>***每当启动一个Activity，系统就会创建一个新的实例，并将其压入任务栈的栈顶，而不管该Activity是否已经存在于任务栈中***</font>。Standard模式的好处就是不用特意配置，直接上手就能用，但缺点是浪费系统资源。
 
-### ***2.  SingleTop模式***
+### SingleTop模式
 
 SingleTop是这样一种模式：当启动一个Activity时，<font color=green>***若任务栈的栈顶已经存在该Activity的实例，那么该实例将直接被复用，否则系统就创建新的实例***</font>。这个模式只考虑任务栈的<font color=red>栈顶</font>是否存在待启动的Activity实例，如果待启动的Activity实例存在但不是位于栈顶，那么就会转变成Standard模式，同样会造成资源浪费。因此从目前实际开发的角度来讲，这种“半吊子节约”的启动模式并没有太大的使用价值。
 
-### ***3.  SingleTask模式***
+### SingleTask模式
 
 SingleTask比SingleTop更进一步，<font color=green>***只要任务栈中存在待启动Activity的实例，那么就直接复用，并且把该Activity之前的其他Activity（如果存在的话）全部出栈，使之位于栈顶***</font>。
 
-### ***4.  SingleInstance模式***
+### SingleInstance模式
 
 SingleInstance使用<font color=green>***一个任务栈来单独管理指定为该模式的Activity，无论有哪些应用程序访问该Activity，都只会共用这个任务栈***</font>，因此可以实现Activity实例的共享。根据Google官方开发文档的介绍，系统不会将任何其他Activity启动到包含该实例的任务栈中，该Activity始终是其任务栈中**唯一**的成员；由该Activity启动的任何Activity都会在其他的任务栈中打开。在这种情况下，Activity的出栈顺序取决于它们所在任务栈的顺序，只有最先出栈的Activity所在的任务栈完全出栈后，才会切换到其他的任务栈，并进行后续的出栈步骤。
 
 ## 查看任务栈
 
-将设备与Android Studio通过ADB连接进行调试，在Terminal中输入**adb shell dumpsys activity**，即可打印显示当前系统中的任务栈情况（但是位置比较靠后）。常见的情况有以下几种：
+将设备与Android Studio通过ADB连接进行调试，在Terminal中输入`adb shell dumpsys activity`，即可打印显示当前任务栈情况（但是位置比较靠后）。常见的情况有以下几种：
 
 ### （1）停留桌面：
 
