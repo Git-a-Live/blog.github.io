@@ -196,7 +196,7 @@ Framework层包含三大进程：Zygote进程、System Server进程以及Media S
 
 Zygote进程是Android系统的首个Java进程，也是所有Java进程的父进程。System Server进程由前者孵化而来，用于管理整个Java framework层，包含ActivityManager，PowerManager等各种系统服务。
 
-以<font color=red>***用户点击桌面图标启动应用***</font>为例，在这一过程中，Activity的启动流程如下。
+以<font color=red>用户点击桌面图标启动应用</font>为例，在这一过程中，Activity的启动流程如下。
 
 图1 中的Launcher进程是Android系统启动之后的第一个应用程序，它的作用有两个：
 
@@ -301,23 +301,23 @@ Activity有四种启动模式：
 
 `· SingleInstance（单实例）`
 
-这四种模式可以在AndroidManifest文件中设置lauchMode进行声明，也可以在代码中调用Intent对象的addFlags方法来设置。后者优先级<font color=red>高于</font>前者，当同时使用两种方式设置启动模式时，以后者为准。当然，还有一种方式是在AndroidManifest文件中设置taskAffinity属性，指定Activity所属的任务栈，但是对SingleInstance模式无效。除了Standard之外，其他三种启动模式的存在目的，都是为了解决<font color=red>***如何避免同一Activity重复创建多个实例***</font>的问题。
+这四种模式可以在AndroidManifest文件中设置lauchMode进行声明，也可以在代码中调用Intent对象的addFlags方法来设置。后者优先级<font color=red>高于</font>前者，当同时使用两种方式设置启动模式时，以后者为准。当然，还有一种方式是在AndroidManifest文件中设置taskAffinity属性，指定Activity所属的任务栈，但是对SingleInstance模式无效。除了Standard之外，其他三种启动模式的存在目的，都是为了解决<font color=red>如何避免同一Activity重复创建多个实例</font>的问题。
 
 ### Standard模式
 
-Standard模式是启动Activity的默认模式，没有任何特殊配置的Activity，会默认以Standard模式启动。在这种模式下，<font color=green>***每当启动一个Activity，系统就会创建一个新的实例，并将其压入任务栈的栈顶，而不管该Activity是否已经存在于任务栈中***</font>。Standard模式的好处就是不用特意配置，直接上手就能用，但缺点是浪费系统资源。
+Standard模式是启动Activity的默认模式，没有任何特殊配置的Activity，会默认以Standard模式启动。在这种模式下，<font color=green>每当启动一个Activity，系统就会创建一个新的实例，并将其压入任务栈的栈顶，而不管该Activity是否已经存在于任务栈中</font>。Standard模式的好处就是不用特意配置，直接上手就能用，但缺点是浪费系统资源。
 
 ### SingleTop模式
 
-SingleTop是这样一种模式：当启动一个Activity时，<font color=green>***若任务栈的栈顶已经存在该Activity的实例，那么该实例将直接被复用，否则系统就创建新的实例***</font>。这个模式只考虑任务栈的<font color=red>栈顶</font>是否存在待启动的Activity实例，如果待启动的Activity实例存在但不是位于栈顶，那么就会转变成Standard模式，同样会造成资源浪费。因此从目前实际开发的角度来讲，这种“半吊子节约”的启动模式并没有太大的使用价值。
+SingleTop是这样一种模式：当启动一个Activity时，<font color=green>若任务栈的栈顶已经存在该Activity的实例，那么该实例将直接被复用，否则系统就创建新的实例</font>。这个模式只考虑任务栈的<font color=red>栈顶</font>是否存在待启动的Activity实例，如果待启动的Activity实例存在但不是位于栈顶，那么就会转变成Standard模式，同样会造成资源浪费。因此从目前实际开发的角度来讲，这种“半吊子节约”的启动模式并没有太大的使用价值。
 
 ### SingleTask模式
 
-SingleTask比SingleTop更进一步，<font color=green>***只要任务栈中存在待启动Activity的实例，那么就直接复用，并且把该Activity之前的其他Activity（如果存在的话）全部出栈，使之位于栈顶***</font>。
+SingleTask比SingleTop更进一步，<font color=green>只要任务栈中存在待启动Activity的实例，那么就直接复用，并且把该Activity之前的其他Activity（如果存在的话）全部出栈，使之位于栈顶</font>。
 
 ### SingleInstance模式
 
-SingleInstance使用<font color=green>***一个任务栈来单独管理指定为该模式的Activity，无论有哪些应用程序访问该Activity，都只会共用这个任务栈***</font>，因此可以实现Activity实例的共享。根据Google官方开发文档的介绍，系统不会将任何其他Activity启动到包含该实例的任务栈中，该Activity始终是其任务栈中**唯一**的成员；由该Activity启动的任何Activity都会在其他的任务栈中打开。在这种情况下，Activity的出栈顺序取决于它们所在任务栈的顺序，只有最先出栈的Activity所在的任务栈完全出栈后，才会切换到其他的任务栈，并进行后续的出栈步骤。
+SingleInstance使用<font color=green>一个任务栈来单独管理指定为该模式的Activity，无论有哪些应用程序访问该Activity，都只会共用这个任务栈</font>，因此可以实现Activity实例的共享。根据Google官方开发文档的介绍，系统不会将任何其他Activity启动到包含该实例的任务栈中，该Activity始终是其任务栈中**唯一**的成员；由该Activity启动的任何Activity都会在其他的任务栈中打开。在这种情况下，Activity的出栈顺序取决于它们所在任务栈的顺序，只有最先出栈的Activity所在的任务栈完全出栈后，才会切换到其他的任务栈，并进行后续的出栈步骤。
 
 ## 查看任务栈
 
