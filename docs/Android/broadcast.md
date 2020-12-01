@@ -82,6 +82,22 @@ class MyReceiver : BroadcastReceiver() {
 
 >注意，Broadcast Receiver不允许开启多线程，而且在重写onReceive()方法时，不要添加过多的业务逻辑甚至是耗时操作， 否则可能会因为满足BroadcastQueue Timeout条件而触发ANR（Application Not Responding，程序无响应）。
 
+```
+ANR主要有四类：
+1. InputDispatching Timeout：5s内无法响应屏幕触摸事件或键盘输入事件；
+2. BroadcastQueue Timeout ：在执行前台广播（BroadcastReceiver）的onReceive()函数时10s内没有处理完成，后台为60s；
+3. Service Timeout ：前台服务20秒内，后台服务在200秒内未执行完毕；
+4. ContentProvider Timeout ：ContentProvider的publish在10s内未能执行完毕。
+
+分析ANR的方法有查看Log、分析traces.txt文件、分析Java调用线程以及使用DDMS。
+
+规避ANR的方式有：
+· 避免主线程阻塞
+· 避免CPU满负荷运行
+· 优化内存使用
+· 避免在各大组件中执行耗时操作
+```
+
 ## 广播发送
 
 在之前的内容中已经提到，广播分为标准广播和有序广播，标准广播不可被截断，能被所有广播接收器同时接收到， 有序广播只能从高优先级的广播接收器依次向低优先级的广播接收器传递，并且还有可能被中间的某个广播接收器截断。
