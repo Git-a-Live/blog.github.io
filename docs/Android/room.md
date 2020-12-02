@@ -129,26 +129,62 @@ val demoDao = DemoDataBase.getDemoDao() //通过这个对象调用访问数据�
 
 在Android开发中，对于数据库的操作通常不允许放在主线程中进行，因为这可能会导致应用响应迟缓甚至无响应（ANR），严重降低用户体验。
 
- 为了解决上述问题，就必须引入多线程。Java一般使用Thread创建多线程任务，而Android一般使用AsyncTask（异步任务）。 当然，在实际开发中会使用第三方框架来代替AsyncTask。 此外，由于Kotlin协程的出现和应用， AsyncTask类已经在Android R中被废弃。 尽管如此，AsyncTask依然可以在Android R以下版本的设备上运行，考虑到这些设备目前还是占据大多数，因此有必要了解AsyncTask的使用方法。
+ 为了解决上述问题，就必须引入多线程。Java一般使用Thread和Runnable创建多线程任务，而Android一般使用Handler和AsyncTask，前者相对麻烦，而后者相对更容易上手。 
+ 
+ 当然，在实际开发中会使用第三方框架来代替AsyncTask。 此外，由于Kotlin协程的出现和应用， AsyncTask类已经在Android R中被废弃。 尽管如此，AsyncTask依然可以在Android R以下版本的设备上运行，考虑到这些设备目前还是占据大多数，因此有必要了解AsyncTask的使用方法。
 
- AsyncTask是一个抽象类，因此需要定义一个子类继承AsyncTask然后重写相关方法：
+ AsyncTask是一个抽象类，因此需要定义一个子类继承AsyncTask并重写相关方法：
 
 ```
-class DemoAsyncTask(vararg params: Params?): AsyncTask< Params, Progress, Results>(){
-    override fun doInBackground(vararg params: Params?): Void? {
-        //TODO
-        return null
-    }
-    ···
-    //Params，Progress以及Results都要填入数据类型，Progress和Results可以设为Void
+class DemoAsyncTask: AsyncTask<Params, Progress, Results>() {
+    override fun doInBackground(vararg params: Params?): Boolean {
+             //在这里开启子线程执行耗时操作任务
+        }
+
+        override fun onPreExecute() {
+            //在后台任务开始执行前调用，用于进行一些界面上的初始化操作
+        }
+
+        override fun onProgressUpdate(vararg values: Progress?) {
+            //此处可以进行UI操作，利用传递进来的参数对界面进行更新
+        }
+
+        override fun onPostExecute(result: Results?) {
+            //在后台任务执行结束之后返回结果，可以进行UI操作
+        }
+
+        override fun onCancelled(result: Results?) {
+            //后台任务取消时调用
+        }
+
+        override fun onCancelled() {
+            //后台任务取消时调用
+        }
 }
 ```
 
-在主线程中调用execute()方法执行相关任务：
+AsyncTask有三个泛型参数：
+
++ **Params**
+
+在执行异步任务时需要传入的参数。
+
++ **Progress**
+
+
+显示任务进度，通常会选择Int或者Double。
+
++ **Result**
+
+任务执行完毕之后需要返回的结果。
+
+AsyncTask中只声明了一个抽象方法` doInBackground()`，其余方法可以根据需要有选择性地去重写。
+
+在实现AsyncTask之后，在主线程中调用`execute()`方法执行后台任务即可：
 
 ```
-val demoAsyncTask: DemoAsyncTask = DemoAsyncTask(vararg params: Params?)
-demoAsyncTask.execute(param: Param?)
+val demoAsyncTask: AsyncTask = DemoAsyncTask()
+demoAsyncTask.execute(param: Param?) //execute方法是可以传递任意数量的参数的
 ```
 
 ### Repository
