@@ -1,11 +1,12 @@
 * <font color=red>**Android开发**</font>
   * [配置Android Studio](Android/config.md)
-  * <font color=blue>基本组件</font>
+  * <font color=blue>常用组件</font>
     * [Activity](Android/activity.md)
     * [Broadcast](Android/broadcast.md)
     * [Content Provider](Android/contpro.md)
     * [Service](Android/service.md)
     * [Fragment](Android/fg.md)
+    * [WorkManager]()
   * <font color=blue>应用架构</font>
     * [ViewModel](Android/vm.md)
     * [LiveData](Android/ld.md)
@@ -13,21 +14,35 @@
     * [AndroidViewModel](Android/avm.md)
     * [ViewBinding](Android/vb.md)
   * <font color=blue>数据存储</font>
+    * [SQLite]()
     * [Shared Preferences](Android/sp.md)
     * [Room](Android/room.md)
   * <font color=blue>序列化</font>
     * [Serializable](Android/serial.md)
     * [Parcelable](Android/parcel.md)
     * [JSON](Android/json.md)
-  * <font color=blue>网络通信</font>
+    * [XML]()
+  * <font color=blue>网络</font>
     * [Webview](Android/wv.md)
     * [OkHttp](Android/oh.md)
+    * [Retrofit]()
   * <font color=blue>多媒体</font>
     * [摄像头与照片](Android/photo.md)
     * [音视频](Android/msc.md)
-  * <font color=blue>UI界面</font>
-  * <font color=blue>其他</font>
     * [蓝牙](Android/bt.md)
+  * <font color=blue>UI界面</font>
+    * [基本布局]()
+    * [常用控件]()
+    * [自定义控件]()
+    * [Material Design]()
+* <font color=red>**Kotlin进阶**</font>
+  * [函数式编程]()
+  * [标准函数与静态方法]()
+  * [延迟初始化与密封类]()
+  * [扩展函数与运算符重载]()
+  * [高阶函数]()
+  * [泛型与委托]()
+  * [协程]()
 * <font color=red>**Gradle入门**</font>
   * <font color=blue>Groovy语言</font>
     * [基础语法](Gradle/Groovy语言入门_基本语法.md)
