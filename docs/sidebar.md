@@ -35,12 +35,17 @@
     * [常用控件]()
     * [自定义控件]()
     * [Material Design]()
+  * <font color=blue>调试与性能</font>
+    * [日志工具]()
+    * [应用调试]()
+    * [性能优化]()
+  * <font color=blue>库开发</font>
+    * [Module]()
+    * [NDK]()
 * <font color=red>**Kotlin进阶**</font>
-    * [函数式编程]()
-    * [标准函数与静态方法]()
+    * [函数式编程](Kotlin/func.md)
     * [延迟初始化与密封类]()
     * [扩展函数与运算符重载]()
-    * [高阶函数]()
     * [泛型与委托]()
     * [协程]()
 * <font color=red>**Gradle入门**</font>
