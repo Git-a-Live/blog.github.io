@@ -94,7 +94,7 @@ quickstart项目在运行后会输出“Hello World”，然而有些时候，�
 
 值得一提的是，\<version>中以-SNAPSHOT结尾的版本都被视为开发版本，每次都会重新导入，正式发布的版本不能出现-SNAPSHOT。
 
-如果需要引用某个依赖，但又不清楚GAV坐标，那么就在[Maven官网](search.maven.org)中搜索关键字来查找。 例如需要使用log4j，那么就通过上述网站查找，找到自己想用的组件后，直接复制使用即可。
+如果需要引用某个依赖，但又不清楚GAV坐标，那么就在[Maven官网](https://search.maven.org)中搜索关键字来查找。 例如需要使用log4j，那么就通过上述网站查找，找到自己想用的组件后，直接复制使用即可。
 
 ![](pics/maven_9.png)
 
