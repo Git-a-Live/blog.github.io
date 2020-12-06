@@ -4,7 +4,7 @@ XML中没有预定义的标签，这也就意味着创作者可以定义自己�
 
 与JSON相比，XML不适合存储结构非常复杂的数据（比如多层嵌套结构），显而易见，随着结构复杂度的上升，标签数量也会急剧增长，数据量自然也会大幅增加。
 
-对XML操作最常用的第三方库是[dom4j](https://search.maven.org/artifact/org.dom4j/dom4j)，它是一个非常优秀的Java XML API，具有性能优异、功能强大和极端易用的特点，同时也是一个开放源代码的软件。
+对XML操作最常用的第三方库是[dom4j](https://search.maven.org/artifact/org.dom4j/dom4j)，它是一个非常优秀的Java XML API，支持DOM、SAX以及JAXP，具有性能优异、功能强大和极端易用的特点，同时也是一个开放源代码的软件。
 
 ## 创建XML文件
 
@@ -62,19 +62,89 @@ writer.close()
 
 ## 解析XML文件
 
-Android开发中，解析XML文件主要有三种方式，一种是DOM，一种是Pull，另一种则是SAX。
+Android开发中，解析XML文件主要有三种方式，一种是DOM，一种是Pull，另一种则是SAX。注意，无论采用哪种方式解析XML，都要用`try`语句将执行逻辑包裹起来，以避免解析过程中抛出异常导致的应用崩溃。
 
 ### DOM
 
-DOM解析是一次性将整个XML文档加载进内存，在内存中构建Document的对象树，通过Document对象，得到树上的节点对象，通过节点对象访问（操作）到XML文档的内容。**因此DOM方式占用内存大，解析慢，优点是可以任意遍历和修改树的节点**。
-
-但是考虑到Android设备性能的限制，并不推荐使用DOM方式解析XML。
-
-### Pull
-
-
+DOM解析是一次性将整个XML文档加载进内存，在内存中构建Document的对象树，通过Document对象，得到树上的节点对象，通过节点对象访问（操作）到XML文档的内容。**因此DOM方式占用内存大，解析慢，优点是可以任意遍历和修改树的节点**。但是考虑到Android设备性能的限制，在实际开发中并<font color=red>不推荐</font>使用DOM方式解析XML。
 
 ### SAX
 
-相比于DOM，SAX是一种速度更快，更有效的方法。它逐行扫描文档，一边扫描一边解析。而且相比于DOM，SAX可以在解析文档的任意时刻停止解析。SAX解析可以立即开始，速度快，没有内存压力，但是不能对节点做任意修改。如果没有修改节点的需求，优先选择使用SAX即可。
+相比于DOM，SAX是一种速度更快，更有效的方法。它逐行扫描文档，一边扫描一边解析。而且相比于DOM，SAX可以在解析文档的任意时刻停止解析。SAX解析可以立即开始，速度快，没有内存压力，但是不能对节点做任意修改。在正常情况下，如果没有修改节点的需求，优先选择使用SAX即可。
+
+Android项目中使用SAX解析XML，主要分为两个步骤：
+
+1. **创建DefaultHandler子类**
+
+DefaultHandler类有许多方法可以重写，常用方法有以下5个：
+
+```
+class MyHandler: DefaultHandler() {
+    override fun startDocument() {
+        //XML解析开始时调用
+    }
+
+    override fun endDocument() {
+        //XML解析完成时调用
+    }
+
+    override fun startElement(uri: String?, localName: String?, qName: String?, attributes: Attributes?) {
+        //开始解析某个节点时调用
+    }
+
+    override fun endElement(uri: String?, localName: String?, qName: String?) {
+        //完成解析某个节点时调用
+    }
+
+    override fun characters(ch: CharArray?, start: Int, length: Int) {
+        //获取节点中的内容时调用
+    }
+}
+```
+
+2. **调用DefaultHandler子类**
+
+在调用重写了方法的DefaultHandler子类的地方，需要编写以下代码来使用该子类以解析XML：
+
+```
+try {
+    val xmlReader = SAXParseFactory.newInstance().newSAXParser().xmlReader
+    xmlReader.contentHandler = MyHandler()
+    xmlReader.parse(InputSource(StringReader(XML_Data_String)))
+} catch (e: Exception) {
+    //TODO
+}
+```
+
+### Pull
+
+Pull也是Android项目中常用的一种XML解析手段，在用法上跟SAX有一些类似，具体示例代码如下：
+
+```
+try {
+    val xmlPullParser = XmlPullParserFactory.newInstance().newPullParser()
+    xmlPullParser.setInput(StringReader(XML_Data_String))
+    var eventType = xmlPullParser.eventType
+    while (eventType != XmlPullParser.END_DOCUMENT) {
+        when (eventType) {
+            XmlPullParser.START_TAG -> {
+                when (xmlPullParser.name) {
+                    //TODO
+                }
+            }
+            XmlPullParser.END_TAG -> {
+                //TODO
+            }
+            ···
+        }
+        eventType = xmlPullParser.next()
+    }
+} catch (e: Exception) {
+    //TODO
+}
+```
+
+上述代码的含义是，获得一个XmlPullParser对象，传入String类型的XML数据，通过一个`while`循环进行解析。
+
+
 
