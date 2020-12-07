@@ -32,7 +32,7 @@
     * [蓝牙](Android/bt.md)
   * <font color=blue>UI界面</font>
     * [基本布局](Android/lo.md)
-    * [控件](Android/controller.md)
+    * [自定义View](Android/controller.md)
     * [Material Design](Android/md.md)
   * <font color=blue>调试与性能</font>
     * [日志工具]()
@@ -43,8 +43,7 @@
     * [NDK]()
 * <font color=red>**Kotlin进阶**</font>
     * [函数式编程](Kotlin/func.md)
-    * [延迟初始化与密封类]()
-    * [扩展函数与运算符重载]()
+    * [延迟初始化、扩展函数与密封类](Kotlin/late.md)
     * [泛型与委托]()
     * [协程]()
 * <font color=red>**Gradle入门**</font>
