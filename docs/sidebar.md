@@ -14,7 +14,7 @@
     * [AndroidViewModel](Android/avm.md)
     * [ViewBinding](Android/vb.md)
   * <font color=blue>数据存储</font>
-    * [SQLite]()
+    * [SQLite](Android/sql.md)
     * [Shared Preferences](Android/sp.md)
     * [Room](Android/room.md)
   * <font color=blue>序列化</font>
@@ -25,7 +25,7 @@
   * <font color=blue>网络</font>
     * [Webview](Android/wv.md)
     * [OkHttp](Android/oh.md)
-    * [Retrofit]()
+    * [Retrofit](Android/retr.md)
   * <font color=blue>多媒体</font>
     * [摄像头与照片](Android/photo.md)
     * [音视频](Android/msc.md)
@@ -35,17 +35,18 @@
     * [自定义View](Android/controller.md)
     * [Material Design](Android/md.md)
   * <font color=blue>调试与性能</font>
-    * [日志工具]()
-    * [应用调试]()
-    * [性能优化]()
+    * [日志工具](Android/log.md)
+    * [应用调试](Android/debug.md)
+    * [单元测试](Android/unit.md)
+    * [性能优化](Android/perf.md)
   * <font color=blue>库开发</font>
-    * [Module]()
-    * [NDK]()
+    * [Module](Android/mod.md)
+    * [NDK](Android/ndk.md)
 * <font color=red>**Kotlin进阶**</font>
     * [函数式编程](Kotlin/func.md)
     * [延迟初始化、扩展函数与密封类](Kotlin/late.md)
-    * [泛型与委托]()
-    * [协程]()
+    * [泛型与委托](Kotlin/gen.md)
+    * [协程](Kotlin/coroutine.md)
 * <font color=red>**Gradle入门**</font>
   * <font color=blue>Groovy语言</font>
     * [基础语法](Gradle/Groovy语言入门_基本语法.md)
