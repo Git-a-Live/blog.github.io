@@ -32,7 +32,7 @@
     * [蓝牙](Android/bt.md)
   * <font color=blue>UI界面</font>
     * [基本布局](Android/lo.md)
-    * [自定义View](Android/controller.md)
+    * [自定义控件](Android/controller.md)
     * [Material Design](Android/md.md)
   * <font color=blue>调试与性能</font>
     * [日志工具](Android/log.md)
@@ -107,3 +107,16 @@
   * [基础语法](Swift/Swift语言入门_基础语法.md)
   * [数据类型（1）](Swift/Swift语言入门_数据类型_1.md)
   * [数据类型（2）](Swift/Swift语言入门_数据类型_2.md)
+* <font color=red>**C++入门**</font>
+  * <font color=blue>基础部分</font>
+  * <font color=blue>进阶部分</font>
+* <font color=red>**Python入门**</font>
+  * <font color=blue>基础部分</font>
+  * <font color=blue>进阶部分</font>
+* <font color=red>**操作系统**</font>
+* <font color=red>**计算机组成原理**</font>
+* <font color=red>**编译原理**</font>
+* <font color=red>**高等数学**</font>
+* <font color=red>**线性代数**</font>
+* <font color=red>**离散数学**</font>
+* <font color=red>**嵌入式开发**</font>
