@@ -35,7 +35,6 @@
     * [自定义控件](Android/controller.md)
     * [Material Design](Android/md.md)
   * <font color=blue>调试与性能</font>
-    * [日志工具](Android/log.md)
     * [应用调试](Android/debug.md)
     * [单元测试](Android/unit.md)
     * [性能优化](Android/perf.md)
