@@ -80,23 +80,7 @@ class MyReceiver : BroadcastReceiver() {
 
 <font color=red>由于静态注册可以使应用在未启动的情况下也能接收到系统广播，许多恶意应用（尤其是某些在中国大陆市场具有垄断地位的应用）都会利用该机制实现后台自动唤醒</font>，因此Android也在削减静态注册Broadcast Receiver的功能。因此，如果要接收系统广播并作出响应， 必须要在AndroidManifest文件里面设置相关权限，否则引起应用会崩溃。
 
->注意，Broadcast Receiver不允许开启多线程，而且在重写onReceive()方法时，不要添加过多的业务逻辑甚至是耗时操作， 否则可能会因为满足BroadcastQueue Timeout条件而触发ANR（Application Not Responding，程序无响应）。
-
-```
-ANR主要有四类：
-1. InputDispatching Timeout：5s内无法响应屏幕触摸事件或键盘输入事件；
-2. BroadcastQueue Timeout ：在执行前台广播（BroadcastReceiver）的onReceive()函数时10s内没有处理完成，后台为60s；
-3. Service Timeout ：前台服务20秒内，后台服务在200秒内未执行完毕；
-4. ContentProvider Timeout ：ContentProvider的publish在10s内未能执行完毕。
-
-分析ANR的方法有查看Log、分析traces.txt文件、分析Java调用线程以及使用DDMS。
-
-规避ANR的方式有：
-· 避免主线程阻塞
-· 避免CPU满负荷运行
-· 优化内存使用
-· 避免在各大组件中执行耗时操作
-```
+>注意，Broadcast Receiver不允许开启多线程，而且在重写onReceive()方法时，不要添加过多的业务逻辑甚至是耗时操作， 否则可能会因为满足BroadcastQueue Timeout条件而触发[ANR](Android/perf?id=anr)。
 
 ## 广播发送
 

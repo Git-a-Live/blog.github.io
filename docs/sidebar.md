@@ -34,10 +34,11 @@
     * [基本布局](Android/lo.md)
     * [自定义控件](Android/controller.md)
     * [Material Design](Android/md.md)
-  * <font color=blue>调试与性能</font>
+  * <font color=blue>调试、性能与安全</font>
     * [应用调试](Android/debug.md)
     * [单元测试](Android/unit.md)
     * [性能优化](Android/perf.md)
+    * [代码混淆、应用加密与反编译](Android/perf.md)
   * <font color=blue>库开发</font>
     * [Module](Android/mod.md)
     * [NDK](Android/ndk.md)
