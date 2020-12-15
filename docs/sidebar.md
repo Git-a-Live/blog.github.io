@@ -115,8 +115,4 @@
   * <font color=blue>进阶部分</font>
 * <font color=red>**操作系统**</font>
 * <font color=red>**计算机组成原理**</font>
-* <font color=red>**编译原理**</font>
-* <font color=red>**高等数学**</font>
-* <font color=red>**线性代数**</font>
-* <font color=red>**离散数学**</font>
 * <font color=red>**嵌入式开发**</font>
