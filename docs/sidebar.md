@@ -38,7 +38,7 @@
     * [应用调试](Android/debug.md)
     * [单元测试](Android/unit.md)
     * [性能优化](Android/perf.md)
-    * [代码混淆、应用加密与反编译](Android/perf.md)
+    * [代码混淆、应用加密与反编译](Android/proguard.md)
   * <font color=blue>库开发</font>
     * [Module](Android/mod.md)
     * [NDK](Android/ndk.md)
