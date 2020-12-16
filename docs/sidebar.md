@@ -115,4 +115,3 @@
   * <font color=blue>进阶部分</font>
 * <font color=red>**操作系统**</font>
 * <font color=red>**计算机组成原理**</font>
-* <font color=red>**嵌入式开发**</font>

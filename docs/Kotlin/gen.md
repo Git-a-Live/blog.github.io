@@ -57,8 +57,80 @@ inline fun <reified T> foo(param: ParamType): ReturnType {
 
 ### 协变与逆变
 
+协变和逆变，本质上都是用来**描述类型转换后的继承关系**。所谓协变，是指<font color=red>某个类型（基类）可以由其派生类型（子类）安全地替换</font>，而逆变则表示<font color=blue>某个类型（子类）可以被安全地替换成其所继承的基类</font>。举个例子，若A是B的子类，同时Demo\<A>也是Demo\<B>的子类，那么就称Demo在T类型上支持协变；反之，若A是B的子类，但Demo\<B>是Demo\<A>的子类，那么就称Demo在T类型上支持逆变。在实际的使用中应当遵守这样一个原则：<font color=orange>让泛型在协变时只出现在返回值位置（即只读不写），在逆变时只出现在参数位（即只写不读）。</font>
+
+>注意，虽然Kotlin提供了`@UnsafeVariance`注解来突破上述原则，但是绝不能滥用。
+
+Kotlin使用`out`关键字修饰泛型，亦即采用`<out T>`的方式来声明一个协变的泛型；逆变则使用`in`关键字修饰泛型，声明时采用`<in T>`的方式。而在Java中，声明一个泛型是协变的，需要使用通配符`<? extends T>`，逆变的泛型则使用通配符`<? super T>`（这里还引申出PECS原则，即返回T的Producer使用extends，写入T的Consumer使用super）。
+
+**总而言之，协变的目的是为了确保泛型类型向下转型安全，而逆变则是为了确保泛型类型向上转型安全。**
+
 ## 委托
 
-### 原理
+委托（Delegate）是一种设计模式，其基本思想为：**将操作对象的逻辑处理工作交由另一个辅助对象去实现**。Java中对于委托并没有语言层面的支持，但是可以通过反射来间接实现。C#和Kotlin等语言就对委托提供了原生的支持。Kotlin的委托主要可以分为类委托和属性委托两大类，并通过`by`关键字来实现委托。
+
+### 类委托
+
+类委托的核心思想是：<font color=red>将一个类的具体实现交由另一个类去完成</font>，即一个类中定义的方法实际是调用另一个类的对象的方法来实现的。示例如下：
+
+```
+//接口：
+interface Demo {
+    fun foo()
+}
+
+//被委托类：
+class DemoImp(): Demo {
+    override fun foo() {
+        //TODO
+    } 
+}
+
+//委托类：
+class Delegate(demo: Demo): Demo by demo {
+    //TODO
+}
+
+//调用：
+Delegate(DemoImp()).foo()
+```
+
+当接口只有较少的方法需要实现时，事实上并不需要委托模式，直接通过已经实现好的被委托类实例化对象去调用相关的方法即可。委托模式的适用场景为：接口定义了大量方法，但其中的大部分都由被委托类实现，少部分在委托类中另外实现，并且还可能再声明一些接口以外的独有方法以供调用。
+
+### 属性委托
+
+属性委托的含义是：<font color=red>将一个属性（字段）的具体实现交由另一个类去实现</font>，即一个类的某个属性值不是在类中直接进行定义，而是将其托付给一个代理类，从而实现对该类的属性统一管理。示例如下：
+
+```
+//声明属性：
+class Demo {
+    var p by Delegate()
+}
+
+//管理属性：
+class Delegate {
+    var propValue: Any? = null
+
+    operator fun getValue(demo: Demo, prop: KProperty<*>): Any? {
+        return propValue
+    }
+
+    operator fun setValue(demo: Demo, prop: KProperty<*>, value: Any?) {
+        propValue = value
+    }
+}
+```
+
+属性委托的意义在于：将属性的声明与读写控制相分离，这样就不必在声明属性的类中为它们一一编写具有相同业务逻辑的`get()`和`set()`方法（试想一下在一个声明了大量属性的类里面，要成对地编写`get()`和`set()`方法是何等恐怖）。
 
 ### lazy函数
+
+`lazy`函数的通用名称是“懒加载函数”，使用`lazy`函数的目的是直到第一次访问该属性的时候，才根据需要创建对象的一部分，以减少资源的消耗，确切地说就是某些逻辑只会在第一次访问的时候执行。其基本使用方式为：
+
+```
+val/var v: Type by lazy {
+    //TODO
+}
+```
+
+尽管在了解委托的基本原理后可以自定义一个`lazy`函数，但是Kotlin内置的`lazy`函数在实现上更为严谨，因而在实际开发中更推荐使用。
