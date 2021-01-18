@@ -40,11 +40,10 @@
     * [单元测试](Android/unit.md)
     * [性能优化](Android/perf.md)
     * [代码混淆、应用加密与反编译](Android/proguard.md)
-  * <font color=blue>库开发</font>
-    * [Module](Android/mod.md)
-    * [NDK](Android/ndk.md)
   * <font color=blue>其他</font>
     * [RxJava](Android/.md)
+    * [Module开发](Android/mod.md)
+    * [NDK开发](Android/ndk.md)
 * <font color=red>**Kotlin进阶**</font>
     * [函数式编程](Kotlin/func.md)
     * [延迟初始化、扩展函数与密封类](Kotlin/late.md)

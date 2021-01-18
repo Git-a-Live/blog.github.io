@@ -9,12 +9,19 @@ Kotlin通过`import kotlinx.android.synthetic.*`的方式简化了控件的引�
 
 Google推出ViewBinding的初衷也在于消除这样的隐患。
 
-如果要在项目中使用ViewBinding，需要在build.gradle(:app)文件中添加下面语句以启用该功能：
+如果要在项目中使用ViewBinding，需要在build.gradle(:app)文件中添加以下三种形式的语句启用该功能：
 
 ```
 android {
     ···
-    viewBinding.enabled = true
+    viewBinding.enabled = true //Android Studio 5.0中弃用
+
+    android.buildFeatures.viewBinding = true //允许
+
+    buildFeatures { //允许
+        viewBinding true
+    }
+
     defaultConfig {
         ···
     }
