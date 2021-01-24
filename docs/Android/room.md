@@ -177,18 +177,20 @@ Repository类用于访问多个数据源。Repository并不是架构组件库的
 
 ```
 class DemoRepository(context: Context) {
-    private val demoDao = DemoDataBaseImpl().getDatabase(context.applicationContext).getDemoDao()
-    //注意，这里要将DemoDataBase进行实例化，但是抽象类需要先被继承才能这么做
-    private val allDemosLive = demoDao.getDemosAll()
+    private val demoDao = DemoDataBase.getImpl(context).getDemoDao()
 
-    fun getAllDemos(): LiveData<List<Param>> {
-        return allDemosLive
+    //使用协程的写法（此处仅为示意）
+    fun foo1(): LiveData<List<Param>> {
+        var tmp: LiveData<List<Param>>
+        Globalscope.launch {
+            tmp =  demoDao.foo1()
+        }
+        return tmp
     }
 
-    fun demoFun(vararg params: Params?){
-        ···
+    //使用AsyncTask的写法
+    fun foo2(vararg params: Params?){
         DemoAsyncTask(vararg params: Params?).execute(param: Param?)
-        ···
     }
 
     class DemoAsyncTask(param: Param?): AsyncTask<Params, Progress, Results>(){
@@ -197,11 +199,10 @@ class DemoRepository(context: Context) {
         }
         ···
     }
-    ···
 }
 ```
 
-Repository通常还会跟ViewModel配合使用，即Repository提供异步执行方法的接口，ViewModel编写调用接口的方法，主线程调用ViewModel提供的方法来执行异步任务。
+Repository通常还会跟ViewModel配合使用，即Repository提供异步执行方法的接口，ViewModel编写调用这些异步接口的方法，主线程调用ViewModel提供的方法来执行异步任务。
 
 ## RecyclerView和RecyclerView Adapter
 
