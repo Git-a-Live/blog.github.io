@@ -78,18 +78,21 @@ Database的创建方法如下：
 
 ```
 @Database(entities = [DemoEntity_1::class, DemoEntity_2::class, ···], version = xxx, exportSchema = ···)
-abstract class DemoDataBase: RoomDatabase() {
-    @Synchronized
-    fun getDatabase(context: Context): DemoDataBase {
-        return Room.databaseBuilder(
-            context.applicationContext,
-            DemoDataBase::class.java,
-            "custom_database_name"
-        ).build()
+abstract class DemoDatabase: RoomDatabase() {
+    companion object {
+        @Volatile
+        private var instance: DemoDatabase? = null
+
+        fun getImpl(context: Context): ScoreQueryDatabase = instance ?: synchronized(this) {
+            Room.databaseBuilder(context, DemoDatabase::class.java,"database_name")
+                    .build()
+                    .also { instance = it }
+                    //如果想强制在主线程中访问数据库，必须在.build()前加上.allowMainThreadQueries()
+        }
     }
 
-    abstract fun getEntity_1_Dao(): Entity_1_Dao
-    abstract fun getEntity_2_Dao(): Entity_2_Dao
+    abstract fun getDemoDao1(): DemoDao1
+    abstract fun getDemoDao2(): DemoDao2
     ···
     //有多少个Entity，就要定义多少个返回Dao类型的抽象方法
 }
@@ -100,9 +103,7 @@ abstract class DemoDataBase: RoomDatabase() {
 访问数据库的核心代码为：
 
 ```
-val demoDataBase = Room.databaseBuilder(context,DemoDataBase::class.java,"custom_database_name").build()
-//如果想强制在主线程中访问数据库，必须在.build()前加上.allowMainThreadQueries()
-val demoDao = demoDataBase.getDemoDao() //通过这个对象调用访问数据库的方法
+val demoDao = DemoDatabase.getImpl(context).getDemoDao() //通过这个对象调用访问数据库的方法
 ```
 
 ## AsyncTask和Repository
@@ -113,7 +114,7 @@ val demoDao = demoDataBase.getDemoDao() //通过这个对象调用访问数据�
 
  为了解决上述问题，就必须引入多线程。Java一般使用Thread和Runnable创建多线程任务，而Android一般使用Handler和AsyncTask，前者相对麻烦，而后者相对更容易上手。 
  
- 当然，在实际开发中会使用第三方框架来代替AsyncTask。 此外，由于Kotlin协程的出现和应用， AsyncTask类已经在Android R中被废弃。 尽管如此，AsyncTask依然可以在Android R以下版本的设备上运行，考虑到这些设备目前还是占据大多数，因此有必要了解AsyncTask的使用方法。
+ 当然，在实际开发中会使用第三方框架来代替AsyncTask。 此外，由于[Kotlin协程](Kotlin/coroutine.md)的出现和应用， AsyncTask类已经在Android R中被废弃。 尽管如此，AsyncTask依然可以在Android R以下版本的设备上运行，考虑到这些设备目前还是占据大多数，因此有必要了解AsyncTask的使用方法。
 
  AsyncTask是一个抽象类，因此需要定义一个子类继承AsyncTask并重写相关方法：
 
