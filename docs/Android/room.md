@@ -17,16 +17,10 @@ Dao：@Dao用来注解一个接口或者抽象方法，该类的作用是提供�
 在项目的应用级build.gradle文件中添加依赖如下：
 
 ```
-plugins {
-    ···
-    id "org.jetbrains.kotlin.kapt" version "$latest_version"
-    //或者用kotlin("kapt") version "$latest_version"
-}
-···
 dependencies {
     ···
     implementation "androidx.room:room-runtime:$room_version"
-    kapt "androidx.room:room-compiler:$room_version"
+    annotationProcessor "androidx.room:room-compiler:$room_version"
 
     // optional - Kotlin Extensions and Coroutines support for Room
     implementation "androidx.room:room-ktx:$room_version"
@@ -43,7 +37,7 @@ Dao的全称为Data access object（数据访问对象），专门提供访问�
 ```
 @Dao //该注解使得对象成为一个Dao接口
 interface DemoDao {
-    @Insert　//这类注解表示这是由官方定义好的SQL命令
+    @Insert　//这类注解表示这是由官方定义好的SQL命令，开发者只需要传入参数即可
     fun insertXxx(···)
 
     @Update
@@ -52,7 +46,7 @@ interface DemoDao {
     @Delete
     fun deleteXxx(···)
 
-    @Query("···")  //在@Query()中写入指定的SQL语句
+    @Query("···")  //在@Query()中写入指定的SQL语句，例如"SELECT * FROM DemoEntity"
     fun foo(···)
     ···
 }
@@ -66,29 +60,17 @@ Entity对应的是数据库中的表。Entity类的创建方式如下：
 
 ```
 @Entity //该注解使得对象成为一个Entity类
-class DemoEntity {
-    @PrimaryKey(autoGenerate = true或false) //创建自增或非自增主键
-    var primaryKey
-
-    @ColumnInfo(name = "···") //创建列并标注列名
-    var column_1
-
-    @ColumnInfo(name = "···")
-    var column_2
+data class DemoEntity(
+    @PrimaryKey(autoGenerate = true/false) var primaryKey: Type1, //创建自增或非自增主键
+    @ColumnInfo(name = "col1") var col1: Type2,  //创建列并标注列名
+    @ColumnInfo(name = "col2") var col2: Type3,
     ···
-
-    fun getXxx(): ···{ //创建get方法
-        //TODO
-    }
-
-    fun setXxx(···){ //创建set方法
-       //TODO
-    }
-    ···
+) {
+    
 }
 ```
 
-从上面的代码中可以看到，Entity类的创建过程和数据库创建表的过程很相似。 Entity类中必须对每个列（包括主键）都创建get方法和set方法，否则无法对表中的记录进行操作。
+从上面的代码中可以看到，Entity类的创建过程和数据库创建表的过程很相似。 Entity类中必须对每个列（包括主键）都创建get/set方法，否则无法对表中的记录进行操作（Kotlin使用data class会自动实现这些get/set方法）。
 
 ### Database
 
@@ -171,7 +153,6 @@ AsyncTask有三个泛型参数：
 
 + **Progress**
 
-
 显示任务进度，通常会选择Int或者Double。
 
 + **Result**
@@ -195,7 +176,8 @@ Repository类用于访问多个数据源。Repository并不是架构组件库的
 
 ```
 class DemoRepository(context: Context) {
-    private val demoDao = DemoDataBase_Impl().getDatabase(context.applicationContext).getDemoDao()
+    private val demoDao = DemoDataBaseImpl().getDatabase(context.applicationContext).getDemoDao()
+    //注意，这里要将DemoDataBase进行实例化，但是抽象类需要先被继承才能这么做
     private val allDemosLive = demoDao.getDemosAll()
 
     fun getAllDemos(): LiveData<List<Param>> {
@@ -332,7 +314,7 @@ demoViewModel.getData().observe(this, Observer {
 
 方法一：卸载原来的应用，安装新的应用。采用这种方法的话，新应用中只修改Entity表的结构，其他文件设置不做任何改动；
 
-方法二：在修改了Entity表结构之后，需要进入Database类文件，修改当前版本号，然后在调用Room.databaseBuilder(···).build()的时候， 在.build()前加上.fallbackToDestructiveMigration()，执行之后数据库就只会将Entity表的结构应用到数据库原表，先前所有数据都被清空。
+方法二：在修改了Entity表结构之后，需要进入Database类文件，修改当前版本号，然后在调用`Room.databaseBuilder().build()`的时候， 在`.build()`前加上`.fallbackToDestructiveMigration()`，执行之后数据库就只会将Entity表的结构应用到数据库原表，先前所有数据都被清空。
 
 在实际开发中，上述两种方法基本不可能考虑，因为用户更新应用的时候通常不会采用卸载旧版本的方式，而是直接覆盖安装新版本，同时， 一个每次更新都会清空所有数据的应用是不会被用户容忍的。所以必须采用下面这种看起来很繁琐的方法，才能在保留数据的前提下完成数据库版本迁移。
 
