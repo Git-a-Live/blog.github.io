@@ -120,7 +120,7 @@ abstract class DemoDataBase: RoomDatabase() {
 ```
 val demoDataBase = Room.databaseBuilder(context,DemoDataBase::class.java,"custom_database_name").build()
 //如果想强制在主线程中访问数据库，必须在.build()前加上.allowMainThreadQueries()
-val demoDao = DemoDataBase.getDemoDao() //通过这个对象调用访问数据库的方法
+val demoDao = demoDataBase.getDemoDao() //通过这个对象调用访问数据库的方法
 ```
 
 ## AsyncTask和Repository
@@ -233,48 +233,52 @@ Android Studio提供了一些可以实现页面滚动的组件，最主要的是
 1. 封装了ViewHolder的回收复用，写起来更加简单；
 2. 高度解耦，使用灵活，扩展性强，可简便控制Item的显示方式和样式。
 
-RecyclerView主要由LayoutManager（管理Item的布局）、Adapter（为Item提供数据）、 Item Decoration（提供Item之间的分割线）、 Item Animator（添加、删除Item动画）四个部分组成。其中，Layout Manager和Adapter是必须使用的组件，其他两个可以视情况选用。
+RecyclerView主要由LayoutManager（管理Item的布局）、Adapter（为Item提供数据）、 Item Decoration（提供Item之间的分割线）、 Item Animator（添加、删除Item动画）四个部分组成。其中，LayoutManager和Adapter是必须使用的组件，其他两个可以视情况选用。
 
 LayoutManager提供了三种布局管理，分别是LinerLayoutManager（以垂直或者水平列表方式展示Item）、GridLayoutManager（以网格方式展示Item）， 以及StaggeredGridLayoutManager（以瀑布流方式展示Item）。 LayoutManager提供了如下常见API：
 
->canScrollHorizontally() //能否横向滚动
+```
+canScrollHorizontally()：设置能否横向滚动
 
->canScrollVertically() //能否纵向滚动
+canScrollVertically()：设置能否纵向滚动
 
->scrollToPosition(int position) //滚动到指定位置
+scrollToPosition(int position)：设置滚动到指定位置
 
->setOrientation(int orientation) //设置滚动的方向
+setOrientation(int orientation)：设置滚动的方向
 
->getOrientation() //获取滚动方向
+getOrientation()：获取滚动方向
 
->findViewByPosition(int position) //获取指定位置的Item View
+findViewByPosition(int position)：获取指定位置的Item View
 
->findFirstCompletelyVisibleItemPosition() //获取第一个完全可见的Item位置
+findFirstCompletelyVisibleItemPosition()：获取第一个完全可见的Item位置
 
->findFirstVisibleItemPosition() //获取第一个可见Item的位置
+findFirstVisibleItemPosition()：获取第一个可见Item的位置
 
->findLastCompletelyVisibleItemPosition() //获取最后一个完全可见的Item位置
+findLastCompletelyVisibleItemPosition()：获取最后一个完全可见的Item位置
 
->findLastVisibleItemPosition() //获取最后一个可见Item的位置
+findLastVisibleItemPosition()：获取最后一个可见Item的位置
+```
 
 LinerLayoutManager的常用方法：
 
->onLayoutChildren() //对RecyclerView进行布局的入口方法
+```
+onLayoutChildren()：对RecyclerView进行布局的入口方法
 
->fill() //负责填充RecyclerView。
+fill()：负责填充RecyclerView。
 
->scrollVerticallyBy() //根据手指的移动滑动一定距离，并调用fill()填充
+scrollVerticallyBy()：根据手指的移动滑动一定距离，并调用fill()填充
 
->canScrollVertically()或canScrollHorizontally() //判断是否支持纵向滑动或横向滑动
+canScrollVertically()/canScrollHorizontally()：判断是否支持纵向滑动或横向滑动
+```
 
-GridLayoutManager继承于LinerLayoutManager，在使用上差别不大;StaggeredGridLayoutManager的使用在网上也有很多资料可查，在此略过。
+GridLayoutManager继承于LinerLayoutManager，在使用上差别不大；StaggeredGridLayoutManager的使用在网上也有很多资料可查，在此略过。
 
 ### RecyclerView Adapter
 
 Adapter一般通过如下方式进行创建：
 
 ```
-class DemoAdapter: RecyclerView.Adapter<DemoAdapter.ViewHolder>() {
+class DemoAdapter(data: List<T>): RecyclerView.Adapter<DemoAdapter.ViewHolder>() {
     private var data: List<T> = listOf()
     fun setData(data: List<T>){
         this.data = data;
@@ -282,19 +286,29 @@ class DemoAdapter: RecyclerView.Adapter<DemoAdapter.ViewHolder>() {
     ···
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         //TODO：容纳View视图，绑定布局控件，避免在其他地方使用不必要的findViewById()
+        val ctrl_1: Type = itemView.findViewById(R.id.ctrl_name1)
+        val ctrl_2: Type = itemView.findViewById(R.id.ctrl_name2)
+        val ctrl_3: Type = itemView.findViewById(R.id.ctrl_name3)
+        ···
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        //TODO：创建视图。一旦有了够用的ViewHolder，RecyclerView就会停止调用onCreateViewHolder()方法，
-            随后回收利用旧的ViewHolder以节约时间和内存
+        //TODO：创建item视图。一旦有了够用的ViewHolder，RecyclerView就会停止调用onCreateViewHolder()方法，
+            随后回收利用旧的ViewHolder以节约时间和内存。注意下面的R.layout.xxx是指item的布局文件，而不是RecyclerView的
+        return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.xxx, parent, false))
     }
 
     override fun getItemCount(): Int {
         //TODO：查询有多少个待展示的视图
+        return someNumber
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        //TODO：找到目标位置的数据并将其显示到ViewHolder的视图上
+        //TODO：将数据集的数据分别显示到目标位置ViewHolder的特定控件上，通常是文本和图片
+        holder.ctrl1.someProp = data[position].prop1
+        holder.ctrl2.someProp = data[position].prop2
+        holder.ctrl3.someProp = data[position].prop3
+        ···
     }
 }
 ```
@@ -302,14 +316,13 @@ class DemoAdapter: RecyclerView.Adapter<DemoAdapter.ViewHolder>() {
 
 ```
 val demoAdapter = DemoAdapter()
-recyclerView.layoutManager = LinearLayoutManager(···) //其他LayoutManager类似
+recyclerView.layoutManager = LinearLayoutManager(context) //其他LayoutManager类似，
 recyclerView.adapter = demoAdapter
 
 val demoViewModel = DemoViewModel(application)
 demoViewModel.getData().observe(this, Observer {
-      demoAdapter.setData(it)
-      demoAdapter.notifyDataSetChanged()
-      //刷新视图上的所有数据内容
+      demoAdapter.setData(it) //注意是将ViewModel的数据赋值给Adapter中的数据集
+      demoAdapter.notifyDataSetChanged() //刷新视图上的所有数据内容
 })
 ```
 
