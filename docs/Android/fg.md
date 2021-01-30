@@ -86,16 +86,17 @@ Navigation.findNavController(it).navigate(R.id.action_aFragment_to_bFragment)
 4. 通过`replace()`方法传入Fragment容器id和待添加的Fragment实例；
 5. 调用`commit()`方法提交事务，完成Fragment的替换。
 
-步骤2到步骤5的代码示例如下：
+上述步骤的代码示例如下：
 
 ```
+val someFragment = SomeFragment()
 val fragmentManager = supportFragmentManager
 val transaction = fragmentManager.beginTransaction()
 transaction.replace(R.id.xxxLayout, someFragment)
 transaction.commit()
 ```
 
-
+>注意：动态添加Fragment需要在布局文件中添加使用一个FrameLayout，所有的动态添加都会在这个FrameLayout中进行。
 
 #### Fragment的返回栈
 

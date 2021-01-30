@@ -114,7 +114,7 @@ val demoDao = DemoDatabase.getImpl(context).getDemoDao() //通过这个对象调
 
  为了解决上述问题，就必须引入多线程。Java一般使用Thread和Runnable创建多线程任务，而Android一般使用Handler和AsyncTask，前者相对麻烦，而后者相对更容易上手。 
  
- 当然，在实际开发中会使用第三方框架来代替AsyncTask。 此外，由于[Kotlin协程](Kotlin/coroutine.md)的出现和应用， AsyncTask类已经在Android R中被废弃。 尽管如此，AsyncTask依然可以在Android R以下版本的设备上运行，考虑到这些设备目前还是占据大多数，因此有必要了解AsyncTask的使用方法。
+ 当然，在实际开发中会使用第三方框架来代替AsyncTask。 此外，由于[Kotlin协程](Kotlin/coroutine.md)的出现和应用， AsyncTask类已经被Google官方明确会在Android R中废弃。 尽管如此，AsyncTask依然可以在Android R以下版本的设备上运行，考虑到这些设备目前还是占据大多数，因此有必要了解AsyncTask的使用方法。
 
  AsyncTask是一个抽象类，因此需要定义一个子类继承AsyncTask并重写相关方法：
 
@@ -353,7 +353,7 @@ SQLite添加列的方式很简单，但是删除列很麻烦，要按照以下�
 
 4. 依靠ALTER TABLE将新表改名，其名字和原表一致。
 
-如果将设备上原来安装的应用卸载掉，再直接安装包含迁移策略的新版本应用，是否会因为设备上没有相应旧版本的数据库而发生错误呢？ 答案是不会。
+如果将设备上原来安装的应用卸载掉，再直接安装包含迁移策略的新版本应用，是否会因为设备上没有相应旧版本的数据库而发生错误呢？答案是在实际应用中并不会发生这种情况。
 
 ## 数据库的分页显示
 

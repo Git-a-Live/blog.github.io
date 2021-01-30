@@ -5,11 +5,11 @@
 ```
 显然，布局上有多少个控件，类似的代码就要写多少行，这是非常麻烦的。而且在定义了变量之后不马上调用findViewById()进行赋值的话， 很容易出现漏写导致空引用异常，引发应用崩溃。
 
-Kotlin通过`import kotlinx.android.synthetic.*`的方式简化了控件的引用， 使得开发者可以在任意一个Activity或Fragment里面直接通过控件id，来引用项目中存在的控件——即便那个控件并不属于引用它的Activity/Fragment。 这就带来一个隐患：如果开发者不小心引用了不属于本Activity/Fragment的控件，在编译时并不会报错，而应用一旦开始运行，就会由于空引用导致应用崩溃。
+Kotlin在早期通过`import kotlinx.android.synthetic.*`的方式简化了控件的引用， 使得开发者可以在任意一个Activity或Fragment里面直接通过控件id，来引用项目中存在的控件——即便那个控件并不属于引用它的Activity/Fragment。 这就带来一个隐患：如果开发者不小心引用了不属于本Activity/Fragment的控件，在编译时并不会报错，而应用一旦开始运行，就会由于空引用导致应用崩溃。
 
-Google推出ViewBinding的初衷也在于消除这样的隐患。
+Google推出ViewBinding的初衷也在于消除这样的隐患，而现在ViewBinding也确实成为替代ButterKnife的重要开发技术。
 
-如果要在项目中使用ViewBinding，需要在build.gradle(:app)文件中添加以下三种形式的语句启用该功能：
+如果要在项目中使用ViewBinding，需要使用3.6+版本的Gradle工具，并在build.gradle(:app)文件中添加以下三种形式的语句启用该功能：
 
 ```
 android {
