@@ -17,7 +17,7 @@ XML中没有预定义的标签，这也就意味着创作者可以定义自己�
 首先在Android项目中通过以下语句导入dom4j：
 
 ```
-implementation 'org.dom4j:dom4j:$latest_version'
+implementation "org.dom4j:dom4j:$latest_version"
 ```
 
 然后按照下面几个步骤构建XML的内部结构：

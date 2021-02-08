@@ -5,7 +5,7 @@
 在使用OkHttp之前，需要在Gradle文件中添加如下依赖：
 
 ```
-implementation 'com.squareup.okhttp3:okhttp:${lateset_version}'
+implementation "com.squareup.okhttp3:okhttp:$lateset_version"
 ```
 添加上述依赖后，Android Studio会导入OkHttp和Okio这两个库。
 由于网络操作非常耗时，因此必须开启协程或多线程。此外，网络功能的代码大同小异，没有必要在每个用到网络功能的地方都写一遍， 所以应该把这部分代码封装起来。通常最简易的做法如下：

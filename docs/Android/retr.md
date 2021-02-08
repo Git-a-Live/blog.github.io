@@ -2,10 +2,10 @@
 
 ```
 //必选，添加Retrofit、OkHttp以及Okio
-implementation 'com.squareup.retrofit2:retrofit:$latest_version'
+implementation "com.squareup.retrofit2:retrofit:$latest_version"
 
 //可选，根据所要解析的数据格式选用对应的转换解析库，解析JSON就选用转换解析JSON的库
-implementation 'com.squareup.retrofit2:converter-gson:$latest_version'
+implementation "com.squareup.retrofit2:converter-gson:$latest_version"
 ```
 
 ## 接口定义

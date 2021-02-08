@@ -21,7 +21,7 @@ JSON适合表示层次结构，因为它格式简单，仅支持以下几种数�
 
 ```
 //Gradle：
-implementation 'com.google.code.gson:gson:${latest_version}'
+implementation "com.google.code.gson:gson:$latest_version"
 
 //Maven：
 <dependency>

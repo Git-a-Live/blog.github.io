@@ -2,7 +2,7 @@ SQLite是一个软件库，实现了自给自足的、无服务器的、零配�
 
 SQLite命令与标准SQL相似，因此在掌握标准SQL命令的情况下，上手SQLite命令并不会十分困难。 使用了数据库的应用，可以实现本地数据持久化，跟之前使用SharedPreferences相比，其操作更复杂，但功能也更为完善和强大。
 
-Room是Google提供的一个ORM库，提供了三个主要的组件：
+Room是Google提供的一个ORM库，提供了三大核心组件：
 
 Database：@Database用来注解类，并且注解的类必须是继承自RoomDatabase的抽象类。 该类主要作用是创建数据库和创建Daos（data access objects，数据访问对象）。
 
@@ -17,10 +17,13 @@ Dao：@Dao用来注解一个接口或者抽象方法，该类的作用是提供�
 在项目的应用级build.gradle文件中添加依赖如下：
 
 ```
+plugin {
+    id 'kotlin-kapt' //kapt是必要依赖
+}
+
 dependencies {
-    ···
     implementation "androidx.room:room-runtime:$room_version"
-    annotationProcessor "androidx.room:room-compiler:$room_version"
+    kapt "androidx.room:room-compiler:$room_version"
 
     // optional - Kotlin Extensions and Coroutines support for Room
     implementation "androidx.room:room-ktx:$room_version"
@@ -32,13 +35,13 @@ dependencies {
 
 ### Dao
 
-Dao的全称为Data access object（数据访问对象），专门提供访问数据库的方法。Dao的创建方法如下：
+Dao的全称为Data access object（数据访问对象），专门提供访问数据库的方法，而数据库的数据最终是要通过Dao来进行CRUD操作。Dao的创建方法如下：
 
 ```
 @Dao //该注解使得对象成为一个Dao接口
 interface DemoDao {
     @Insert　//这类注解表示这是由官方定义好的SQL命令，开发者只需要传入参数即可
-    fun insertXxx(···)
+    suspend fun insertXxx(···) //使用协程的写法
 
     @Update
     fun updateXxx(···)
@@ -52,7 +55,9 @@ interface DemoDao {
 }
 ```
 
-在Dao中创建的函数都不需要写出函数体和执行语句，因为是依靠注解去执行具体的SQL命令，函数只是负责传入或返回参数而已。
+在Dao中创建的函数都不需要写出函数体，函数只是负责传入参数或返回查询到的记录，具体实现交由Room的底层。因为是依靠注解去执行具体的SQL命令，这也就意味着开发者不光要熟悉Android的开发工具和开发语言，还需要掌握一定的SQL指令。
+
+>注意，接口可以替换成抽象类，同理接口方法就被替换成抽象方法。如果多个Dao具有高度相似的函数，那么就可以将其抽象出来作为一个基础接口，其他Dao定义为抽象类继承该接口。
 
 ### Entity
 
@@ -61,23 +66,25 @@ Entity对应的是数据库中的表。Entity类的创建方式如下：
 ```
 @Entity //该注解使得对象成为一个Entity类
 data class DemoEntity(
-    @PrimaryKey(autoGenerate = true/false) var primaryKey: Type1, //创建自增或非自增主键
+    @PrimaryKey(autoGenerate = true) var primaryKey: Type1, //创建自增主键，直接赋值为0即可
     @ColumnInfo(name = "col1") var col1: Type2,  //创建列并标注列名
-    @ColumnInfo(name = "col2") var col2: Type3,
+    var col2: Type3, //如果不使用@ColumnInfo则以变/常量名称作为列名
     ···
 ) {
-    
+    //TODO
 }
 ```
 
 从上面的代码中可以看到，Entity类的创建过程和数据库创建表的过程很相似。 Entity类中必须对每个列（包括主键）都创建get/set方法，否则无法对表中的记录进行操作（Kotlin使用data class会自动实现这些get/set方法）。
+
+>注意，如果将列设置为可空的（例如Int?、String?等）会在编译过程中报错。
 
 ### Database
 
 Database的创建方法如下：
 
 ```
-@Database(entities = [DemoEntity_1::class, DemoEntity_2::class, ···], version = xxx, exportSchema = ···)
+@Database(entities = [DemoEntity_1::class, DemoEntity_2::class, ···], version = xxx, exportSchema = ···) 
 abstract class DemoDatabase: RoomDatabase() {
     companion object {
         @Volatile
@@ -91,20 +98,14 @@ abstract class DemoDatabase: RoomDatabase() {
         }
     }
 
-    abstract fun getDemoDao1(): DemoDao1
+    abstract suspend fun getDemoDao1(): DemoDao1 //使用协程的写法
     abstract fun getDemoDao2(): DemoDao2
     ···
-    //有多少个Entity，就要定义多少个返回Dao类型的抽象方法
+    //有多少个Entity，就要定义多少个Dao以及返回Dao的抽象方法，同时@Database的entities里也要注明有对应的Entity
 }
 ```
 
-### 访问数据库
-
-访问数据库的核心代码为：
-
-```
-val demoDao = DemoDatabase.getImpl(context).getDemoDao() //通过这个对象调用访问数据库的方法
-```
+在实际开发过程中，Entity和Dao可以集中到一起组成一个Module，供上层其他模块调用，而每个模块分别定义自己的Database，根据需要接入指定的Dao。最后可以在本模块中，或者更上层的模块中定义下面要讲到的Repository，以集中编写数据库操作方法，对外（特别是ViewModel）提供简洁的接口。
 
 ## AsyncTask和Repository
 
@@ -179,14 +180,8 @@ Repository类用于访问多个数据源。Repository并不是架构组件库的
 class DemoRepository(context: Context) {
     private val demoDao = DemoDataBase.getImpl(context).getDemoDao()
 
-    //使用协程的写法（此处仅为示意）
-    fun foo1(): LiveData<List<Param>> {
-        var tmp: LiveData<List<Param>>
-        Globalscope.launch {
-            tmp =  demoDao.foo1()
-        }
-        return tmp
-    }
+    //使用协程的写法（此处仅为编写挂起函数）
+    suspend fun foo1() = demoDao.foo1()
 
     //使用AsyncTask的写法
     fun foo2(vararg params: Params?){
@@ -305,7 +300,7 @@ recyclerView.adapter = demoAdapter
 
 val demoViewModel = DemoViewModel(application)
 demoViewModel.getData().observe(this, Observer {
-      demoAdapter.setData(it) //注意是将ViewModel的数据赋值给Adapter中的数据集
+      demoAdapter.data = it //注意是将ViewModel的数据赋值给Adapter中的数据集
       demoAdapter.notifyDataSetChanged() //刷新视图上的所有数据内容
 })
 ```
