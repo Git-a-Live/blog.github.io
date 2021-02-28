@@ -13,8 +13,7 @@
     * [DataBinding](Android/db.md)
     * [AndroidViewModel](Android/avm.md)
     * [ViewBinding](Android/vb.md)
-  * <font color=blue>数据存储</font>
-    * [SQLite](Android/sql.md)
+  * <font color=blue>本地数据存储</font>
     * [Shared Preferences](Android/sp.md)
     * [Room](Android/room.md)
   * <font color=blue>序列化</font>
@@ -41,22 +40,23 @@
     * [性能优化](Android/perf.md)
     * [代码混淆、应用加密与反编译](Android/proguard.md)
   * <font color=blue>其他</font>
-    * [RxJava](Android/.md)
     * [Module开发](Android/mod.md)
-    * [NDK开发](Android/ndk.md)
+    * [RxJava](Android/.md)
+  * <font color=blue>Android开发进阶</font>
+    * [插件化]()
+    * [热更新]()
+    * [NDK](Android/ndk.md)
 * <font color=red>**Kotlin进阶**</font>
     * [函数式编程](Kotlin/func.md)
     * [延迟初始化、扩展函数与密封类](Kotlin/late.md)
     * [泛型与委托](Kotlin/gen.md)
-    * [协程](Kotlin/coroutine.md)
+    * [Kotlin协程](Kotlin/coroutine.md)
 * <font color=red>**Gradle入门**</font>
   * <font color=blue>Groovy语言</font>
     * [基础语法](Gradle/Groovy语言入门_基本语法.md)
     * [进阶语法](Gradle/Groovy语言入门_进阶语法.md) 
   * <font color=blue>Gradle脚本</font>
     * [基础部分](Gradle/Gradle脚本编写_入门部分.md)
-* <font color=red>**Dart入门**</font>
-* <font color=red>**Flutter入门**</font>
 * <font color=red>**Maven入门**</font>
   * [Maven的使用](Maven/maven.md)
 * <font color=red>**Linux指令**</font>
@@ -74,6 +74,14 @@
   * [CASE表达式](MySQL/case.md)
   * [集合运算](MySQL/set.md)
   * [窗口函数](MySQL/window.md)
+* <font color=red>**设计模式**</font>
+  * [设计模式概述](DesignPattern/概述.md)
+  * [创建型设计模式](DesignPattern/创建型设计模式.md)
+  * [结构型设计模式](DesignPattern/结构型设计模式.md)
+  * [行为型设计模式](DesignPattern/行为型设计模式.md)
+* <font color=red>**Java进阶**</font>
+* <font color=red>**Dart入门**</font>
+* <font color=red>**Flutter入门**</font>
 * <font color=red>**数据结构**</font>
   * [数据结构概述](/DataStructure/1.数据结构概述.md)
   * [线性表](DataStructure/2.线性表.md)
@@ -92,11 +100,6 @@
     * [Dijkstra算法](Algorithm/dij.md)
     * [贪婪算法](Algorithm/greedy.md)
     * [K最近邻算法](Algorithm/knn.md)
-* <font color=red>**设计模式**</font>
-  * [设计模式概述](DesignPattern/概述.md)
-  * [创建型设计模式](DesignPattern/创建型设计模式.md)
-  * [结构型设计模式](DesignPattern/结构型设计模式.md)
-  * [行为型设计模式](DesignPattern/行为型设计模式.md)
 * <font color=red>**计算机网络**</font>
   * [概述](ComputerNetwork/Chapter_1_概述.md)
   * [物理层](ComputerNetwork/Chapter_2_物理层.md) 
@@ -106,16 +109,17 @@
   * [应用层](ComputerNetwork/Chapter_6_应用层.md)
   * [网络安全](ComputerNetwork/Chapter_7_网络安全.md)
   * [无线网络](ComputerNetwork/Chapter_8_无线网络.md)
-* <font color=red>**Swift入门**</font>
-  * [基本知识](Swift/Swift语言入门_基本知识.md)
-  * [基础语法](Swift/Swift语言入门_基础语法.md)
-  * [数据类型（1）](Swift/Swift语言入门_数据类型_1.md)
-  * [数据类型（2）](Swift/Swift语言入门_数据类型_2.md)
-* <font color=red>**C++入门**</font>
-  * <font color=blue>基础部分</font>
-  * <font color=blue>进阶部分</font>
-* <font color=red>**Python入门**</font>
-  * <font color=blue>基础部分</font>
-  * <font color=blue>进阶部分</font>
 * <font color=red>**操作系统**</font>
 * <font color=red>**计算机组成原理**</font>
+* <font color=red>**数学基础**</font>
+  * [高等数学]()
+  * [线性代数]()
+  * [离散数学]()
+  * [复变函数]()
+  * [数值分析]()
+* <font color=red>**iOS开发**</font>
+  * <font color=red>**Swift入门**</font>
+    * [基本知识](Swift/Swift语言入门_基本知识.md)
+    * [基础语法](Swift/Swift语言入门_基础语法.md)
+    * [数据类型（1）](Swift/Swift语言入门_数据类型_1.md)
+    * [数据类型（2）](Swift/Swift语言入门_数据类型_2.md)

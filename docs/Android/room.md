@@ -1,20 +1,10 @@
-SQLite是一个软件库，实现了自给自足的、无服务器的、零配置的、事务性的SQL数据库引擎。由于具有轻量级的特点， 因此特别适用于Android手机等移动设备上。
+Room是Google提供的一个ORM库，它在SQLite的基础上提供了一个抽象层，让用户能够在充分利用SQLite的强大功能的同时，获享更强健的数据库访问机制。**Google官方强烈建议使用Room而非直接使用SQLite来访问数据库**，主要原因在于：
 
-SQLite命令与标准SQL相似，因此在掌握标准SQL命令的情况下，上手SQLite命令并不会十分困难。 使用了数据库的应用，可以实现本地数据持久化，跟之前使用SharedPreferences相比，其操作更复杂，但功能也更为完善和强大。
+1. SQLite没有针对原始SQL查询的编译时验证；
 
-Room是Google提供的一个ORM库，提供了三大核心组件：
+2. 开发者需要使用大量样板代码，在SQL查询和数据对象之间进行转换。
 
-Database：@Database用来注解类，并且注解的类必须是继承自RoomDatabase的抽象类。 该类主要作用是创建数据库和创建Daos（data access objects，数据访问对象）。
-
-Entity：@Entity用来注解实体类，@Database通过entities属性引用被@Entity注解的类， 并利用该类的所有字段作为表的列名来创建表。
-
-Dao：@Dao用来注解一个接口或者抽象方法，该类的作用是提供访问数据库的方法。 在使用@Database注解的类中必须定一个不带参数的方法，这个方法返回使用@Dao注解的类。
-
-## Dao、Entity以及Database
-
-### 依赖添加
-
-在项目的应用级build.gradle文件中添加依赖如下：
+要使用Room，需要在相应模块（注意不是项目本身）的build.gradle文件中添加如下依赖：
 
 ```
 plugin {
@@ -32,6 +22,20 @@ dependencies {
     testImplementation "androidx.room:room-testing:$room_version"
 }
 ```
+
+## Dao、Entity以及Database
+
+Room提供了三大核心组件：
+
+Database：@Database用来注解类，并且注解的类必须是继承自RoomDatabase的抽象类。 该类主要作用是创建数据库和创建Daos（data access objects，数据访问对象）。
+
+Entity：@Entity用来注解实体类，@Database通过entities属性引用被@Entity注解的类， 并利用该类的所有字段作为表的列名来创建表。
+
+Dao：@Dao用来注解一个接口或者抽象方法，该类的作用是提供访问数据库的方法。 在使用@Database注解的类中必须定一个不带参数的方法，这个方法返回使用@Dao注解的类。
+
+它们的关系如下图所示：
+
+![](pics/room_architecture.png)
 
 ### Dao
 
@@ -56,6 +60,8 @@ interface DemoDao {
 ```
 
 在Dao中创建的函数都不需要写出函数体，函数只是负责传入参数或返回查询到的记录，具体实现交由Room的底层。因为是依靠注解去执行具体的SQL命令，这也就意味着开发者不光要熟悉Android的开发工具和开发语言，还需要掌握一定的SQL指令。
+
+Android Studio目前支持在编写SQL指令时高亮提示，从而确保指令编写使用的是正确语法。
 
 >注意，接口可以替换成抽象类，同理接口方法就被替换成抽象方法。如果多个Dao具有高度相似的函数，那么就可以将其抽象出来作为一个基础接口，其他Dao定义为抽象类继承该接口。
 
@@ -115,7 +121,7 @@ abstract class DemoDatabase: RoomDatabase() {
 
  为了解决上述问题，就必须引入多线程。Java一般使用Thread和Runnable创建多线程任务，而Android一般使用Handler和AsyncTask，前者相对麻烦，而后者相对更容易上手。 
  
- 当然，在实际开发中会使用第三方框架来代替AsyncTask。 此外，由于[Kotlin协程](Kotlin/coroutine.md)的出现和应用， AsyncTask类已经被Google官方明确会在Android R中废弃。 尽管如此，AsyncTask依然可以在Android R以下版本的设备上运行，考虑到这些设备目前还是占据大多数，因此有必要了解AsyncTask的使用方法。
+ 当然，在实际开发中会使用第三方框架来代替AsyncTask。 此外，由于[Kotlin协程](Kotlin/coroutine.md)的出现和应用， AsyncTask类已经被Google官方明确会在Android R中废弃。 尽管如此，AsyncTask依然可以在Android R以下版本的设备上运行，考虑到这些设备目前还是占据大多数，因此有必要了解一下AsyncTask的基本使用方法。
 
  AsyncTask是一个抽象类，因此需要定义一个子类继承AsyncTask并重写相关方法：
 
@@ -257,36 +263,32 @@ GridLayoutManager继承于LinerLayoutManager，在使用上差别不大；Stagge
 Adapter一般通过如下方式进行创建：
 
 ```
-class DemoAdapter(data: List<T>): RecyclerView.Adapter<DemoAdapter.ViewHolder>() {
-    private var data: List<T> = listOf()
-    fun setData(data: List<T>){
-        this.data = data;
-    }
-    ···
+class DemoAdapter(var dataList: List<T>): RecyclerView.Adapter<DemoAdapter.ViewHolder>() {
+    
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         //TODO：容纳View视图，绑定布局控件，避免在其他地方使用不必要的findViewById()
-        val ctrl_1: Type = itemView.findViewById(R.id.ctrl_name1)
-        val ctrl_2: Type = itemView.findViewById(R.id.ctrl_name2)
-        val ctrl_3: Type = itemView.findViewById(R.id.ctrl_name3)
+        val ctrl1: Type = itemView.findViewById(R.id.ctrl_name1)
+        val ctrl2: Type = itemView.findViewById(R.id.ctrl_name2)
+        val ctrl3: Type = itemView.findViewById(R.id.ctrl_name3)
         ···
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         //TODO：创建item视图。一旦有了够用的ViewHolder，RecyclerView就会停止调用onCreateViewHolder()方法，
-            随后回收利用旧的ViewHolder以节约时间和内存。注意下面的R.layout.xxx是指item的布局文件，而不是RecyclerView的
+            随后回收利用旧的ViewHolder以节约时间和内存。注意下面的R.layout.xxx是指item的布局文件
         return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.xxx, parent, false))
     }
 
     override fun getItemCount(): Int {
         //TODO：查询有多少个待展示的视图
-        return someNumber
+        return dataList.size
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         //TODO：将数据集的数据分别显示到目标位置ViewHolder的特定控件上，通常是文本和图片
-        holder.ctrl1.someProp = data[position].prop1
-        holder.ctrl2.someProp = data[position].prop2
-        holder.ctrl3.someProp = data[position].prop3
+        holder.ctrl1.prop = dataList[position].prop1
+        holder.ctrl2.prop = dataList[position].prop2
+        holder.ctrl3.prop = dataList[position].prop3
         ···
     }
 }
@@ -295,7 +297,7 @@ class DemoAdapter(data: List<T>): RecyclerView.Adapter<DemoAdapter.ViewHolder>()
 
 ```
 val demoAdapter = DemoAdapter()
-recyclerView.layoutManager = LinearLayoutManager(context) //其他LayoutManager类似，
+recyclerView.layoutManager = LinearLayoutManager(context) //其他LayoutManager类似
 recyclerView.adapter = demoAdapter
 
 val demoViewModel = DemoViewModel(application)

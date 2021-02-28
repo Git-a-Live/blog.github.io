@@ -73,13 +73,17 @@ Activity间依靠Intent实现跳转，根据是否指明目标Activity，可以�
 显式Intent需要指定目标Activity：
 
 ```
-val intent = Intent(this, someActivity::class.java)
+val intent = Intent(this, SomeActivity::class.java)
 startActivity(intent)
 ```
 
+显示Intent的优势在于简单明确，跳转动作不会发生混淆;。但是这种跳转方式**只适用于目标Activity可以被直接引用的情形**。最典型的例子是，在多模块依赖的项目中，平行层级模块间的Activity是不可能直接相互引用的，同样地，被依赖的模块也不可能直接引用到依赖该模块的模块中的Activity。
+
 + **隐式Intent**
 
-隐式Intent则是指定一系列<font color=red>抽象的action和category信息</font>，只要有Activity在AndroidManifest文件中注册时，设置了对应的\<action>和\<category>标签内容，那么它就可以被跳转到。隐式Intent的使用方式如下：
+隐式Intent则是指定一系列<font color=red>抽象的action和category信息</font>，只要项目中有Activity在AndroidManifest文件中设置了对应的\<action>和\<category>标签内容，那么它就可以被跳转到。使用隐式Intent的优势在于，调用`startActivity()`方法的一方**根本不需要了解目标Activity叫什么、有哪些属性、在项目中处于什么层次以及能不能被引用等等**，这在多模块依赖的大型项目中尤为有用。
+
+隐式Intent的使用方式如下：
 
 ```
 val intent = Intent("ActionTag")
@@ -293,31 +297,31 @@ ActivityStack是一个用于管理系统所有的Activity的堆栈机制，由Ac
 
 Activity有四种启动模式：
 
-`· Standard（标准）`
+`· standard（标准）`
 
-`· SingleTop（栈顶复用）`
+`· singleTop（栈顶复用）`
 
-`· SingleTask（栈内复用）`
+`· singleTask（栈内复用）`
 
-`· SingleInstance（单实例）`
+`· singleInstance（单实例）`
 
 这四种模式可以在AndroidManifest文件中设置lauchMode进行声明，也可以在代码中调用Intent对象的addFlags方法来设置。后者优先级<font color=red>高于</font>前者，当同时使用两种方式设置启动模式时，以后者为准。当然，还有一种方式是在AndroidManifest文件中设置taskAffinity属性，指定Activity所属的任务栈，但是对SingleInstance模式无效。除了Standard之外，其他三种启动模式的存在目的，都是为了解决<font color=red>如何避免同一Activity重复创建多个实例</font>的问题。
 
-### Standard模式
+### standard模式
 
-Standard模式是启动Activity的默认模式，没有任何特殊配置的Activity，会默认以Standard模式启动。在这种模式下，<font color=green>每当启动一个Activity，系统就会创建一个新的实例，并将其压入任务栈的栈顶，而不管该Activity是否已经存在于任务栈中</font>。Standard模式的好处就是不用特意配置，直接上手就能用，但缺点是浪费系统资源。
+standard模式是启动Activity的默认模式，没有任何特殊配置的Activity，会默认以standard模式启动。在这种模式下，<font color=green>每当启动一个Activity，系统就会创建一个新的实例，并将其压入任务栈的栈顶，而不管该Activity是否已经存在于任务栈中</font>。standard模式的好处就是不用特意配置，直接上手就能用，但缺点是浪费系统资源。
 
-### SingleTop模式
+### singleTop模式
 
-SingleTop是这样一种模式：当启动一个Activity时，<font color=green>若任务栈的栈顶已经存在该Activity的实例，那么该实例将直接被复用，否则系统就创建新的实例</font>。这个模式只考虑任务栈的<font color=red>栈顶</font>是否存在待启动的Activity实例，如果待启动的Activity实例存在但不是位于栈顶，那么就会转变成Standard模式，同样会造成资源浪费。因此从目前实际开发的角度来讲，这种“半吊子节约”的启动模式并没有太大的使用价值。
+singleTop是这样一种模式：当启动一个Activity时，<font color=green>若任务栈的栈顶已经存在该Activity的实例，那么该实例将直接被复用，否则系统就创建新的实例</font>。这个模式只考虑任务栈的<font color=red>栈顶</font>是否存在待启动的Activity实例，如果待启动的Activity实例存在但不是位于栈顶，那么就会转变成standard模式，同样会造成资源浪费。因此从实际开发的角度来讲，这种“半吊子节约”的启动模式并没有太大的使用价值。
 
-### SingleTask模式
+### singleTask模式
 
-SingleTask比SingleTop更进一步，<font color=green>只要任务栈中存在待启动Activity的实例，那么就直接复用，并且把该Activity之前的其他Activity（如果存在的话）全部出栈，使之位于栈顶</font>。
+singleTask比SingleTop更进一步，<font color=green>只要任务栈中存在待启动Activity的实例，那么就直接复用，并且把该Activity之前的其他Activity（如果存在的话）全部出栈，使之位于栈顶</font>。
 
-### SingleInstance模式
+### singleInstance模式
 
-SingleInstance使用<font color=green>一个任务栈来单独管理指定为该模式的Activity，无论有哪些应用程序访问该Activity，都只会共用这个任务栈</font>，因此可以实现Activity实例的共享。根据Google官方开发文档的介绍，系统不会将任何其他Activity启动到包含该实例的任务栈中，该Activity始终是其任务栈中**唯一**的成员；由该Activity启动的任何Activity都会在其他的任务栈中打开。在这种情况下，Activity的出栈顺序取决于它们所在任务栈的顺序，只有最先出栈的Activity所在的任务栈完全出栈后，才会切换到其他的任务栈，并进行后续的出栈步骤。
+singleInstance使用<font color=green>一个任务栈来单独管理指定为该模式的Activity，无论有哪些应用程序访问该Activity，都只会共用这个任务栈</font>，因此可以实现Activity实例的共享。根据Google官方开发文档的介绍，系统不会将任何其他Activity启动到包含该实例的任务栈中，该Activity始终是其任务栈中**唯一**的成员；由该Activity启动的任何Activity都会在其他的任务栈中打开。在这种情况下，Activity的出栈顺序取决于它们所在任务栈的顺序，只有最先出栈的Activity所在的任务栈完全出栈后，才会切换到其他的任务栈，并进行后续的出栈步骤。
 
 ## 查看任务栈
 
