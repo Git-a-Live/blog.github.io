@@ -341,7 +341,7 @@ CoroutineScope是Kotlin官方提供的作用域<font color=red>接口</font>，�
 
 GlobalScope是一个由Kotlin官方实现的最基础的<font color=red>自定义</font>作用域。它可以创建启动**顶级**协程，这些协程在整个应用程序生命周期内运行，不会被过早地被取消。
 
-然而，GlobalScope通常也不与任何生命周期组件绑定，除非手动管理，否则很难满足实际开发中的需求。因此，程序代码应该使用自定义的协程作用域，**<font color=red>强烈不建议直接使用GlobalScope</font>**。
+然而，GlobalScope通常也不与任何生命周期组件绑定，除非手动管理，否则很难满足实际开发中的需求。因此，程序代码应该使用自定义的协程作用域，<font color=red>强烈不建议直接使用GlobalScope</font>。
 
 + **MainScope**
 
