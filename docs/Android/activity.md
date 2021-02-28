@@ -77,7 +77,7 @@ val intent = Intent(this, SomeActivity::class.java)
 startActivity(intent)
 ```
 
-显示Intent的优势在于简单明确，跳转动作不会发生混淆;。但是这种跳转方式**只适用于目标Activity可以被直接引用的情形**。最典型的例子是，在多模块依赖的项目中，平行层级模块间的Activity是不可能直接相互引用的，同样地，被依赖的模块也不可能直接引用到依赖该模块的模块中的Activity。
+显示Intent的优势在于简单明确，跳转动作不会发生混淆。但是这种跳转方式**只适用于目标Activity可以被直接引用的情形**。最典型的例子是，在多模块依赖的项目中，平行层级模块间的Activity是不可能直接相互引用的，同样地，被依赖的模块也不可能直接引用到依赖该模块的模块中的Activity。
 
 + **隐式Intent**
 
@@ -500,7 +500,7 @@ Display #0 (activities from top to bottom):
 
 如果不考虑桌面和近期任务这两个Activity，可以看到，在通常情况下，**不同的应用程序会启动不同的ActivityStack对其任务栈进行管理**。
 
-### （3）Standard模式从一个Activity启动另一个Activity：
+### （3）standard模式从一个Activity启动另一个Activity：
 
 以一个demo应用为例，在MuMu模拟器上运行并打印查看任务栈信息如下：
 
