@@ -8,15 +8,11 @@ AndroidViewModel是ViewModel的一个子类，但是它和ViewModel相比有一�
 
 ```
 class MyAndroidViewModel(application: Application): AndroidViewModel(application) {
-    //TODO:
+    //TODO
 }
 ```
 
-注意，在使用AndroidViewModel的时候，IDE会提示添加一个构造函数以获取Application对象，从而获得全局资源的访问权限， 比如调用Application对象的get()方法来添加SharedPreferences对象等等。因为使用了构造函数，所以在MainActivity文件中， 创建MyAndroidViewModel对象时，不再和之前的ViewModel一样使用ViewModelProvider，而是可以直接通过构造方法将Application对象传入：
-
-```
-val myAndroidViewModel = MyAndroidViewModel(application)
-```
+注意，在使用AndroidViewModel的时候，IDE会提示添加一个构造函数以获取Application对象，从而获得全局资源的访问权限， 比如调用Application对象的get()方法来添加SharedPreferences对象等等。
 
 接着继续完成MyAndroidViewModel文件的编写，通过application对象调用get()方法，可以直接在MainActivity以外创建SharedPreferences对象：
 

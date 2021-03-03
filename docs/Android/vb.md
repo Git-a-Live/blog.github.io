@@ -9,7 +9,7 @@ Kotlin在早期曾通过`import kotlinx.android.synthetic.*`的方式简化了�
 
 Google推出ViewBinding的初衷也在于消除这样的隐患，而现在ViewBinding也确实成为替代ButterKnife的重要开发技术。
 
-如果要在项目中使用ViewBinding，需要使用`3.6+`版本的Gradle工具，并在build.gradle(:app)文件中添加以下三种形式的语句启用该功能：
+如果要在项目中使用ViewBinding，需要Android Studio使用`3.6`版本以上的Gradle插件（可通过File-Project Structure-Project-Android Gradle Plugin Version查看），并在build.gradle(:app)文件中添加以下三种形式的语句启用该功能：
 
 ```
 android {
