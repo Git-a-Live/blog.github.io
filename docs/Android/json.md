@@ -79,14 +79,14 @@ val demo: Demo = Gson().fromJson(json,Demo::class.java)
 
 //对数组反序列化
 val json = [···]
-val demoArray: Array< Demo> = Gson().fromJson(json,Array< Demo>::class.java)
+val demoArray: Array<Demo> = Gson().fromJson(json,Array< Demo>::class.java)
 
 //对List反序列化
 val json = [···]
 /*List*/
 val demosArray: List<Demo> = Gson().fromJson(json,Array<Demo>::class.java).toList()
 /*ArrayList*/
-val demosArrayList: ArrayList<Demo> = Gson().fromJson(json,ArrayList< Demo>::class.java)
+val demosArrayList: ArrayList<Demo> = Gson().fromJson(json,ArrayList<Demo>::class.java)
 
 //Java代码：
 //对类反序列化

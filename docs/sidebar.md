@@ -82,7 +82,7 @@
 * <font color=red>**Java进阶**</font>
 * <font color=red>**Dart入门**</font>
 * <font color=red>**Flutter入门**</font>
-* <font color=red>**数据结构**</font>
+* <font color=red>**数据结构（基于Java）**</font>
   * [数据结构概述](/DataStructure/1.数据结构概述.md)
   * [线性表](DataStructure/2.线性表.md)
   * [栈和队列](DataStructure/3.栈和队列.md)
