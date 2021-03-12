@@ -1,5 +1,5 @@
 * <font color=red>**Android开发**</font>
-  * [配置Android Studio](Android/config.md)
+  * [Android Studio基本配置](Android/config.md)
   * <font color=blue>常用组件</font>
     * [Activity](Android/activity.md)
     * [Broadcast](Android/broadcast.md)
@@ -15,7 +15,8 @@
     * [ViewBinding](Android/vb.md)
   * <font color=blue>本地数据存储</font>
     * [Shared Preferences](Android/sp.md)
-    * [Room](Android/room.md)
+    * [Room/SQLite](Android/room.md)
+    * [自定义文件存储](Android/io.md)
   * <font color=blue>序列化</font>
     * [Serializable](Android/serial.md)
     * [Parcelable](Android/parcel.md)
@@ -30,10 +31,12 @@
     * [摄像头与照片](Android/photo.md)
     * [音视频](Android/msc.md)
     * [蓝牙](Android/bt.md)
+    * [设备定位](Android/ndk.md)
   * <font color=blue>UI界面</font>
     * [基本布局](Android/lo.md)
     * [自定义控件](Android/controller.md)
     * [Material Design](Android/md.md)
+    * [Jetpack Compose](Android/jc.md)
   * <font color=blue>调试、性能与安全</font>
     * [应用调试](Android/debug.md)
     * [单元测试](Android/unit.md)
@@ -41,11 +44,17 @@
     * [代码混淆、应用加密与反编译](Android/proguard.md)
   * <font color=blue>其他</font>
     * [Module开发](Android/mod.md)
-    * [RxJava](Android/.md)
-  * <font color=blue>Android开发进阶</font>
-    * [插件化]()
-    * [热更新]()
-    * [NDK](Android/ndk.md)
+    * [正则表达式](Android/regx.md)
+    * [RxJava](Android/rxjava.md)
+    * [EventBus](Android/eb.md)
+  * <font color=blue>Android进阶</font>
+    * [Android虚拟机：Dalvik](Android/dvm.md)
+    * [Android虚拟机：ART](Android/art.md)
+    * [热修复](Android/ndk.md)
+    * [热更新](Android/ndk.md)
+    * [插件化](Android/ndk.md)
+    * [NDK开发](Android/ndk.md)
+    * [AOSP与定制Android系统](Android/ndk.md)
 * <font color=red>**Kotlin进阶**</font>
     * [函数式编程](Kotlin/func.md)
     * [延迟初始化、扩展函数与密封类](Kotlin/late.md)
@@ -57,10 +66,6 @@
     * [进阶语法](Gradle/Groovy语言入门_进阶语法.md) 
   * <font color=blue>Gradle脚本</font>
     * [基础部分](Gradle/Gradle脚本编写_入门部分.md)
-* <font color=red>**Maven入门**</font>
-  * [Maven的使用](Maven/maven.md)
-* <font color=red>**Linux指令**</font>
-  * [基础指令](Linux/basicom.md) 
 * <font color=red>**MySQL入门**</font>
   * [基础指令](MySQL/basicom.md) 
   * [表的操作](MySQL/tables.md)
@@ -80,8 +85,18 @@
   * [结构型设计模式](DesignPattern/结构型设计模式.md)
   * [行为型设计模式](DesignPattern/行为型设计模式.md)
 * <font color=red>**Java进阶**</font>
+  * [Java虚拟机：跨平台原理](Android/ndk.md)
+  * [Java虚拟机：体系结构](Android/ndk.md)
+  * [Java虚拟机：运行机制](Android/ndk.md)
+  * [加密算法](Android/ndk.md)
+  * [GUI设计开发](Android/ndk.md)
+  * [JNI](Android/ndk.md)
+* <font color=red>**杂项**</font>
+  * [Maven的使用](Maven/maven.md)
+  * [Linux基础指令](Linux/basicom.md)
 * <font color=red>**Dart入门**</font>
 * <font color=red>**Flutter入门**</font>
+* <font color=red>**C++入门**</font>
 * <font color=red>**数据结构（基于Java）**</font>
   * [数据结构概述](/DataStructure/1.数据结构概述.md)
   * [线性表](DataStructure/2.线性表.md)

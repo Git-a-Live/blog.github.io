@@ -12,7 +12,7 @@ class MyAndroidViewModel(application: Application): AndroidViewModel(application
 }
 ```
 
-注意，在使用AndroidViewModel的时候，IDE会提示添加一个构造函数以获取Application对象，从而获得全局资源的访问权限， 比如调用Application对象的get()方法来添加SharedPreferences对象等等：
+注意，在使用AndroidViewModel的时候，IDE会提示添加一个构造函数以获取Application对象，从而可以访问全局资源：
 
 ```
 //Activity
@@ -22,7 +22,7 @@ val myViewModel = ViewModelProvider(this, ViewModelProvider.AndroidViewModelFact
 val myViewModel = ViewModelProvider(requireActivity(), ViewModelProvider.AndroidViewModelFactory.getInstance(requireActivity().application))[MyAndroidViewModel::class.java]
 ```
 
->注意：尽管AndroidViewModel自带构造器，但是强烈不建议直接通过构造器的方式去创建AndroidViewModel实例。<font color=red>因为直接通过构造器创建实例对象，起不到绑定组件生命周期的作用，这样ViewModel的存在意义就没有了。</font>
+>注意：尽管AndroidViewModel自带构造器，但是**强烈不建议**直接通过构造器的方式去创建AndroidViewModel实例。<font color=red>因为直接通过构造器创建实例对象，起不到绑定组件生命周期的作用，这样使用ViewModel和LiveData的意义就没有了。</font>
 
 接着继续完成MyAndroidViewModel文件的编写，通过application对象调用get()方法，可以直接在MainActivity以外创建SharedPreferences对象：
 
