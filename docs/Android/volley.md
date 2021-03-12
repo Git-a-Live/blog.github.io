@@ -17,13 +17,15 @@
 · Support for request prioritization.
 · 支持请求设置优先级。
 
-· Cancellation request API. You can cancel a single request, or you can set blocks or scopes of requests to cancel.
+· Cancellation request API. You can cancel a single request, 
+  or you can set blocks or scopes of requests to cancel.
 · 取消请求API，既可以取消单个请求，也可以设置取消某个时间段或范围内的请求。
 
 · Ease of customization, for example, for retry and backoff.
 · 便于自定义，如自定义重试或退避时间。
 
-· Strong ordering that makes it easy to correctly populate your UI with data fetched asynchronously from the network.
+· Strong ordering that makes it easy to correctly populate your UI 
+  with data fetched asynchronously from the network.
 · 强大的排序功能，确保从网络上异步获取到的数据能正确填充到界面上。
 
 · Debugging and tracing tools.
@@ -33,10 +35,12 @@
 同时，官方也强调：
 
 ```
-Volley is not suitable for large download or streaming operations, since Volley holds all responses in memory during parsing. 
+Volley is not suitable for large download or streaming operations, 
+since Volley holds all responses in memory during parsing. 
 For large download operations, consider using an alternative like DownloadManager.
 
-Volley不适用于大量下载或流式传输操作，因为Volley在解析过程中会把所有响应缓存到内存中（响应数据量太大会耗光内存）。如果需要进行大量下载的操作，最好选择DownloadManager之类的方式。
+Volley不适用于大量下载或流式传输操作，因为Volley在解析过程中会把所有响应缓存到内存中（响应数据量太大会耗光内存）。
+如果需要进行大量下载的操作，最好选择DownloadManager之类的方式。
 ```
 
 目前Volley并没有集成在Android SDK当中，因此要想使用Volley，需要先在项目中导入依赖如下：
@@ -166,8 +170,7 @@ StringRequest提供了一种简单粗暴的响应处理方式——全部转成�
 StringRequest的构造方法有两个：
 
 ```
-StringRequest(int method, String url, Listener<String> listener,
-            @Nullable ErrorListener errorListener)
+StringRequest(int method, String url, Listener<String> listener, @Nullable ErrorListener errorListener)
 
 StringRequest(String url, Listener<String> listener, @Nullable ErrorListener errorListener)
 ```
@@ -182,7 +185,7 @@ JsonObjectRequest的构造方法也有两个：
 
 ```
 JsonObjectRequest(String url, @Nullable JSONObject jsonRequest,
-    Listener<JSONObject> listener, @Nullable ErrorListener errorListener)
+            Listener<JSONObject> listener, @Nullable ErrorListener errorListener)
 
 JsonObjectRequest(int method, String url, @Nullable JSONObject jsonRequest,
             Listener<JSONObject> listener, @Nullable ErrorListener errorListener)
@@ -195,8 +198,8 @@ JsonObjectRequest(int method, String url, @Nullable JSONObject jsonRequest,
 ```
 JsonArrayRequest(String url, Listener<JSONArray> listener, @Nullable ErrorListener errorListener)
 
-JsonArrayRequest(int method, String url, @Nullable JSONArray jsonRequest, Listener<JSONArray> listener,
-            @Nullable ErrorListener errorListener)
+JsonArrayRequest(int method, String url, @Nullable JSONArray jsonRequest, 
+            Listener<JSONArray> listener, @Nullable ErrorListener errorListener)
 ```
 
 第一个构造方法默认发起GET请求。两个构造方法同样都要传入响应监听器。
