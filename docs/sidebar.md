@@ -16,7 +16,7 @@
   * <font color=blue>本地数据存储</font>
     * [Shared Preferences](Android/sp.md)
     * [Room/SQLite](Android/room.md)
-    * [自定义文件存储](Android/io.md)
+    * [I/O操作](Android/io.md)
   * <font color=blue>序列化</font>
     * [Serializable](Android/serial.md)
     * [Parcelable](Android/parcel.md)
@@ -97,6 +97,8 @@
 * <font color=red>**Dart入门**</font>
 * <font color=red>**Flutter入门**</font>
 * <font color=red>**C++入门**</font>
+  * [编译器配置](/CPP/config.md)
+  * [从Hello World开始](/CPP/helloworld.md)
 * <font color=red>**数据结构（基于Java）**</font>
   * [数据结构概述](/DataStructure/1.数据结构概述.md)
   * [线性表](DataStructure/2.线性表.md)
