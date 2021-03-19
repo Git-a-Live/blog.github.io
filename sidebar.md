@@ -129,11 +129,11 @@
 * <font color=red>**操作系统**</font>
 * <font color=red>**计算机组成原理**</font>
 * <font color=red>**数学基础**</font>
-  * [高等数学]()
-  * [线性代数]()
-  * [离散数学]()
-  * [复变函数]()
-  * [数值分析]()
+  * [高等数学](Math/caculus.md)
+  * [线性代数](Math/caculus.md)
+  * [离散数学](Math/caculus.md)
+  * [复变函数](Math/caculus.md)
+  * [数值分析](Math/caculus.md)
 * <font color=red>**iOS开发**</font>
   * <font color=red>**Swift入门**</font>
     * [基本知识](Swift/Swift语言入门_基本知识.md)
