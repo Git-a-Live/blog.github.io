@@ -99,6 +99,7 @@
 * <font color=red>**C++入门**</font>
   * [编译器配置](/CPP/config.md)
   * [从Hello World开始](/CPP/helloworld.md)
+  * [函数](/CPP/function.md)
 * <font color=red>**数据结构（基于Java）**</font>
   * [数据结构概述](/DataStructure/1.数据结构概述.md)
   * [线性表](DataStructure/2.线性表.md)
