@@ -2,7 +2,7 @@
 
 尽管协程本身是一个很早提出的概念，但直到近些年才在某些语言中（如Go、Lua、Python、Kotlin甚至C++20等）广泛运用。值得注意的是，Kotlin协程与其他语言的协程存在一个本质上的差异：作为一种基于JVM的语言，Kotlin在底层还是要靠线程来实现协程——<font color=red>这意味着Kotlin协程在实质上，依然和Java的Executors、Future和ForkJoin，以及Android的Handler和AsyncTask一样是一种线程框架</font>。因此Kotlin协程和其他语言的协程并不是同一种东西，绝不可将它们混为一谈，更不能把其他语言的协程概念和特点套用到Kotlin协程上。
 
-在了解协程之前，需要先掌握线程的用法。因为只有通过逐步接触**最原始**的线程用法，了解到基于原始线程用法执行并发任务的不便之后，才能够理解为什么会有Executor、AsyncTask乃至Kotlin协程这些线程框架的出现和应用。
+在了解协程之前，需要先掌握线程的用法。因为只有通过逐步接触**最原始**的线程用法，了解到基于原始线程用法执行并发任务的不便之后，才能够理解为什么会有Executors、AsyncTask乃至Kotlin协程这些线程框架的出现和应用。
 
 ## 线程
 
@@ -110,14 +110,13 @@ class MyThread: Thread() {
 
 线程有以下6种状态：
 
-```
-New：新创建，创建线程对象之后、调用start()方法之前
-Runnable：可运行，调用start()方法之后、被暂停、中断或终止之前
-Blocked：被阻塞，执行某些操作（如网络通信、读写文件等）
-Waiting：等待中，在调用Object.wait()或join()方法之后、执行notify()或notifyAll()方法之前
-Timed waiting：计时等待，在调用Thread.sleep()等带有超时参数的方法之后
-Terminated：被终止，run()方法退出（正常退出或异常终止）
-```
++ *New*：新创建，创建线程对象之后、调用`start()`方法之前
++ *Runnable*：可运行，调用`start()`方法之后、被暂停、中断或终止之前
++ *Blocked*：被阻塞，执行某些操作（如网络通信、读写文件等）
++ *Waiting*：等待中，在调用`wait()`或`join()`方法之后、执行`notify()`或`notifyAll()`方法之前
++ *Timed waiting*：计时等待，在调用`Thread.sleep()`等带有超时参数的方法之后
++ *Terminated*：被终止，`run()`方法退出（正常退出或异常终止）
+
 
 大致的状态切换为：
 
@@ -239,16 +238,185 @@ class Demo {
 
 ##### ReentrantLock
 
-+ 
+从Java 5开始，Java引入了一个高级的处理并发的`java.util.concurrent`包，它提供了大量更高级的并发功能，能大大简化多线程程序的编写。
+
+ReentrantLock就是这个包里面的其中一种工具，它是一种被设计用于替代`synchronized`的线程锁。和`synchronized`一样，ReentrantLock也是一种可重入锁，但是它比`synchronized`多了一项特性——可以尝试获取锁，即便获取失败也不会引起死锁，这就提高了多线程任务的安全性。
+
+ReentrantLock的典型使用方式如下：
+
+```
+//不做获取锁的尝试
+class Demo {
+    private final Lock lock = new ReentrantLock();
+
+    public void foo(int num) throws InterruptedException {
+        lock.lock();
+        try {
+            //TODO：执行目标代码
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            lock.unlock();
+        }
+    }
+}
+
+//尝试获取锁
+class Demo {
+    private final Lock lock = new ReentrantLock();
+
+    public void foo(int num) throws InterruptedException {
+        //可以设置等待时间，一定时间后仍未获取到锁就会放弃等待，程序可以脱离出来执行别的任务
+        if (lock.tryLock(someTime, TimeUnit.XXX)) { 
+            try {
+                //TODO：执行目标代码
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                lock.unlock();
+            }
+        }
+    }
+}
+```
+
+>注意，ReentrantLock通常建议跟try-catch-finally代码块搭配使用，以确保锁一定可以被释放。后面介绍的其他线程锁也同样遵循这一规则。
+
+`synchronized`通过配合`wait()`、`notify()`以及`notifyAll()`方法来执行线程的等待和唤醒，而ReentrantLock则依靠Condition对象来实现相同的功能。Condition对象必须由Lock对象来创建，这样才能确保其跟线程锁绑定在一起，从而发挥其应有的作用。对上面的示例代码进行修改，加入Condition对象：
+
+```
+class Demo {
+    private final Lock lock = new ReentrantLock();
+    private final Condition condition = lock.newCondition();
+
+    public void foo(int num) throws InterruptedException {
+        if (lock.tryLock(someTime, TimeUnit.XXX)) { 
+            try {
+                //TODO：执行目标代码
+                //condition.await(); 线程释放当前锁进入等待状态，唤醒之后需要重新获得锁
+                //condition.signal(); 唤醒某个线程
+                //condition.signalAll(); 唤醒所有线程
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                lock.unlock();
+            }
+        }
+    }
+}
+```
+
+Condition对象的`await()`方法和ReentrantLock对象的`tryLock()`方法类似，也可以设置等待时间，如果线程在指定时间内没有被其他线程锁唤醒，它就会在时间到了以后自己唤醒执行任务。
+
+综上，利用ReentrantLock和Condition，可以实现更为安全灵活的多线程并发机制。
+
 ##### ReadWriteLock
+
+ReentrantLock对于线程读写的加锁保护是非常严格的，它可以确保任何时候都只有一个线程执行临界区代码（包括读和写），安全性不言而喻。然而事实上，<font color=red>线程安全最关键的地方在于“写”，仅仅是“读”数据其实并没有什么太多的问题</font>。
+
+Java提供ReadWriteLock就是为了满足这样的需求：为了提高并发效率，当没有线程修改数据时，应当允许多个线程同时读取数据。请注意，多个线程同时读取数据的前提是“**此时没有线程在修改数据**”，否则读取数据的操作就不被允许执行。而且反过来，当有线程在读取数据时，写入操作同样也是不被允许的。正因为这两种操作绝对互斥（<font color=red>一种操作必须等待另一种操作释放锁才能执行</font>），ReadWriteLock又被称作**悲观锁**。
+
+对于一些读多写少的场合，使用ReadWriteLock无疑是非常合适的。
+
+ReadWriteLock的典型使用方式如下：
+
+```
+public class Demo {
+    private final ReadWriteLock rwlock = new ReentrantReadWriteLock();
+    private final Lock rlock = rwlock.readLock();
+    private final Lock wlock = rwlock.writeLock();
+
+    public void set(int index) {
+        wlock.lock(); //加写锁
+        try {
+            //TODO：执行目标代码
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            wlock.unlock(); //释放写锁
+        }
+    }
+
+    public SomeType get() {
+        rlock.lock(); //加读锁
+        try {
+            //TODO：执行目标代码
+            return someThing;
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            rlock.unlock(); //释放读锁
+        }
+    }
+}
+```
+
+注意到ReadWriteLock在Java中的具体实现是ReentrantReadWriteLock。ReentrantReadWriteLock针对读和写提供了`readLock()`和`writeLock()`两个方法，它们都会返回一个Lock对象，<font color=red>这样，不同的操作就通过不同的Lock对象调用`newCondition()`方法获得各自的Condition对象</font>，在使用上就和ReentrantLock基本一样了。
+
 ##### StampedLock
 
-#### 线程安全类
+为了进一步提高并发效率，Java 8提供了另一种线程锁StampedLock，它和ReadWriteLock相比有个重要的差别：读的过程中也允许其他线程获取写锁后写入。此外，StampedLock是一种不可重入锁。
 
-在Java中，一个类如果不作特殊说明，通常都是默认为**非线程安全**的，需要通过`synchronized`等方式对共享变量和相关代码块进行加锁和解锁。事实上，<font color=red>线程安全最关键的地方在于“写”，仅仅是“读”其实并不太会引起线程安全问题</font>。
+StampedLock的工作原理是这样的：预期读取过程中大概率不会有写入，而一旦发生读写同时操作导致读取的数据不一致，需要检测出来，之后再读一遍以确保读到的是最新的数据。这种基于概率的线程锁就被称为**乐观锁**。
 
-##### Concurrent集合
-##### Atomic操作类
+StampedLock的典型使用方式如下：
+
+```
+class Demo {
+    private final StampedLock stampedLock = new StampedLock();
+
+    public void set(SomeType arg) {
+        long stamp = stampedLock.writeLock(); //获取写锁
+        try {
+            //TODO：执行目标代码
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            stampedLock.unlockWrite(stamp); //释放写锁
+        }
+    }
+
+    public SomeType get() {
+        long stamp = stampedLock.tryOptimisticRead(); //获得一个乐观读锁
+        //TODO：未加锁情况下先进行一次读取
+        if (!stampedLock.validate(stamp)) { //检查乐观读锁后是否有其他写锁发生
+            stamp = stampedLock.readLock(); //如果确实发生了其他写锁，获取一个悲观读锁
+            try {
+                //TODO：执行目标代码，在加锁情况下重新读取一次
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                stampedLock.unlockRead(stamp); //释放悲观读锁
+            }
+        }
+        return someThing;
+    }
+}
+```
+
+注意到在上面的示例代码中，通过`writeLock()`、`tryOptimisticRead()`以及`readLock()`方法获取到的对象不是Lock类型，而是long类型，这是一个**版本号**。此外，可以看到，StampedLock对写入操作的加解锁和先前其他的线程锁是类似的，但是对于读取操作则需要加入版本号验证的环节。
+
+最后要注意的是，StampedLock通过`asReadLock()`、`asWriteLock()`以及`asReadWriteLock()`这三个方法来获取Lock对象，进而获取到Condition对象来执行线程的等待和唤醒操作。
+
+#### Concurrent集合与Atomic操作类
+
+在Java中，如果一个类不作特殊说明，通常都是默认为**非线程安全**的，需要通过`synchronized`等方式对共享变量和相关代码块进行加锁和解锁。
+
+对于常用的集合类，Java在`java.util.concurrent`包里面提供了一些基本的线程安全的具体实现：
+
+|接口|非线程安全的常用具体实现|线程安全的常用具体实现|
+|:--:|:--:|:--:|
+|List|ArrayList|CopyOnWriteArrayList|
+|Map|HashMap|ConcurrentHashMap|
+|Set|HashSet、TreeSet|CopyOnWriteArraySet|
+|Queue|ArrayDeque、LinkedList|ArrayBlockingQueue、LinkedBlockingQueue|
+|Deque|ArrayDeque、LinkedList|LinkedBlockingDeque|
+
+上面这些线程安全的集合类具体实现可以拿来直接替换，不需要做其他额外的更改。
+
+除了Concurrent集合，Java还提供了一系列原子操作的封装类，它们位于`java.util.concurrent.atomic`包中，常见的有AtomicInteger、AtomicBoolean以及AtomicLong等等。Atomic类可以通过**无锁**方式来实现线程安全访问。
+
+所谓CAS（Compare and Set）是一种验证手段，它会对比当前持有的数据与拿到的期望数据，若当前值与期望值不等，就将期望值修改为当前值，并返回false。CAS的具体实现需要深入到底层的C/C++部分，限于篇幅这里不做展开。
 
 ### 线程池
 
@@ -267,7 +435,7 @@ FixedThreadPool是一种<font color=red>线程数固定</font>的线程池，其
 val tp = Executors.newFixedThreadPool(线程数) //传入的线程数决定线程池大小
 
 //提交执行任务：
-tp.submit(Task) //Task可以通过继承Runnable和Callable接口来实现，如无必要后面不再说明
+tp.submit(Task) //Task可以通过继承Runnable和Callable接口来实现
 tp.submit {
     //TODO
 }
