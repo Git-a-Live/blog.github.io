@@ -85,7 +85,7 @@
   * [结构型设计模式](DesignPattern/结构型设计模式.md)
   * [行为型设计模式](DesignPattern/行为型设计模式.md)
 * <font color=red>**Java进阶**</font>
-  * [Java虚拟机：跨平台原理](Android/ndk.md)
+  * [Java虚拟机：跨平台原理](Java/jvm1.md)
   * [Java虚拟机：体系结构](Android/ndk.md)
   * [Java虚拟机：运行机制](Android/ndk.md)
   * [加密算法](Android/ndk.md)
