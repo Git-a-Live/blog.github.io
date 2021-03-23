@@ -446,7 +446,7 @@ tp.shutdownNow() //立即关闭
 tp.awaitTermination(等待时长,时间单位) //等待一段时间后自动关闭线程池
 ```
 
->注意，线程池使用完毕后必须关闭，以免发生内存泄漏。如无特别说明，所有线程池都应当如此。
+>注意，线程池使用完毕后必须关闭，以免发生内存泄漏。**如无特别说明，所有线程池都应当如此**。
 
 + **CachedThreadPool**
 
@@ -486,9 +486,145 @@ tp.scheduleWithFixedDelay((Task, 等待时长, 时间间隔, 时间单位) //任
 
 #### Future / CompletableFuture
 
+之前已经提到，提交到线程池的Task要么实现Runnable接口，要么实现Callable接口，这两者之间存在什么区别？简单来说，实现Runnable接口的Task调用方法是拿不到返回值的，而实现Callable接口就可以做到，因为它是一个泛型接口，可以返回指定类型的结果。换句话说，如果使用线程池去执行异步任务且不需要考虑返回结果，那么就让Task实现Runnable，否则必须实现Callable。
+
+在实现Callable接口之后，下一步就是从线程池实例对象的`submit()`方法中拿到结果。`submit()`方法返回的是一个Future类型的对象，而Future本身是一个泛型接口，因此调用该对象的`get()`方法就会得到指定类型的结果。Future的典型用法如下：
+
+```
+val future: Future<SomeType> = threadPool.submit(Callable {
+    //TODO：执行耗时代码，最后一句代码应该返回一个指定类型的结果
+})
+future.get() //获得指定类型的异步结果
+future.get(someTime, TimeUnit.XXX) //在指定时间内未能获取到异步结果，主线程自行脱离阻塞状态
+future.isDone() //判断异步任务是否已经完成
+future.cancel() //取消当前异步任务
+future.isCancelled() //判断当前异步任务是否已经被取消
+
+threadPool.shutdown()
+```
+
+正如它的名称一样，Future会在“未来”拿到一个异步返回的结果，但是这个“未来”有多远就很难确定了，因此要十分注意<font color=red>调用`get()`方法可能会造成主线程的长时间阻塞</font>。
+
+为了解决使用Future造成主线程被迫阻塞等待结果的问题，Java 8又推出了CompletableFuture，它对Future的主要改进之处在于，可以传入回调对象，当异步任务完成或者发生异常时，自动调用回调对象的回调方法。此外，CompletableFuture还具备串行执行的特性（同步写法执行异步任务？）。
+
+CompletableFuture的典型用法如下：
+
+```
+val cf: CompletableFuture<SomeType> = CompletableFuture.supplyAsync { //supplyAsync自动开启一个子线程
+    //TODO：执行耗时代码，最后一句代码应该返回一个指定类型的结果
+}
+cf.thenAccept { it: SomeType!
+    //TODO：处理异步任务成功返回的结果
+}
+cf.exceptionally { it: Throwable!
+    //TODO：处理异步任务执行过程中发生的异常
+}
+
+//上一个异步任务执行成功后，串行执行下一个异步任务
+val cf2: CompletableFuture<SomeType> = cf.thenAcceptAsync {
+    //TODO：执行耗时代码，最后一句代码应该返回一个指定类型的结果
+}
+cf2.thenAccept { it: SomeType!
+    //TODO：处理异步任务成功返回的结果
+}
+cf2.exceptionally { it: Throwable!
+    //TODO：处理异步任务执行过程中发生的异常
+}
+```
+
+>注意，如果主线程的结束时间比子线程早，那么CompletableFuture就会来不及返回处理任何结果。
+
+CompletableFuture的调用方法在命名上也有一些讲究，比如以Async结尾的方法都会在线程池中异步执行，没有以Async结尾的方法则会继续在已有的线程中执行。
+
+除此之外，CompletableFuture还提供了`anyOf()`和`allOf()`这两个方法，它们都可以接受若干个CompletableFuture对象作为参数，也都会返回一个CompletableFuture对象，但是在具体的使用上存在差异：
+
++ 前者表示只要有一个CompletableFuture对象执行异步任务成功，就返回一个CompletableFuture\<Any!>对象
++ 后者表示必须所有的CompletableFuture对象执行异步任务成功，才会返回一个CompletableFuture\<Void!>对象
+
+两个方法的组合使用可以实现非常复杂的异步流程控制。
+
 #### ForkJoin
 
+ForkJoin是Java 7引入的一种新型线程池，其主要原理是：基于“分治”的思想，将一个大型任务拆分成小型任务**并行执行**，最后将并行执行的结果合并。
+
+ForkJoin的使用有两个重点值得关注：一是如何构建任务，二是如何传递任务。接下来配合下面的示例代码进行说明。
+
+构建任务的核心在于创建继承RecursiveTask或RecursiveAction的子类。RecursiveTask和RecursiveAction都是实现了ForkJoinTask这个抽象泛型类的子类，只不过后者在实现的时候传入的泛型是`Void`，所以就没有返回值可用了。
+
+```
+class DemoTask(···): RecursiveTask<SomeType>() {
+    override fun compute(): SomeType {
+        //TODO：执行并行计算的具体代码，并将结果返回
+        val demo = DemoTask(···)
+        val demo2 = DemoTask(···)
+        ···
+        invokeAll(demo,demo2,···)
+        val result = demo.join()
+        val result2 = demo2.join()
+        ···
+    }
+}
+
+class DemoTask2(···): RecursiveAction() {
+    override fun compute() {
+        //TODO：执行并行计算的具体代码，但是没有结果返回
+        val demo = DemoTask2(···)
+        val demo2 = DemoTask2(···)
+        ···
+        invokeAll(demo,demo2,···)
+        demo.join()
+        demo2.join()
+        ···
+    }
+}
+```
+
+无论是继承哪一个，都要覆写`compute()`方法。在这个方法里面，有三个需要注意的地方：
+
+1. 将一个大型任务拆分成相同类型的足够小的任务对象
+2. 拆分出来的小型任务对象传入`invokeAll()`方法中并行执行
+3. 调用这些小型任务对象的`join()`方法，以确保并行计算任务能够在完成前不被随意中断
+
+>注意，在上面的示例代码中，DemoTask或DemoTask2都应该使用带参数的构造器，无参构造器是不能实现大型任务拆分的。比如拆分一个大型数组，至少要传入数组本身、拆分起始位置和拆分结束位置这些参数。
+
+在介绍完如何构建任务之后，接下来就要知道如何在主线程里传递任务。传递任务的方式很简单，有以下五种：
+
+```
+val task = DemoTask(···) //或是val task = DemoTask2(···)
+
+ForkJoinPool.commonPool().invoke(task) //传递单个大型任务
+
+ForkJoinPool.commonPool().invokeAll(taskCollection) //传递多个大型任务执行并行计算
+
+ForkJoinPool.commonPool().invokeAll(taskCollection,someTime,TimeUnit.XXX) //传递多个大型任务，并尝试在指定时间内完成所有并行计算任务
+
+ForkJoinPool.commonPool().invokeAny(taskCollection) //传递多个大型任务，并返回成功执行的任务的结果
+
+ForkJoinPool.commonPool().invokeAny(taskCollection,someTime,TimeUnit.XXX) //传递多个大型任务，并返回在指定时间内完成的任务的结果
+```
+
+`invoke()`、`invokeAll()`以及`invokeAny()`方法都是泛型方法，返回值的具体类型主要由task所使用的任务类决定。
+
 #### ThreadLocal
+
+ThreadLocal并不是一个Thread，而是一个Thread的局部变量。它在Java 1.2时期就已经出现，Java 5时期修改成泛型。ThreadLocal的主要作用在于通过为每个线程提供一个独立的变量副本，解决变量并发访问的冲突问题。它适合在**一个**线程的处理流程中保持上下文，从而避免了同一参数在所有方法中传递。也就是说，只要一个线程内需要调用若干个方法，而这些方法又需要用到同一个参数，那么就可以使用ThreadLocal作为该线程作用域内的“全局变量”。
+
+ThreadLocal的典型用法如下：
+
+```
+val threadLocal = ThreadLocal<SomeType>() //创建ThreadLocal对象
+threadLocal.set(···) //设置ThreadLocal对象的参数内容，进行初始化
+
+try {
+    threadLocal.get() //获取ThreadLocal对象的参数内容
+} catch(e: Exception) {
+    e.printStackTrace()
+} finally {
+    threadLocal.remove() //释放ThreadLocal对象，防止上下文干扰
+}
+```
+
+一个线程内允许创建和使用多个ThreadLocal。
 
 ## Kotlin协程
 
