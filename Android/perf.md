@@ -109,6 +109,34 @@ viewStub.inflate().findViewById<View>(R.id.xxx)
 
 Android Studio上检查内存泄漏的基本工具就是Android Profiler，可以通过它来监测应用程序在一段时间内运行过程中的CPU负荷、内存使用量、网络使用量以及电量消耗状况。当然，Android Studio还提供了一个由Gradle封装好的[Lint](https://developer.android.google.cn/studio/write/lint?hl=zh-cn)工具，在开发UI界面的时候各种下划线提示就是Lint在工作的证明，限于篇幅，这里不做展开。
 
+### LeakCanary
+
+LeakCanary是一个非常流行的内存泄漏分析工具，它是Square公司（没错，就是那个开发了OkHttp和Retrofit的Square公司）基于MAT开发的[开源项目](https://github.com/square/leakcanary)，集成方便，使用便捷，配置简单，而且功能强大。
+
+把LeakCanary导入到Android项目中非常简单：
+
+```
+dependencies {
+  // debugImplementation because LeakCanary should only run in debug builds.
+  debugImplementation 'com.squareup.leakcanary:leakcanary-android:$specific_version'
+}
+```
+
+编译运行程序，过滤LogCat日志，查看是否有以下这条日志：
+
+```
+D/LeakCanary: LeakCanary is running and ready to detect leaks
+```
+
+如果有的话就表明LeakCanary已经成功导入并正常工作。
+
+根据官方的说法，LeakCanary会自动检测以下几种对象实例是否存在内存泄露的情况：
+
++ 已经被摧毁的Activity
++ 已经被摧毁的Fragment
++ 已经被摧毁的Fragment视图
++ 已经被清理的ViewModel
+
 ## 电量优化
 
 电量优化是一个容易被忽视的性能优化点，但是一个应用耗电量的多少，往往也是用户评价该应用好坏的重点之一，因此有必要了解Android开发中的电量优化手段。其实电量优化的原则总结起来只有一条：**应用按需运行**。
