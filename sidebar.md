@@ -16,7 +16,7 @@
   * <font color=blue>本地数据存储</font>
     * [Shared Preferences](Android/sp.md)
     * [Room/SQLite](Android/room.md)
-    * [I/O操作](Android/io.md)
+    * [IO操作](Android/io.md)
   * <font color=blue>序列化</font>
     * [Serializable](Android/serial.md)
     * [Parcelable](Android/parcel.md)
