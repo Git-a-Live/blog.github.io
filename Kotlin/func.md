@@ -112,7 +112,7 @@ obj.apply {
 }
 ```
 
-+ **takeIf / takeUnless**：
++ **takeIf / takeUnless**
 
 由于`takeUnless`函数只是在逻辑上与`takeIf`函数相反，因此这里只介绍`takeIf`函数。`takeIf`函数通过对象来调用，传入一个条件进行判断，如果对象符合条件则返回自身，反之则返回`null`：
 
@@ -122,7 +122,7 @@ val value = obj?.takeIf {
 }
 ```
 
-+ **repeat**：
++ **repeat**
 
 `repeat`函数用于重复执行某些代码，不需要依赖对象的调用，在使用时，需要传入执行次数和Lambda表达式：
 
