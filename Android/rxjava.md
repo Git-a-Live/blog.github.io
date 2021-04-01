@@ -118,7 +118,7 @@ observable.subscribe(observer)
 为了简化写法，上述三个步骤还可以合到一起，就像下面代码所示的那样：
 
 ```
-Observable.create<String> { it:ObservableEmitter<SomeType>!
+Observable.create<SomeType> { it:ObservableEmitter<SomeType>!
     it.apply {
         onNext(···)
         onError(···)
