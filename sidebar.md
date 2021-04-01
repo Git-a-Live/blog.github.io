@@ -47,6 +47,11 @@
     * [正则表达式](Android/regx.md)
     * [RxJava](Android/rxjava.md)
     * [EventBus](Android/eb.md)
+    * [Glide](Android/glide.md)
+    * [腾讯Tinker](Android/tinker.md)
+    * [腾讯Bugly](Android/bugly.md)
+    * [阿里云OSS](Android/oss.md)
+    * [MPAndroid](Android/mpandroid.md)
   * <font color=blue>Android进阶</font>
     * [Android虚拟机：Dalvik](Android/dvm.md)
     * [Android虚拟机：ART](Android/art.md)
@@ -54,6 +59,7 @@
     * [热更新](Android/ndk.md)
     * [插件化](Android/ndk.md)
     * [NDK开发](Android/ndk.md)
+    * [Google Play上架应用](Android/ndk.md)
     * [AOSP与定制Android系统](Android/ndk.md)
 * <font color=red>**Kotlin进阶**</font>
     * [函数式编程](Kotlin/func.md)
@@ -86,11 +92,11 @@
   * [行为型设计模式](DesignPattern/行为型设计模式.md)
 * <font color=red>**Java进阶**</font>
   * [Java虚拟机：跨平台原理](Java/jvm1.md)
-  * [Java虚拟机：体系结构](Android/ndk.md)
-  * [Java虚拟机：运行机制](Android/ndk.md)
-  * [加密算法](Android/ndk.md)
-  * [GUI设计开发](Android/ndk.md)
-  * [JNI](Android/ndk.md)
+  * [Java虚拟机：体系结构](Java/jvm2.md)
+  * [Java虚拟机：运行机制](Java/jvm3.md)
+  * [加密算法](Java/cipher.md)
+  * [GUI设计开发](Java/gui.md)
+  * [JNI](Java/jni.md)
 * <font color=red>**杂项**</font>
   * [Maven的使用](Maven/maven.md)
   * [Linux基础指令](Linux/basicom.md)
@@ -101,7 +107,7 @@
   * [从Hello World开始](/CPP/helloworld.md)
   * [函数](/CPP/function.md)
   * [复合类型](/CPP/complex.md)
-* <font color=red>**数据结构（基于Java）**</font>
+* <font color=red>**基于Java的数据结构**</font>
   * [数据结构概述](/DataStructure/1.数据结构概述.md)
   * [线性表](DataStructure/2.线性表.md)
   * [栈和队列](DataStructure/3.栈和队列.md)

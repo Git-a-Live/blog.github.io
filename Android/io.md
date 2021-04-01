@@ -40,13 +40,54 @@ Android将设备的存储空间划分为内部存储空间和外部存储空间�
 
 >外部公共存储
 
-外部公共存储主要存放和应用无关的数据，这些数据在卸载App的时候不会被删除。它还具有这些特点：1）应用要申请外部存储权限才能访问，在Android 6.0以后，外部存储权限还要动态申请；2）任何应用只要有外部存储权限，都可以访问公共存储目录下的数据。
+外部公共存储主要存放和应用无关的数据，这些数据在卸载App的时候不会被删除。它还具有这些特点：1）应用要申请权限才能访问，在Android 6.0以后，外部存储权限还要动态申请；2）任何应用只要有外部存储权限，都可以访问公共存储目录下的数据；3）外部公共存储和外部私有存储一样，只占机身存储的一部分，<font color=red>其余的受系统限制无法直接访问</font>。
 
 综上，各种存储空间之间的关系可以用下图来概括：
 
 ![](pics/storage.png)
 
-Google[官方文档](https://developer.android.com/training/data-storage)将内部存储空间和外部私有存储统称为“应用专属存储（App-specific storage）”，其余存储部分统称为“共享存储（Shared storage）”，在后面的内容中也以此为依据进行分析介绍。
+Google[官方文档](https://developer.android.com/training/data-storage)将<u>内部存储空间和外部私有存储</u>统称为<font color=green>“应用专属存储（App-specific storage）”</font>，而<u>外部公共存储</u>称为<font color=blue>“共享存储（Shared storage）”</font>，在后面的内容中也以此为依据进行分析介绍。
+
+#### 标准存储目录
+
+系统预置了以下标准存储目录，用于存储对应类型的文件：
+
+|目录|调用值|说明|
+|:--|:--|:--|
+|`···/Music`|DIRECTORY_MUSIC||
+|`···/Podcasts`|DIRECTORY_PODCASTS||
+|`···/Ringtones`|DIRECTORY_RINGTONES||
+|`···/Alarms`|DIRECTORY_ALARMS|存储用于闹钟响铃的音频文件|
+|`···/Notification`|DIRECTORY_NOTIFICATIONS|存储用于通知提示音的音频文件|
+|`···/Pictures`|DIRECTORY_PICTURES||
+|`···/Movies`|DIRECTORY_MOVIES||
+|`···/Downloads`|DIRECTORY_DOWNLOADS||
+|`···/DCIM`|DIRECTORY_DCIM||
+|`···/Documents`|DIRECTORY_DOCUMENTS||
+|`···/Screenshots`|DIRECTORY_SCREENSHOTS|存储截屏图片，Android Q（API = 29）以上使用|
+|`···/Audiobooks`|DIRECTORY_AUDIOBOOKS|存储有声电子书，Android Q（API = 29）以上使用|
+
+这些目录可以在应用专属存储和共享存储当中进行创建和文件存取操作。
+
+#### 判断外部存储空间状态
+
+Android提供了`Environment.getExternalStorageState(···)`来判断指定外部存储目录（**如果不传参数就默认是外部私有存储**）的状态，它会以String的形式返回10种状态中的一种：
+
+|状态|返回值|说明|
+|:--|:--|:--|
+|MEDIA_UNKNOWN|unknown|状态不明|
+|MEDIA_REMOVED|removed|媒介已移除|
+|MEDIA_UNMOUNTED|unmounted|媒介未挂载|
+|MEDIA_CHECKING|checking|媒介检测中|
+|MEDIA_NOFS|nofs|媒介为空或使用了不支持的文件系统格式|
+|MEDIA_MOUNTED|mounted|媒介已挂载，可以读写|
+|MEDIA_MOUNTED_READ_ONLY|mounted_ro|媒介已挂载，只读|
+|MEDIA_SHARED|shared|媒介未挂载，而是通过USB进行共享|
+|MEDIA_BAD_REMOVAL|bad_removal|媒介在未脱离挂载的情况下被移除|
+|MEDIA_UNMOUNTABLE|unmountable|媒介无法挂载，通常是因为文件系统损坏|
+|MEDIA_EJECTING|ejecting|媒介正在退出|
+
+如果返回的是`MEDIA_MOUNTED`或`MEDIA_MOUNTED_READ_ONLY`，那么至少是可以访问的。
 
 ## File类
 
@@ -531,6 +572,50 @@ context.openFileInput("test.txt").bufferedReader().useLines { lines ->
 
 #### 创建和删除缓存文件
 
+创建缓存文件有两种方式，一种通过调用File的扩展函数，另一种则是构建File对象：
+
+```
+/*方式一*/
+File.createTempFile(fileName,fileExtension,cacheDir)
+
+/*方式二*/
+File(cacheDir,fileName).apply {
+    if (!exists()) {
+        createNewFile()
+    }
+}
+```
+
+方式一中，需要用户传入文件名、文件扩展名以及cache目录路径，如果文件扩展名为空，系统会自动为文件添加`.tmp`扩展名。此外，系统还会在文件名后面自行添加一串数字。如果介意的话就使用方式二，这样可以确保文件名和文件扩展名都是由用户自行决定的。
+
+删除缓存文件也有对应的两种方式：
+
+```
+/*方式一*/
+File(cacheDir,fileName).delete()
+
+/*方式二*/
+context.deleteFile(cacheFileName)
+```
+
+>注意，方式二不光能删除缓存文件，只要在应用专属存储范围内能搜索到的文件都可以删。
+
+上面两种方式都是用于删除**单个**缓存文件，如果要清理cache目录下的所有文件，那么就得构建一个File对象遍历目录然后删除：
+
+```
+File(cacheDir.toString()).listFiles()?.let { 
+    for (i in it) {
+        i.delete()
+    }
+}
+```
+
+还有一种情况是存储空间不足，需要清理**所有**应用的缓存文件，那么就可以发送一条携带有action参数`ACTION_CLEAR_APP_CACHE`的隐式Intent广播。Google官方对此作出了一个提醒：
+
+>The ACTION_CLEAR_APP_CACHE intent action can substantially affect device battery life and might remove a large number of files from the device.
+>
+>以`ACTION_CLEAR_APP_CACHE`作为action参数的Intent会对设备电量产生显著影响并移除大量文件。
+
 ### 访问共享存储的数据文件
 
 共享存储的数据文件包括多媒体、文档以及其他可以被共享使用的文件（Shared Preferences和数据库不在此列），如果要访问它们，就必须在AndroidManifest当中声明以下权限：
@@ -544,6 +629,42 @@ context.openFileInput("test.txt").bufferedReader().useLines { lines ->
 
 #### 访问多媒体文件
 
-#### 访问文档
+> *MediaStore API*
 
-#### 访问其他文件
+访问位于共享存储当中的多媒体文件——图片、视频以及音频等——需要用到一个非常重要的类：MediaStore。按照Google官方的说法，Android系统会自动扫描磁盘中的多媒体文件并进行分类，然后将它们的信息分别存进对应的表中进行维护，这样就提供了一个经过优化的媒体集合索引，称为媒体库：
+
++ 图片类：保存在`MediaStore.Images`表中
++ 视频类：保存在`MediaStore.Video`表中
++ 音频类：保存在`MediaStore.Audio`表中
++ 下载类：保存在`MediaStore.Downloads`表中，**Android 9（API = 28）以上才能使用**
+
+在针对Android 10（API = 29）及其以上版本开发的应用中，如果开发者使用了Scoped Storage（分区存储），那么可以通过`MediaStore.Files`来查看那些**由该应用创建的**图片和音视频文件——但是在大多数情况下应该是用不上的。如果没使用Scoped Storage，`MediaStore.Files`会展示所有类型的多媒体文件。
+
+MediaStore API需要和[ContentResolver](Android/contpro?id=使用content-resolver访问其他应用的数据)搭配使用。
+
+> *查询MediaStore中的多媒体文件*
+
+> *加载文件缩略图*
+
+> *打开多媒体文件*
+
+> *保存多媒体文件*
+
+> *更新多媒体文件*
+
+> *删除多媒体文件*
+
+
+#### 访问文档和其他文件
+
+> *Storage Access Framework*
+
+访问文档和其他文件需要用到一套工具：Storage Access Framework（存储访问框架）。
+
+> *创建文档*
+
+> *打开文档*
+
+> *授权访问目录内容*
+
+> *在指定位置执行操作*
