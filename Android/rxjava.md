@@ -155,21 +155,201 @@ RxJava支持流式操作。所谓流式操作，本质上就是一种基于事�
 
 要想知道有哪些方法可以调用，怎样调用以及何时调用，就得接着往下看。
 
-### 基础类
+### 关键类
 
 #### Observable
 
+Observable是被观察者的一种类型，官方对其描述为：
+
+>0..N flows, no backpressure
+
+这段描述的含义是，Observable对象可以产生0到N个事件流，但是不支持背压——所谓背压，是指在**异步**场景中，被观察者发送事件的速度**远快于**观察者的处理速度的情况下，一种告诉上游的被观察者降低发送速度的策略。背压机制的出发点就是进行流速控制，避免事件太多来不及处理引发内存溢出、程序崩溃等问题。
+
+Observable是RxJava中最为重要的核心类，它是一个泛型抽象类，提供了各类工厂方法和中间操作符，负责消费同步或者异步的数据流。
+
+更多内容详见[官方对Observable的说明](http://reactivex.io/RxJava/3.x/javadoc/io/reactivex/rxjava3/core/Observable.html)。
+
 #### Flowable
+
+Flowable是被观察者的另一种类型，官方对其描述为：
+
+>0..N flows, supporting Reactive-Streams and backpressure
+
+这段描述的含义是，Flowable对象可以产生0到N个事件流，且支持响应式流和背压。
+
+Flowable和Observable一样也是一个泛型抽象类，它跟Observable的主要区别在于，它实现了Publisher接口，采用的是响应式流发布者模式。除了提供各类工厂方法和中间操作符以外，还负责消费响应式数据流。
+
+更多内容详见[官方对Flowable的说明](http://reactivex.io/RxJava/3.x/javadoc/io/reactivex/rxjava3/core/Flowable.html)。
 
 #### Single
 
+Single是一种实现**单值响应**模式的类，官方对其描述为：
+
+>a flow of exactly 1 item or an error
+
+这段描述的含义是，Single只会产生一个事件流，而这个事件流只有两种类型，要么表示成功（有内容返回），要么表示失败（返回一个错误）。
+
+更多内容详见[官方对Single的说明](http://reactivex.io/RxJava/3.x/javadoc/io/reactivex/rxjava3/core/Single.html)。
+
 #### Completable
+
+Completable是一个实现CompletableSource接口的泛型抽象类，官方对其描述为：
+
+>a flow without items but only a completion or error signal
+
+这段描述的含义是，Completable只会产生一个提示完成或异常，且不带任何返回值的事件流。
+
+Completable在行为上跟Observable有些相似，但它只会发送完成事件和异常事件，并不像其他类那样还发送普通事件或成功事件。
+
+更多内容详见[官方对Completable的说明](http://reactivex.io/RxJava/3.x/javadoc/io/reactivex/rxjava3/core/Completable.html)。
 
 #### Maybe
 
+Maybe是一个实现了MaybeSource接口的泛型抽象类，官方对其描述为：
+
+>a flow with no items, exactly one item or an error
+
+这段描述的含义是，Maybe只会产生一个没有返回值，或仅有一个返回值，亦或是返回一个异常的事件流。
+
+更多内容详见[官方对Maybe的说明](http://reactivex.io/RxJava/3.x/javadoc/io/reactivex/rxjava3/core/Maybe.html)。
+
 #### Disposable
+
+Disposable是一个接口，主要定义有`dispose()`、`isDisposed()`、`disposed()`以及`fromXXX()`等方法。Disposable对象常见于观察者的实现方法中，主要用于调用`dispose()`方法中断事件流的处理，从外面看就是程序被中断直接跳到执行完毕的环节了。
+
+Disposable对象可以中断Observable、Completable以及Maybe等类型对象的产生的事件流。
+
+更多内容详见[官方对Disposable的说明](http://reactivex.io/RxJava/3.x/javadoc/io/reactivex/rxjava3/disposables/Disposable.html)。
 
 ### 操作符
 
+RxJava的操作符（operators）实际上就是一系列可供调用的方法，它们承担着不同的任务，发挥着不同的作用。按照这些操作符的作用，大致可以划分为这几类：
+
++ 创建操作符
++ 延时操作符
++ 条件操作符
++ 过滤操作符
++ 转换操作符
++ 其他操作符
+
+操作符所处的位置，就是在“事件传递过程”当中，主要负责按照开发者的需要对事件进行加工处理。
+
+#### 创建操作符
+
+常用的创建操作符有：`create()`、`just()`、`fromXXX()`、`empty()`、`error()`以及`never()`等。
+
+|操作符|用途|说明|
+|:--|:--|:--|
+|`create()`|创建一个被观察者对象||
+|`just()`|创建一个被观察者对象并直接发送事件|最多传入10个参数，可自动推断类型|
+|`fromXXX()`|创建一个被观察者对象并直接发送事件|所发送的事件需要以一定形式组织起来，如数组、集合等|
+|`empty()`|创建一个被观察者对象并发送完成事件|观察者接收后直接调用`onCompleted()`|
+|`error()`|创建一个被观察者对象并发送异常事件|观察者接收后直接调用`onError()`|
+|`never()`|创建一个被观察者对象，但不发送任何事件|观察者接收后什么方法都不会调用|
+
+#### 延时操作符
+
+常用的延时操作符有：`delay()`、`defer()`、`timer()`、`interval()`、`intervalRange()`、`range()`以及`rangeLong()`等。
+
+|操作符|用途|说明|
+|:--|:--|:--|
+|`delay()`|被观察者延迟一段时间再发送事件||
+|`defer()`|直到有观察者订阅时，才动态创建被观察者并发送事件||
+|`timer()`|创建一个被观察者对象并在一段时间后发送一个数值0||
+|`interval()`|创建一个被观察者对象并且每隔一段时间就发送事件||
+|`intervalRange()`|创建一个被观察者对象并且每隔一段时间就发送事件|可指定范围|
+|`range()`|创建一个被观察者对象并连续发送一个事件序列|同上|
+|`rangeLong()`|创建一个被观察者对象并连续发送一个事件序列|同上|
+
+#### 条件操作符
+
+常用的条件操作符有：`single()`、`singleOrDefault()`、`all()`、`amb()`、`ambWith()`、`contains()`、`exists()`、`isEmpty()`、`defaultIfEmpty()`、`switchIfEmpty()`、`sequenceEqual()`、`skipUntil()`、`skipWhile()`、`takeUntil()`以及`takeWhile()`等。
+
+|操作符|用途|说明|
+|:--|:--|:--|
+|`single()`|检测被观察者产生的事件是否只有一个，否则报错||
+|`singleOrDefault()`|||
+|`all()`|如果原被观察者正常终止且每一个时间都满足条件则返回true，否则返回false|接收一个函数参数，创建并返回一个单布尔值的被观察者|
+|`amb()`|对于给定的多个被观察者，只发送首先发送事件的那个被观察者的所有数据||
+|`ambWith()`|||
+|`contains()`|接收一个特定值作为参数，判定原被观察者是否发送该值|内部调用了`exists()`，默认不在任何特定调度器上执行|
+|`exists()`|接受一个函数参数，在函数中，对原被观察者发送的数据，设定比对条件并做判断||
+|`isEmpty()`|判定原始被观察者是否有发送数据||
+|`defaultIfEmpty()`|接受一个备用数据，若原被观察者没有发送任何数据便正常终止，则以备用数据创建一个被观察者并发送事件||
+|`switchIfEmpty()`|若原始被观察者正常终止后仍未发送任何数据，就调用备用被观察者发送数据||
+|`sequenceEqual()`|接收两个被观察者和一个函数参数，在函数参数中，比较两个被观察者发送的数据是否相同|默认不在任何特定的调度器上执行|
+|`skipUntil()`|在观察者订阅原被观察者时，忽略原被观察者发送的数据，直到第二个被观察者发送一项数据时，才开始发送原观察者已经发送的数据|同上|
+|`skipWhile()`|忽略原被观察者发送的数据，直到这些数据不满足一个指定的条件时才开始发送原被观察者发送的数据|同上|
+|`takeUntil()`|与`skipUntil()`相反|同上|
+|`takeWhile()`|与`skipWhile()`相反|同上|
+
+#### 过滤操作符
+
+常用的过滤操作符有：`take()`、`takeFirst()`、`takeLast()`、`skip()`、`skipFirst()`、`skipLast()`、`first()`、`last()`、`firstOrDefault()`、`lastOrDefault()`、`filter()`、`ofType()`、`elementAt()`、`elementAtOrDefault()`、`elementAtOrError()`、`firstElement()`、`lastElement()`、`ignoreElements()`、`distinct()`、`distinctUntilChanged()`、`timeout()`、 `debounce()`以及`throtleWithTimeout()`等。
+
+|操作符|用途|说明|
+|:--|:--|:--|
+|`take()`|发送所有数据||
+|`takeFirst()`|只发送第一项数据|不满足发送条件不会抛异常|
+|`takeLast()`|只发送最后一项数据|同上|
+|`skip()`|跳过所有数据不发送||
+|`skipFirst()`|跳过第一项数据开始发送||
+|`skipLast()`|除最后一项数据外，其他数据全部发送||
+|`first()`|只发送第一项数据|不满足发送条件就抛异常|
+|`last()`|只发送最后一项数据|同上|
+|`firstOrDefault()`|只发送满足条件的第一项数据，否则就发送默认值||
+|`lastOrDefault()`|只发送满足条件的最后一项数据没否则就发送默认值||
+|`filter()`|过滤掉不满足发送条件的事件|过滤条件可自定义|
+|`ofType()`|过滤指定类型的事件||
+|`elementAt()`|发送处于某个范围/位置的数据|内部通过`OperatorElementAt()`过滤|
+|`elementAtOrDefault()`|发送处于某个范围/位置的数据，超出范围就发送默认值|同上|
+|`elementAtOrError()`|发送处于某个范围/位置的数据，超出范围就抛异常|同上|
+|`firstElement()`|仅选取第一个数据||
+|`lastElement()`|仅选取最后一个数据||
+|`ignoreElements()`|丢弃所有数据，只发射错误或正常终止的通知|内部通过`OperatorIgnoreElements()`实现|
+|`distinct()`|过滤重复数据|内部通过`OperatorDistinct()`实现|
+|`distinctUntilChanged()`|过滤掉连续重复的数据|内部通过`OperatorDistinctUntilChanged()`实现|
+|`timeout()`|如果原被观察者在指定时间内未发送任何数据，就发送一个异常或者使用备用被观察者||
+|`debounce()`|根据指定的时间间隔进行限流||
+|`throtleWithTimeout()`|根据指定的时间间隔进行限流|若两次发送的时间间隔小于指定时间就丢弃前一次数据，直到指定时间内没有新数据发送，才会发送后一次的数据|
+
+#### 转换操作符
+
+常用的变换操作符有：`map()`、`flatMap()`、`concatMap()`、`switchMap()`、`cast()`、`concat()`、`merge()`、`zip()`、`reduce()`、`collect()`、`startWith()`以及`compose()`等。
+
+|操作符|用途|说明|
+|:--|:--|:--|
+|`map()`|将被观察者发送的事件转换为其他任意类型的事件||
+|`flatMap()`|对被观察者发送的数据都应用一个函数，该函数返回一个被观察者对象，合并这些被观察者并发送出去|新合并生成的事件序列顺序是无序的，即与旧序列发送事件的顺序无关|
+|`concatMap()`|同`flatMap()`|新合并生成的事件序列顺序是有序的|
+|`switchMap()`|当原被观察者发送一个新事件时，若旧事件订阅未完成，就取消对它的订阅和监听，转向监听新事件||
+|`cast()`|将原被观察者发送的每项数据都强制转换为指定类型，然后再发送|所相互转换的类之间需要存在某种关系，如继承和实现|
+|`concat()`|组合多个被观察者一起发送数据，合并后按发送顺序串行执行||
+|`merge()`|组合多个被观察者一起发送数据，合并后按时间线并行执行||
+|`zip()`|合并多个被观察者发送的事件，生成一个新的事件序列再发送|事件会严格按照原先事件序列进行对位合并，最终合并的事件数量等于被观察者当中最少的那个|
+|`reduce()`|把被观察者需要发送的事件聚合成一个事件后再发送|自定义聚合条件，前两个数据聚合得到结果后再与第三个数据聚合，以此类推|
+|`collect()`|将被观察者发送的事件收集到一个数据结构里||
+|`startWith()`|在一个被观察者发送事件前，追加发送一些数据或一个新的被观察者||
+|`compose()`|||
+
+#### 其他操作符
+
+其他操作符中比较常用的有：`retry()`、`retryUntil()`、`retryWhen()`、`repeat()`、`repeatWhen()`以及`count()`等。
+
+|操作符|用途|说明|
+|:--|:--|:--|
+|`retry()`|当出现错误时，让被观察者重新发送事件||
+|`retryUntil()`|出现错误后，判断是否需要重新发送数据||
+|`retryWhen()`|遇到错误时，将发生的错误传递给一个新的被观察者，并决定是否需要重新订阅原始被观察者发送的事件||
+|`repeat()`|被观察者重复发送事件|重载方法可设置重复次数|
+|`repeatWhen()`|被观察者在满足一定条件时重复发送事件||
+|`count()`|统计被观察者发送事件的数量||
+
 ### 异步任务
+
+### 其他补充
+
+#### 常用术语
+
+#### 背压策略
 
