@@ -45,22 +45,17 @@
   * <font color=blue>常见开源框架</font>
     * [EventBus](Android/eb.md)
     * [RxJava](Android/rxjava.md)
-    * [腾讯Tinker](Android/tinker.md)
-    * [腾讯Bugly](Android/bugly.md)
-    * [阿里云OSS](Android/oss.md)
     * [Glide](Android/glide.md)
-    * [Picasso](xxx)
     * [MPAndroidChart](Android/mpandroid.md)
-    * [MaterialDateTimePicker](xxx)
-    * [Blurry](xxx)
   * <font color=blue>其他</font>
     * [Module开发](Android/mod.md)
     * [正则表达式](Android/regx.md)
+    * [加密算法](xxxx)
+    * [腾讯Bugly集成](Android/bugly.md)
+    * [阿里云OSS集成](Android/oss.md)
   * <font color=blue>Android进阶</font>
     * [Android虚拟机：Dalvik](Android/dvm.md)
     * [Android虚拟机：ART](Android/art.md)
-    * [热修复](Android/ndk.md)
-    * [插件化](Android/ndk.md)
     * [NDK开发](Android/ndk.md)
     * [AOSP与定制Android系统](Android/ndk.md)
 * <font color=red>**Kotlin进阶**</font>
