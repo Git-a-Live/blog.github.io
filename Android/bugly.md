@@ -60,7 +60,6 @@ android {
     defaultConfig {
         ···
         ndk {
-            
             /*
             * 设置支持的SO库架构（armeabi、x86、armeabi-v7a、x86_64或arm64-v8a）
             * 请注意只设置支持的，不支持的不要添加；如果支持多个架构，用","进行分隔
@@ -106,40 +105,40 @@ def baseApkDir = "app-0208-15-10-00"
  */
 tinkerSupport {
 
-    // 开启tinker-support插件，默认值true
+    //开启tinker-support插件，默认值true
     enable = true
 
-    // 指定归档目录，默认值当前module的子目录tinker
+    //指定归档目录，默认值当前module的子目录tinker
     autoBackupApkDir = "${bakPath}"
 
-    // 是否启用覆盖tinkerPatch配置功能，默认值false
-    // 开启后tinkerPatch配置不生效，即无需添加tinkerPatch
+    //是否启用覆盖tinkerPatch配置功能，默认值false
+    //开启后tinkerPatch配置不生效，即无需添加tinkerPatch
     overrideTinkerPatchConfiguration = true
 
-    // 编译补丁包时，必需指定基线版本的apk，默认值为空
-    // 如果为空，则表示不是进行补丁包的编译
-    // @{link tinkerPatch.oldApk }
+    //编译补丁包时，必需指定基线版本的apk，默认值为空
+    //如果为空，则表示不是进行补丁包的编译
+    //@{link tinkerPatch.oldApk }
     baseApk = "${bakPath}/${baseApkDir}/app-release.apk"
 
-    // 对应tinker插件applyMapping
+    //对应tinker插件applyMapping
     baseApkProguardMapping = "${bakPath}/${baseApkDir}/app-release-mapping.txt"
 
-    // 对应tinker插件applyResourceMapping
+    //对应tinker插件applyResourceMapping
     baseApkResourceMapping = "${bakPath}/${baseApkDir}/app-release-R.txt"
 
-    // 构建基准包和补丁包都要指定不同的tinkerId，并且必须保证唯一性
+    //构建基准包和补丁包都要指定不同的tinkerId，并且必须保证唯一性
     tinkerId = "base-1.0.1"
 
-    // 构建多渠道补丁时使用
-    // buildAllFlavorsDir = "${bakPath}/${baseApkDir}"
+    //构建多渠道补丁时使用
+    //buildAllFlavorsDir = "${bakPath}/${baseApkDir}"
 
-    // 是否启用加固模式，默认为false.(tinker-spport 1.0.7起支持）
-    // isProtectedApp = true
+    //是否启用加固模式，默认为false.(tinker-spport 1.0.7起支持）
+    //isProtectedApp = true
 
-    // 是否开启反射Application模式，设为true会方便一些
+    //是否开启反射Application模式，设为true会方便一些
     enableProxyApplication = true
 
-    // 是否支持新增非export的Activity（注意：设置为true才能修改AndroidManifest文件）
+    //是否支持新增非export的Activity（注意：设置为true才能修改AndroidManifest文件）
     supportHotplugComponent = true
 
 }
@@ -172,13 +171,13 @@ tinkerPatch {
     }
     sevenZip {
         zipArtifact = "com.tencent.mm:SevenZip:1.1.10"
-//        path = "/usr/local/bin/7za"
+        //path = "/usr/local/bin/7za"
     }
     buildConfig {
         keepDexApply = false
         //tinkerId = "1.0.1-base"
-        //applyMapping = "${bakPath}/${appName}/app-release-mapping.txt" //  可选，设置mapping文件，建议保持旧apk的proguard混淆方式
-        //applyResourceMapping = "${bakPath}/${appName}/app-release-R.txt" // 可选，设置R.txt文件，通过旧apk文件保持ResId的分配
+        //applyMapping = "${bakPath}/${appName}/app-release-mapping.txt" //可选，设置mapping文件，建议保持旧apk的proguard混淆方式
+        //applyResourceMapping = "${bakPath}/${appName}/app-release-R.txt" //可选，设置R.txt文件，通过旧apk文件保持ResId的分配
     }
 }
 ```
