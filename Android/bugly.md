@@ -31,7 +31,7 @@
 ![](pics/bugly_6.png)
 ![](pics/bugly_7.png)
 
-在产品信息当中，App ID和App Key是一个应用接入Bugly管理平台的唯一凭证，也是需要保密的关键信息。成员管理以及角色权限等部分与Bugly集成的内容没有太大关系，这里不做赘述。
+在产品信息当中，App ID和App Key是一个应用接入Bugly管理平台的唯一凭证，也是需要保密的关键信息。成员管理以及角色权限等部分与Bugly集成的内容没有太大关系，这里不做赘述。异常上报、运营统计以及应用升级功能，操作起来也相对简单，因此同样不做深入介绍。
 
 ## 添加插件依赖
 
@@ -265,3 +265,32 @@ class MyApplicationLike(
 ```
 
 ## 其他配置
+
++ **Activity配置**
+
+```
+<activity
+    android:name="com.tencent.bugly.beta.ui.BetaActivity"
+    android:configChanges="keyboardHidden|orientation|screenSize|locale"
+    android:theme="@android:style/Theme.Translucent" />
+```
+
++ **FileProvider配置**
+
+如果要兼容Android N或者以上的设备，必须要在AndroidManifest文件中配置FileProvider来访问共享路径的文件：
+
+```
+<provider
+    android:name="android.support.v4.content.FileProvider"
+    android:authorities="${applicationId}.fileProvider"
+    android:exported="false"
+    android:grantUriPermissions="true">
+    <meta-data
+        android:name="android.support.FILE_PROVIDER_PATHS"
+        android:resource="@xml/provider_paths"/>
+</provider>
+```
+
++ **安装包签名**
+
+无论是安装在设备上的应用还是上传到Bugly平台的更新包，都必须是**同样签名的Release版本apk文件**，否则就会出现能够下载但是无法安装的问题。
