@@ -1,6 +1,6 @@
 协程（Coroutine），又称微线程或纤程，是一种并发设计模式。按照Google官方的说法，Kotlin协程的主要用处在于“**（以同步的写法）来简化异步执行的代码**”，从而避免不自觉地陷入“回调地狱（Callback Hell）”。因此在使用Kotlin协程的时候，开发者无需过多关心异步任务的线程切换问题，几乎只要按照同步的思路编写程序即可。Google官方对于协程十分看重，并且已经在Android R中替代了AsyncTask的使用。
 
-尽管协程本身是一个很早提出的概念，但直到近些年才在某些语言中（如Go、Lua、Python、Kotlin甚至C++20等）广泛运用。值得注意的是，Kotlin协程与其他语言的协程存在一个本质上的差异：作为一种基于JVM的语言，Kotlin在底层还是要靠线程来实现协程——<font color=red>这意味着Kotlin协程在实质上，依然和Java的Executors、Future和ForkJoin，以及Android的Handler和AsyncTask一样是一种线程框架</font>。因此Kotlin协程和其他语言的协程并不是同一种东西，绝不可将它们混为一谈，更不能把其他语言的协程概念和特点套用到Kotlin协程上。
+尽管协程本身是一个很早提出的概念，但直到近些年才在某些语言中（如Go、Lua、Python、Kotlin甚至C++20等）广泛运用。值得注意的是，Kotlin协程与其他语言的协程存在一个本质上的差异：作为一种基于JVM的语言，Kotlin在底层还是要靠线程来实现协程——<font color=red>这意味着Kotlin协程在实质上，依然和Java的Executors、Android的Handler和AsyncTask一样是一种线程框架</font>。因此Kotlin协程和其他语言的协程并不是同一种东西，绝不可将它们混为一谈，更不能把其他语言的协程概念和特点套用到Kotlin协程上。
 
 在了解协程之前，需要先掌握线程的用法。因为只有通过逐步接触**最原始**的线程用法，了解到基于原始线程用法执行并发任务的不便之后，才能够理解为什么会有Executors、AsyncTask乃至Kotlin协程这些线程框架的出现和应用。
 

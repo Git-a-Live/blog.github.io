@@ -31,7 +31,6 @@
     * [摄像头与照片](Android/photo.md)
     * [音视频](Android/msc.md)
     * [蓝牙](Android/bt.md)
-    * [设备定位](Android/ndk.md)
   * <font color=blue>UI界面</font>
     * [基本布局](Android/lo.md)
     * [自定义控件](Android/controller.md)
@@ -50,7 +49,6 @@
   * <font color=blue>其他</font>
     * [Module开发](Android/mod.md)
     * [正则表达式](Android/regx.md)
-    * [加密算法](xxxx)
     * [腾讯Bugly集成](Android/bugly.md)
     * [阿里云OSS集成](Android/oss.md)
   * <font color=blue>Android进阶</font>
