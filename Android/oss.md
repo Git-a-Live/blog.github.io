@@ -568,3 +568,498 @@ val task = oss.asyncGetObject(request,
 // 等待完成限定条件下载任务
 task.waitUntilFinished()
 ```
+
+### 管理文件
+
+#### 判断文件是否存在
+
+OSS Android SDK提供了专门的同步接口以检测Bucket当中是否存在指定文件，其示例代码如下：
+
+```
+try {
+    // objectKey等同于objectName，表示下载文件到OSS时需要指定包含文件后缀在内的完整路径，例如abc/efg/123.jpg
+    if (oss.doesObjectExist("<bucketName>", "<objectKey>")) {
+        Log.d("doesObjectExist", "object exist.")
+    } else {
+        Log.d("doesObjectExist", "object does not exist.")
+    }
+} catch (e: ClientException) {
+    // 本地异常，如网络异常等
+    e.printStackTrace()
+} catch (e: ServiceException) {
+    // 服务异常
+    Log.e("ErrorCode", e.errorCode)
+    Log.e("RequestId", e.requestId)
+    Log.e("HostId", e.hostId)
+    Log.e("RawMessage", e.rawMessage)
+}
+```
+
+#### 获取文件访问权限
+
+文件访问权限包括私有、公共读和公共读写三种，具体区别如下表所示：
+
+|权限|描述|
+|:--|:--|
+|私有|文件的拥有者和授权用户有该文件的读写权限，其他用户没有权限操作该文件|
+|公共读|文件的拥有者和授权用户有该文件的读写权限，其他用户只有文件的读权限|
+|公共读写|所有用户都有该文件的读写权限|
+
+获取Bucket指定文件访问权限的示例代码如下：
+
+```
+// 填写Bucket名称和Object完整路径，Object完整路径中不能包含Bucket名称
+val request = GetObjectACLRequest("examplebucket", "exampleobject.txt")
+// 获取文件访问权限
+oss.asyncGetObjectACL(request,
+        object : OSSCompletedCallback<GetObjectACLRequest?, GetObjectACLResult> {
+    override fun onSuccess(request: GetObjectACLRequest?, result: GetObjectACLResult) {
+        Log.d("GetObjectACL", "Success!")
+        Log.d("ObjectAcl", result.objectACL)
+        Log.d("Owner", result.objectOwner)
+        Log.d("ID", result.objectOwnerID)
+    }
+
+    override fun onFailure(
+            request: GetObjectACLRequest?,
+            clientException: ClientException,
+            serviceException: ServiceException
+    ) {
+        // 请求异常
+        if (clientException != null) {
+        // 客户端异常，例如网络异常等
+            clientException.printStackTrace()
+        }
+        if (serviceException != null) {
+            // 服务端异常
+            Log.e("ErrorCode", serviceException.errorCode)
+            Log.e("RequestId", serviceException.requestId)
+            Log.e("HostId", serviceException.hostId)
+            Log.e("RawMessage", serviceException.rawMessage)
+        }
+    }
+})
+```
+
+#### 拷贝文件
+
+所谓拷贝文件，是指将文件从一个存储空间（源存储空间）拷贝到**同一地域**的另一个存储空间（目标存储空间）中。拷贝文件的示例代码如下：
+
+```
+// 创建copy请求
+val copyObjectRequest = CopyObjectRequest("<srcBucketName>", "<srcObjectKey>",
+                "<destBucketName>", "<destObjectKey>")
+// 可选设置copy文件元信息
+val objectMetadata = ObjectMetadata();
+// 在Web服务中，Content-Type用于设定文件的类型，决定以哪种形式、什么编码读取这个文件
+// 若上传文件时没有指定Content-Type，SDK会根据后缀自动添加Content-Type
+// 某些情况下，对于上传的文件需要设置Content-Type，否则文件不能以需要的形式和编码来读取
+objectMetadata.contentType = "application/octet-stream";
+copyObjectRequest.newObjectMetadata = objectMetadata;
+// 异步copy
+val copyTask = oss.asyncCopyObject(copyObjectRequest, 
+        object : OSSCompletedCallback<CopyObjectRequest?, CopyObjectResult?> {
+    override fun onSuccess(request: CopyObjectRequest?, result: CopyObjectResult?) {
+        Log.d("copyObject", "copy success!")
+    }
+
+    override fun onFailure(
+            request: CopyObjectRequest?, 
+            clientExcepion: ClientException, 
+            serviceException: ServiceException
+    ) {
+        // 请求异常
+        if (clientExcepion != null) {
+            // 本地异常，如网络异常等
+            clientExcepion.printStackTrace()
+        }
+        if (serviceException != null) {
+            // 服务异常
+            Log.e("ErrorCode", serviceException.errorCode)
+            Log.e("RequestId", serviceException.requestId)
+            Log.e("HostId", serviceException.hostId)
+            Log.e("RawMessage", serviceException.rawMessage)
+        }
+    }
+})
+```
+
+#### 列举文件
+
+列举文件是指列举Bucket中的所有文件（Object）、指定个数的文件以及指定前缀的文件等。
+
++ **列举指定个数的文件**
+
+示例代码如下：
+
+```
+// 填写Bucket名称
+val request = ListObjectsRequest("examplebucket")
+// 填写返回文件的最大个数。如果不设置此参数，则默认值为100，maxkeys的取值不能大于1000
+request.maxKeys = 20
+
+oss.asyncListObjects(request, 
+        object : OSSCompletedCallback<ListObjectsRequest?, ListObjectsResult> {
+    override fun onSuccess(request: ListObjectsRequest?, result: ListObjectsResult) {
+        for (objectSummary in result.objectSummaries) {
+            Log.i("ListObjects", objectSummary.key)
+        }
+    }
+
+    override fun onFailure(
+            request: ListObjectsRequest?, 
+            clientException: ClientException, 
+            serviceException: ServiceException
+    ) {
+        // 请求异常。
+        if (clientException != null) {
+            // 客户端异常，例如网络异常等。
+            clientException.printStackTrace()
+        }
+        if (serviceException != null) {
+            // 服务端异常。
+            Log.e("ErrorCode", serviceException.errorCode)
+            Log.e("RequestId", serviceException.requestId)
+            Log.e("HostId", serviceException.hostId)
+            Log.e("RawMessage", serviceException.rawMessage)
+        }
+    }
+})
+```
+
++ **列举指定前缀的文件**
+
+示例代码如下：
+
+```
+// 填写Bucket名称
+val request = ListObjectsRequest("examplebucket")
+// 填写前缀
+request.prefix = "file"
+oss.asyncListObjects(request, 
+        object : OSSCompletedCallback<ListObjectsRequest?, ListObjectsResult> {
+    override fun onSuccess(request: ListObjectsRequest?, result: ListObjectsResult) {
+        for (objectSummary in result.objectSummaries) {
+            Log.i("ListObjects", objectSummary.key)
+        }
+    }
+
+    override fun onFailure(
+            request: ListObjectsRequest?, 
+            clientException: ClientException, 
+            serviceException: ServiceException
+    ) {
+        // 请求异常
+        if (clientException != null) {
+            // 客户端异常，例如网络异常等
+            clientException.printStackTrace()
+        }
+        if (serviceException != null) {
+            // 服务端异常
+            Log.e("ErrorCode", serviceException.errorCode)
+            Log.e("RequestId", serviceException.requestId)
+            Log.e("HostId", serviceException.hostId)
+            Log.e("RawMessage", serviceException.rawMessage)
+        }
+    }
+})
+```
+
++ **列举指定marker之后的文件**
+
+示例代码如下：
+
+```
+// 填写Bucket名称
+val request = ListObjectsRequest("examplebucket")
+// 填写marker。从marker之后按字母排序的第一个开始返回文件
+// 如果marker在存储空间中不存在，则会从符合marker字母排序的下一个开始返回文件
+request.marker = "exampleobject.txt"
+// 异步操作
+oss.asyncListObjects(request,
+        object : OSSCompletedCallback<ListObjectsRequest?, ListObjectsResult> {
+    override fun onSuccess(request: ListObjectsRequest?, result: ListObjectsResult) {
+        for (objectSummary in result.objectSummaries) {
+            Log.i("ListObjects", objectSummary.key)
+        }
+    }
+
+    override fun onFailure(
+            request: ListObjectsRequest?,
+            clientException: ClientException,
+            serviceException: ServiceException
+    ) {
+        // 请求异常
+        if (clientException != null) {
+            // 客户端异常，例如网络异常等
+            clientException.printStackTrace()
+        }
+        if (serviceException != null) {
+            // 服务端异常
+            Log.e("ErrorCode", serviceException.errorCode)
+            Log.e("RequestId", serviceException.requestId)
+            Log.e("HostId", serviceException.hostId)
+            Log.e("RawMessage", serviceException.rawMessage)
+        }
+    }
+})
+```
+
++ **分页列举所有文件**
+
+示例代码如下：
+
+```
+private var marker: String? = null
+private var isCompleted = false
+
+// 分页列举所有object
+fun getAllObject() {
+    do {
+        val task = getObjectList()
+        // 阻塞等待请求完成获取NextMarker，请求下一页时需要将请求的marker设置为上一页请求返回的NextMarker。第一页无需设置
+        // 示例中通过循环分页列举数据，因此需要阻塞等待请求完成获取NextMarker才能请求下一页数据，实际使用时可根据实际场景判断是否需要阻塞
+        task.waitUntilFinished()
+    } while (!isCompleted)
+}
+
+// 列举一页文件
+fun getObjectList(): OSSAsyncTask<*> {
+    //填写Bucket名称。
+    val request = ListObjectsRequest("examplebucket")
+    // 填写每页返回文件的最大个数。如果不设置此参数，则默认值为100，maxkeys的取值不能大于1000。
+    request.maxKeys = 20
+    request.marker = marker
+    return oss.asyncListObjects(request,
+            object : OSSCompletedCallback<ListObjectsRequest?, ListObjectsResult> {
+        override fun onSuccess(request: ListObjectsRequest?, result: ListObjectsResult) {
+            for (objectSummary in result.objectSummaries) {
+                Log.i("ListObjects", objectSummary.key)
+            }
+            // 最后一页。
+            if (!result.isTruncated) {
+                isCompleted = true
+                return
+            }
+            // 下一次列举文件的marker。
+            marker = result.nextMarker
+        }
+
+        override fun onFailure(
+                request: ListObjectsRequest?,
+                clientException: ClientException,
+                serviceException: ServiceException
+        ) {
+            isCompleted = true
+            // 请求异常
+            if (clientException != null) {
+                // 客户端异常，例如网络异常等
+                clientException.printStackTrace()
+            }
+            if (serviceException != null) {
+                // 服务端异常
+                Log.e("ErrorCode", serviceException.errorCode)
+                Log.e("RequestId", serviceException.requestId)
+                Log.e("HostId", serviceException.hostId)
+                Log.e("RawMessage", serviceException.rawMessage)
+            }
+        }
+    })
+}
+```
+
++ **分页列举指定前缀的文件**
+
+示例代码如下：
+
+```
+private var marker: String? = null
+private var isCompleted = false
+
+// 分页列举所有文件。
+fun getAllObject() {
+    do {
+        val task = getObjectList()
+        // 阻塞等待请求完成获取NextMarker，请求下一页时需要将请求的marker设置为上一页请求返回的NextMarker。第一页无需设置
+        // 示例中通过循环分页列举数据，因此需要阻塞等待请求完成获取NextMarker才能请求下一页数据，实际使用时可根据实际场景判断是否需要阻塞
+        task.waitUntilFinished()
+    } while (!isCompleted)
+}
+
+// 列举一页文件
+fun getObjectList(): OSSAsyncTask<*> {
+    // 填写Bucket名称
+    val request = ListObjectsRequest("examplebucket")
+    // 填写每页返回文件的最大个数。如果不设置此参数，则默认值为100，maxkeys的取值不能大于1000
+    request.maxKeys = 20
+    // 填写前缀
+    request.prefix = "file"
+    request.marker = marker
+    return oss.asyncListObjects(request, 
+            object : OSSCompletedCallback<ListObjectsRequest?, ListObjectsResult> {
+        override fun onSuccess(request: ListObjectsRequest?, result: ListObjectsResult) {
+            for (objectSummary in result.objectSummaries) {
+                Log.i("ListObjects", objectSummary.key)
+            }
+            // 最后一页
+            if (!result.isTruncated) {
+                isCompleted = true
+                return
+            }
+            // 下一次列举文件的marker
+            marker = result.nextMarker
+        }
+
+        override fun onFailure(
+                request: ListObjectsRequest?, 
+                clientException: ClientException, 
+                serviceException: ServiceException
+        ) {
+            isCompleted = true
+            // 请求异常
+            if (clientException != null) {
+                // 客户端异常，例如网络异常等
+                clientException.printStackTrace()
+            }
+            if (serviceException != null) {
+                // 服务端异常
+                Log.e("ErrorCode", serviceException.errorCode)
+                Log.e("RequestId", serviceException.requestId)
+                Log.e("HostId", serviceException.hostId)
+                Log.e("RawMessage", serviceException.rawMessage)
+            }
+        }
+    })
+}
+```
+
++ **列举名称包含特殊字符的文件**
+
+如果文件名称包含以下特殊字符，就需要进行编码传输：
+
++ 单引号（' '）
++ 双引号（" "）
++ and符号（&）
++ 尖括号（< >）
++ 顿号（、）
++ 中文
+
+>注意，阿里云OSS目前仅支持URL编码。
+
+示例代码如下：
+
+```
+// 填写Bucket名称
+val request = ListObjectsRequest("examplebucket")
+// 指定文件名称编码
+request.encodingType = "url"
+
+oss.asyncListObjects(request, 
+        object : OSSCompletedCallback<ListObjectsRequest?, ListObjectsResult> {
+    override fun onSuccess(request: ListObjectsRequest?, result: ListObjectsResult) {
+        for (objectSummary in result.objectSummaries) {
+            Log.i("ListObjects", URLDecoder.decode(objectSummary.key, "UTF-8"))
+        }
+    }
+
+    override fun onFailure(
+            request: ListObjectsRequest?, 
+            clientException: ClientException, 
+            serviceException: ServiceException
+    ) {
+        // 请求异常
+        if (clientException != null) {
+            // 客户端异常，例如网络异常等
+            clientException.printStackTrace()
+        }
+        if (serviceException != null) {
+            // 服务端异常
+            Log.e("ErrorCode", serviceException.errorCode)
+            Log.e("RequestId", serviceException.requestId)
+            Log.e("HostId", serviceException.hostId)
+            Log.e("RawMessage", serviceException.rawMessage)
+        }
+    }
+})
+```
+
+#### 删除文件
+
+删除文件是指删除Bucket内的单个或多个文件。要删除文件，需要确保用户对文件所在的Bucket有读写权限。
+
+删除单个文件的示例代码如下：
+
+```
+// 创建删除请求
+// 填写Bucket名称和Object完整路径。Object完整路径中不能包含Bucket名称
+val delete = DeleteObjectRequest("examplebucket", "exampleobject.txt")
+// 异步删除
+val deleteTask = oss.asyncDeleteObject(delete, 
+        object : OSSCompletedCallback<DeleteObjectRequest?, DeleteObjectResult?> {
+    override fun onSuccess(request: DeleteObjectRequest?, result: DeleteObjectResult?) {
+        Log.d("asyncDeleteObject", "success!")
+    }
+
+    override fun onFailure(
+            request: DeleteObjectRequest?, 
+            clientExcepion: ClientException, 
+            serviceException: ServiceException
+    ) {
+        // 请求异常
+        if (clientExcepion != null) {
+            // 客户端异常，例如网络异常等
+            clientExcepion.printStackTrace()
+        }
+        if (serviceException != null) {
+            // 服务端异常
+            Log.e("ErrorCode", serviceException.errorCode)
+            Log.e("RequestId", serviceException.requestId)
+            Log.e("HostId", serviceException.hostId)
+            Log.e("RawMessage", serviceException.rawMessage)
+        }
+    }
+})
+```
+
+批量删除多个文件的示例代码如下：
+
+```
+// 设置需要删除的多个Object完整路径。Object完整路径中不能包含Bucket名称
+val objectKeys: MutableList<String> = ArrayList()
+objectKeys.add("exampleobject.txt")
+objectKeys.add("testfolder/sampleobject.txt")
+
+// 设置为简单模式，只返回删除失败的文件列表
+val request = DeleteMultipleObjectRequest("examplebucket", objectKeys, true)
+
+oss.asyncDeleteMultipleObject(request, 
+        object : OSSCompletedCallback<DeleteMultipleObjectRequest?, DeleteMultipleObjectResult?> {
+    override fun onSuccess(request: DeleteMultipleObjectRequest?, result: DeleteMultipleObjectResult?) {
+        Log.i("DeleteMultipleObject", "success")
+    }
+
+    override fun onFailure(
+            request: DeleteMultipleObjectRequest?, 
+            clientException: ClientException, 
+            serviceException: ServiceException
+    ) {
+        // 请求异常
+        if (clientException != null) {
+            // 客户端异常，例如网络异常等
+            clientException.printStackTrace()
+        }
+        if (serviceException != null) {
+            // 服务端异常
+            Log.e("ErrorCode", serviceException.errorCode)
+            Log.e("RequestId", serviceException.requestId)
+            Log.e("HostId", serviceException.hostId)
+            Log.e("RawMessage", serviceException.rawMessage)
+        }
+    }
+})
+```
+
+批量删除文件时，每次最多删除1000个文件。返回结果包括详细模式和简单模式，默认返回模式为详细模式，根据实际情况来选用相应的返回模式。
+
++ 详细模式（verbose）：未设置isQuiet或者设置isQuiet为false，表示返回所有删除的文件列表。
++ 简单模式（quiet）：设置isQuiet为true，表示只返回删除失败的文件列表。
