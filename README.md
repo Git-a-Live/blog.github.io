@@ -5,3 +5,5 @@ This is my first blog for recording my studying experience, also the first websi
 I used to imagine that I would be a mechanical engineer one day after graduated from the college before 2019. However, I chose to be an Android developer, a programmer eventually.
 
 There are many reasons why I made such a decision. Some of them are too sensitive to discuss with my friends in public, which may get me in trouble (actually I'm not joking). But some are common, such as the salary, the life style and so on, they can be talked about in public and I don't need to be so careful and fearful. Well, finally I deprecated all ideas that work as a mechanical engineer and started to stay with codes instead of machine parts. 
+
+<iframe src="//player.bilibili.com/player.html?aid=290370363&bvid=BV1wf4y1W7Fj&cid=331136788&page=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"> </iframe>
