@@ -692,7 +692,32 @@ Kotlin协程的挂起是“非阻塞式”的，从本质上来说，就是指�
 
 ### 基本用法
 
-#### 开启/取消协程
+#### 前置工作
+
+在Android项目中使用协程，首先要通过Gradle导入相关依赖：
+
+```
+// 基本使用
+implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$specific_version"
+// 在ViewModel中使用viewModelScope
+implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$specific_version"
+// 使Room支持协程
+implementation "androidx.room:room-ktx:$specific_version"
+// 在Activity中使用lifecycleScope
+implementation "androidx.lifecycle:lifecycle-runtime-ktx:$specific_version"
+```
+
+#### 开启协程
+
+要在程序中开启一个协程，最为简单的方式如下：
+
+```
+GlobalScope.launch { 
+    // TODO       
+}
+```
+
+在`launch{···}`当中编写需要异步执行的代码，然后编译运行即可。
 
 
 
