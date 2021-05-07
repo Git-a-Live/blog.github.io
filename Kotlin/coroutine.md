@@ -725,17 +725,17 @@ GlobalScope.launch {
 }
 
 // 取消全局顶级协程的一种方式
-GlobalScope.cancel(null)
+GlobalScope.cancel()
 
 // 取消全局顶级协程的另一种方式
-GlobalScope.cancel("canceled by developer",null)
+GlobalScope.cancel("canceled by developer","exceptions")
 ```
 
 在`launch{}`当中编写需要异步执行的代码，然后编译运行即可。
 
 但是前面已经提到过，GlobalScope由于不绑定任何生命周期组件，手动管理相对麻烦，因此通常并不建议在正式的Android项目中使用。如果想要在正式的Android项目中使用协程，一般会选用MainScope、lifecycleScope以及viewModelScope这三个作用域来开启协程并进行管理。
 
-此外，GlobalScope开启的协程类似于[守护线程](#守护线程)，只要JVM结束运行，无论里面的协程代码是不是一个一直在执行的死循环，都会跟着被取消。
+此外，GlobalScope开启的协程类似于[守护线程](#守护线程)，只要虚拟机结束运行，无论里面的协程代码是不是一个一直在执行的死循环，都会跟着被取消。
 
 + **MainScope**
 
@@ -751,10 +751,10 @@ mainScope.launch {
 }
 
 // 取消MainScope协程的一种方式
-mainScope.cancel("Canceled by developer",null)
+mainScope.cancel("Canceled by developer","exceptions")
 
 // 取消MainScope协程的另一种方式
-mainScope.cancel(null)
+mainScope.cancel()
 ```
 
 >注意，必须对同一个MainScope对象进行开启和取消协程的操作，否则达不到管理协程的目的，还会引发内存泄漏问题。
@@ -769,7 +769,7 @@ lifecycleScope.launchWhenCreated {
     // TODO
 }
 
-// 在组件启动时开启携程
+// 在组件启动时开启协程
 lifecycleScope.launchWhenStarted {
     // TODO
 }
@@ -892,13 +892,71 @@ launch {
 }
 ```
 
-其中`Dispatchers.Default`是一种线程调度器，后面会进行详细的介绍。
+其中`Dispatchers.Default`是一种线程调度器，后面会进行详细的介绍。`withContext(){}`是一个主要用于同步执行并等待返回任务结果的协程构建器，
 
 在使用`async{}`构建器编写结构化并发代码时，如果任意一个子协程抛出异常，那么第一个子协程以及整个父协程都会被取消。此外，这种抛出异常和协程取消会按照父子协程的结构依次传递出去。
 
 ### 协程进阶
 
 #### 协程上下文与调度器
+
+启动协程需要三大元素：上下文、启动模式和协程体。这三大元素在协程源码中大致是这样的：
+
+```
+public fun CoroutineScope.launch(
+    context: CoroutineContext = EmptyCoroutineContext,
+    start: CoroutineStart = CoroutineStart.DEFAULT,
+    block: suspend CoroutineScope.() -> Unit
+): Job {
+    val newContext = newCoroutineContext(context)
+    val coroutine = if (start.isLazy)
+        LazyStandaloneCoroutine(newContext, block) else
+        StandaloneCoroutine(newContext, active = true)
+    coroutine.start(start, coroutine, block)
+    return coroutine
+}
+```
+
+协程体就不用再多介绍了，它接受的是一个被`suspend`关键字修饰的函数对象，对应的就是开发者在构建器中编写的协程代码。
+
++ **上下文**
+
+CoroutineContext类型的上下文用于为整个协程指定一个**调度器**。如果开发者没有显式指明协程需要使用什么样的调度器（即直接调用构建器开启协程），那么就是<font color=red><u>直接运行在父协程的上下文中</u></font>。
+
+目前Kotlin提供有以下几种调度器：
+
+|调度器|描述|
+|:--|:--|
+|`Dispatchers.Unconfined`|非受限调度器，适用于执行不消耗CPU时间的任务，以及不更新局限于特定线程的任何共享数据（如UI）的协程|
+|`Dispatchers.Default`|默认调度器，在主线程之外执行占用大量CPU资源的工作，使用共享的后台线程池，也用于GlobalScope开启的协程|
+|`Dispatchers.IO`|IO调度器，采用的是线程池，适合在主线程之外执行磁盘或网络I/O|
+|`Dispatchers.Main`|主线程调度器，只能用于与界面交互和执行快速工作|
+|`newSingleThreadContext()`|自定义线程调度器，实验性功能，使用结束后需要手动关闭线程或进行重用|
+
+根据不同的需求，选用相应的调度器，可以有效提高程序执行的效率和效果。
+
+>注意，非受限调度器是一种高级机制，可以在某些极端情况下提供帮助，而不需要调度协程以便稍后执行或是由此产生副作用，因为某些操作必须立即在协程中执行。非受限调度器不应该在通常的代码中使用。
+
++ **启动模式**
+
+CoroutineStart类型的参数为协程指定了启动模式，而在Kotlin协程当中，启动模式是一个枚举值，目前有一下四种：
+
+|启动模式|描述|
+|:--|:--|
+|`DEFAULT`|立即执行协程体|
+|`LAZY`|只有在需要的情况下运行|
+|`ATOMIC`|立即执行协程体，但在开始运行之前无法取消。被注解`@ExperimentalCoroutinesApi`标记为实验性功能|
+|`UNDISPATCHED`|立即在当前线程执行协程体，直到第一个挂起函数调用。被注解`@ExperimentalCoroutinesApi`标记为实验性功能|
+
+最常用的启动模式实际上只有`DEFAULT`和`LAZY`两种。
+
+`DEFAULT`是**饿汉式**启动，构建器调用后，协程就会立即进入待调度状态，一旦调度器准备就绪就可以开始执行。这是最为常用的启动模式。
+
+`LAZY`是**懒汉式**启动，构建器调用后并不会有任何调度行为，协程体也自然不会进入执行状态，直到用户调用了Job对象的`start()`或`join()`方法，就跟Deffered对象调用`await()`方法后的效果类似。
+
+`ATOMIC`这种启动模式的使用比较奇特，简单来说，它只有在Job对象调用`cancel()`方法时才会执行协程体。在Job对象调用`cancel()`之后，`ATOMIC`模式下启动的协程体会立即开始执行，并且在执行到第一个挂起函数前（挂起函数被挂起时会检查协程是否被取消）都不会被取消。换句话说，如果这个协程里没有一个挂起函数，那么调用`cancel()`的效果就等同于普通协程的Job对象调用`start()`。
+
+`UNDISPATCHED`模式跟`ATOMIC`有一些相似，在遇到第一个挂起函数前会一直执行协程体，之后就会根据挂起点本身的逻辑以及调度器来决定后面要怎么执行。
 
 #### 异常处理
 
