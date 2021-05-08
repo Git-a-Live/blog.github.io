@@ -921,7 +921,69 @@ public fun CoroutineScope.launch(
 
 + **上下文**
 
-CoroutineContext类型的上下文用于为整个协程指定一个**调度器**。如果开发者没有显式指明协程需要使用什么样的调度器（即直接调用构建器开启协程），那么就是<font color=red><u>直接运行在父协程的上下文中</u></font>。
+CoroutineContext类型的上下文是指完成某个任务所需要的前置资源和外部环境，其主要作用为<font color=red>携带参数、拦截协程执行以及实现线程切换</font>。在多数情况下，Kotlin提供的现成上下文已经可以满足开发需求，不用开发者自己实现。常见的上下文有两种：
+
++ CombinedContext，上下文组合，表示很多具体的上下文集合
++ EmptyCoroutineContext，什么都没有的空上下文，默认情况下就是这种
+
+CoroutineContext是一个数据结构，可以理解为一个以key为索引的List。下面摘取了一部分源码用于分析：
+
+```
+@SinceKotlin("1.3")
+public interface CoroutineContext {
+    public operator fun <E : Element> get(key: Key<E>): E?
+    public fun <R> fold(initial: R, operation: (R, Element) -> R): R
+    public operator fun plus(context: CoroutineContext): CoroutineContext = ...
+    public fun minusKey(key: Key<*>): CoroutineContext
+
+    public interface Key<E : Element>
+
+    public interface Element : CoroutineContext {
+        public val key: Key<*>
+        ...
+    }
+}
+```
+
+CoroutineContext作为一个集合，它的元素就是上述源码中看到的Element。每一个Element都有一个key，因此它可以作为元素出现；同时它也是CoroutineContext的子接口，因此也可以作为集合出现。
+
+CombinedContext是一个CoroutineContext的子类，而且是一个位于CoroutineContextImpl.kt文件当中的内部类，开发者在协程体里面访问到的coroutineContext大多都是这个类型。如果想要找到某一个特别的上下文实现，就需要用对应的Key来查找，比如：
+
+```
+GlobalScope.launch {
+    println(coroutineContext[Job.Key]) // 打印结果为StandaloneCoroutine{Active}@xxxxxxx
+}
+```
+
+开发者还可以通过指定上下文为协程添加某些特性，最典型的例子就是给协程添加名称以便调试，比如：
+
+```
+launch(CoroutineName("Example")) {
+    // TODO
+}
+```
+
+如果有多个上下文需要添加，只要用`+`进行连接即可：
+
+```
+launch(Dispatchers.Main + CoroutineName("Example")) {
+    // TODO
+}
+```
+
+上下文里面还有两个值得注意的子类，一个是ContinuationInterceptor（协程拦截器），另一个是CoroutineDispatcher（协程调度器）。
+
+>ContinuationInterceptor
+
+从源码上看，ContinuationInterceptor是一个直接继承于CoroutineContext.Element的接口，但是CoroutineContext.Element本身也是CoroutineContext的子类，所以它们之间的关系就可以理清了。
+
+ContinuationInterceptor也是一个上下文的实现方向，可以左右协程的执行，同时为了保证其功能的正确性，协程上下文集合永远将它放在最后面。ContinuationInterceptor的工作方式跟OkHttp的拦截器相似，它会拦截协程的Continuation以实现回调。而下面要提到的CoroutineDispatcher在本质上就是一种拦截器，只不过需要处理线程切换的问题。
+
+>CoroutineDispatcher
+
+CoroutineDispatcher是Kotlin协程中专门执行线程切换任务的重要角色，它是一个继承于ContinuationInterceptor的抽象类。
+
+CoroutineDispatcher的`dispatch()`方法会在拦截器的`interceptContinuation()`方法中调用，进而实现协程的调度。所以如果开发者想要实现自己的调度器，继承这个类就可以了，不过通常情况下用现成的就可以了。
 
 目前Kotlin提供有以下几种调度器：
 
@@ -931,11 +993,17 @@ CoroutineContext类型的上下文用于为整个协程指定一个**调度器**
 |`Dispatchers.Default`|默认调度器，在主线程之外执行占用大量CPU资源的工作，使用共享的后台线程池，也用于GlobalScope开启的协程|
 |`Dispatchers.IO`|IO调度器，采用的是线程池，适合在主线程之外执行磁盘或网络I/O|
 |`Dispatchers.Main`|主线程调度器，只能用于与界面交互和执行快速工作|
-|`newSingleThreadContext()`|自定义线程调度器，实验性功能，使用结束后需要手动关闭线程或进行重用|
+|`newSingleThreadContext()`|自定义线程调度器，实验性功能，使用结束后需要手动关闭线程或进行重用，以免发生线程泄漏等问题|
 
 根据不同的需求，选用相应的调度器，可以有效提高程序执行的效率和效果。
 
 >注意，非受限调度器是一种高级机制，可以在某些极端情况下提供帮助，而不需要调度协程以便稍后执行或是由此产生副作用，因为某些操作必须立即在协程中执行。非受限调度器不应该在通常的代码中使用。
+
+如果开发者没有显式指明协程需要使用什么样的调度器（即直接调用构建器开启协程），那么默认就是<font color=red><u>直接运行在父协程的上下文中</u></font>。
+
+最后需要注意的一个问题是，既然协程本身是基于线程的一种良好封装，那么通过调度器切换线程就依然不能摆脱由此带来的额外性能开销。频繁的线程切换势必会影响到程序的整体性能，因此，在实际开发工作中，通常只需要在一个线程中执行业务逻辑，只有一些耗时操作才需要切换到指定的线程去处理。
+
+此外，自己通过线程池定义调度器的做法本身没什么问题，但最好只用一个线程，因为多线程除了线程切换开销外，还有后面会提到并发安全问题。
 
 + **启动模式**
 
@@ -959,6 +1027,10 @@ CoroutineStart类型的参数为协程指定了启动模式，而在Kotlin协程
 `UNDISPATCHED`模式跟`ATOMIC`有一些相似，在遇到第一个挂起函数前会一直执行协程体，之后就会根据挂起点本身的逻辑以及调度器来决定后面要怎么执行。
 
 #### 异常处理
+
++ **异常处理逻辑**
++ **异常的传递**
++ **异常的监督**
 
 #### 通道
 
