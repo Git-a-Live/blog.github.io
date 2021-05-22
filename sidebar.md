@@ -128,7 +128,6 @@
   * [运输层](ComputerNetwork/Chapter_5_运输层.md)
   * [应用层](ComputerNetwork/Chapter_6_应用层.md)
   * [网络安全](ComputerNetwork/Chapter_7_网络安全.md)
-  * [无线网络](ComputerNetwork/Chapter_8_无线网络.md)
 * <font color=red>**操作系统**</font>
 * <font color=red>**计算机组成原理**</font>
 * <font color=red>**数学基础**</font>
