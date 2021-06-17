@@ -95,8 +95,6 @@
 * <font color=red>**杂项**</font>
   * [Maven的使用](Maven/maven.md)
   * [Linux基础指令](Linux/basicom.md)
-* <font color=red>**Dart入门**</font>
-* <font color=red>**Flutter入门**</font>
 * <font color=red>**C++入门**</font>
   * [编译器配置](/CPP/config.md)
   * [从Hello World开始](/CPP/helloworld.md)
@@ -108,18 +106,6 @@
   * [栈和队列](DataStructure/3.栈和队列.md)
   * [串](DataStructure/4.串.md)
   * [数组和广义表](DataStructure/5.数组和广义表.md)
-* <font color=red>**算法**</font>
-  * <font color=blue>搜索</font>
-    * [二分查找](Algorithm/binasearch.md)
-    * [广度优先搜索](Algorithm/bfs.md)
-  * <font color=blue>排序</font>
-    * [选择排序](Algorithm/selesort.md)
-    * [快速排序](Algorithm/quicksort.md)
-  * <font color=blue>规划</font>
-    * [动态规划](Algorithm/dp.md)
-    * [Dijkstra算法](Algorithm/dij.md)
-    * [贪婪算法](Algorithm/greedy.md)
-    * [K最近邻算法](Algorithm/knn.md)
 * <font color=red>**计算机网络**</font>
   * [概述](ComputerNetwork/Chapter_1_概述.md)
   * [物理层](ComputerNetwork/Chapter_2_物理层.md) 
@@ -128,17 +114,3 @@
   * [运输层](ComputerNetwork/Chapter_5_运输层.md)
   * [应用层](ComputerNetwork/Chapter_6_应用层.md)
   * [网络安全](ComputerNetwork/Chapter_7_网络安全.md)
-* <font color=red>**操作系统**</font>
-* <font color=red>**计算机组成原理**</font>
-* <font color=red>**数学基础**</font>
-  * [高等数学](Math/caculus.md)
-  * [线性代数](Math/caculus.md)
-  * [离散数学](Math/caculus.md)
-  * [复变函数](Math/caculus.md)
-  * [数值分析](Math/caculus.md)
-* <font color=red>**iOS开发**</font>
-  * <font color=red>**Swift入门**</font>
-    * [基本知识](Swift/Swift语言入门_基本知识.md)
-    * [基础语法](Swift/Swift语言入门_基础语法.md)
-    * [数据类型（1）](Swift/Swift语言入门_数据类型_1.md)
-    * [数据类型（2）](Swift/Swift语言入门_数据类型_2.md)
