@@ -17,7 +17,7 @@ maven { url'http://maven.aliyun.com/nexus/content/repositories/jcenter'}
 maven { url 'https://maven.aliyun.com/repository/google' }
 ```
 
-这三行代码表示的是Gradle在中国大陆的镜像仓库，加上之后，Gradle就可以直接从镜像仓库进行同步，从而提高同步速度。 
+这三行代码表示的是Gradle在中国大陆的阿里云镜像仓库，加上之后，Gradle就可以直接从镜像仓库进行同步，从而提高同步速度。 
 
 Gradle同步成功的标志，就是`activity_main.xml`文件加载完成，并出现一个带有“Hello World”字样文本框的UI界面， 这时就可以开始摆放控件设计UI，在`MainActivity`文件中编写源代码了。
 

@@ -1,6 +1,9 @@
 * <font color=red>**Android开发**</font>
-  * [Android Studio基本配置](Android/config.md)
-  * <font color=blue>常用组件</font>
+  * <font color=blue>准备工作</font>
+    * [Android Studio基本配置](Android/config.md)
+    * [ADB/Linux基础指令](Android/basicom.md)
+    * [Git工具使用](xxx.md)
+  * <font color=blue>基本组件</font>
     * [Activity](Android/activity.md)
     * [Broadcast](Android/broadcast.md)
     * [Content Provider](Android/contpro.md)
@@ -13,7 +16,6 @@
     * [DataBinding](Android/db.md)
     * [AndroidViewModel](Android/avm.md)
     * [ViewBinding](Android/vb.md)
-    * [Kotlin数据流](Android/xxx.md)
   * <font color=blue>本地数据存储</font>
     * [Shared Preferences](Android/sp.md)
     * [Room/SQLite](Android/room.md)
@@ -32,7 +34,7 @@
     * [摄像头与照片](Android/photo.md)
     * [音视频](Android/msc.md)
     * [蓝牙](Android/bt.md)
-  * <font color=blue>UI界面</font>
+  * <font color=blue>UI开发</font>
     * [基本布局](Android/lo.md)
     * [自定义控件](Android/controller.md)
     * [Material Design](Android/md.md)
@@ -42,19 +44,20 @@
     * [单元测试](Android/unit.md)
     * [性能优化](Android/perf.md)
     * [代码混淆、应用加密与反编译](Android/proguard.md)
-  * <font color=blue>常见开源框架</font>
+  * <font color=blue>框架</font>
     * [EventBus](Android/eb.md)
     * [RxJava](Android/rxjava.md)
+    * [腾讯Bugly](Android/bugly.md)
+    * [阿里云OSS](Android/oss.md)
     * [Glide](Android/glide.md)
     * [MPAndroidChart](Android/mpandroid.md)
-  * <font color=blue>其他</font>
-    * [Module开发](Android/mod.md)
-    * [正则表达式](Android/regx.md)
-    * [腾讯Bugly集成](Android/bugly.md)
-    * [阿里云OSS集成](Android/oss.md)
+    * [GreenDAO](Android/xxx.md)
+    * [扫码ZXing](xxx.md)
+    * [腾讯TRTC](xxx.md)
   * <font color=blue>Android进阶</font>
     * [Android虚拟机：Dalvik](Android/dvm.md)
     * [Android虚拟机：ART](Android/art.md)
+    * [Module开发](Android/mod.md)
     * [NDK开发](Android/ndk.md)
     * [AOSP与定制Android系统](Android/ndk.md)
 * <font color=red>**Kotlin进阶**</font>
@@ -62,6 +65,7 @@
     * [延迟初始化、扩展函数与密封类](Kotlin/late.md)
     * [泛型与委托](Kotlin/gen.md)
     * [Kotlin协程](Kotlin/coroutine.md)
+    * [Kotlin数据流](Android/xxx.md)
 * <font color=red>**Gradle入门**</font>
   * <font color=blue>Groovy语言</font>
     * [基础语法](Gradle/Groovy语言入门_基本语法.md)
@@ -91,22 +95,49 @@
   * [Java虚拟机：体系结构](Java/jvm2.md)
   * [Java虚拟机：运行机制](Java/jvm3.md)
   * [加密算法](Java/cipher.md)
+  * [Maven的使用](Java/maven.md)
   * [GUI设计开发](Java/gui.md)
   * [JNI](Java/jni.md)
-* <font color=red>**杂项**</font>
-  * [Maven的使用](Maven/maven.md)
-  * [Linux基础指令](Linux/basicom.md)
 * <font color=red>**C++入门**</font>
   * [编译器配置](/CPP/config.md)
   * [从Hello World开始](/CPP/helloworld.md)
   * [函数](/CPP/function.md)
   * [复合类型](/CPP/complex.md)
-* <font color=red>**基于Java的数据结构**</font>
+* <font color=red>**数据结构**</font>
   * [数据结构概述](/DataStructure/1.数据结构概述.md)
   * [线性表](DataStructure/2.线性表.md)
   * [栈和队列](DataStructure/3.栈和队列.md)
   * [串](DataStructure/4.串.md)
   * [数组和广义表](DataStructure/5.数组和广义表.md)
+  * [图/树](xxx.md)
+  * [散列/哈希](xxx.md)
+* <font color=red>**算法**</font>
+  * [概述](xxx.md)
+  * <font color=blue>排序算法</font>
+    * [冒泡排序](xxx.md)
+    * [选择排序](xxx.md)
+    * [插入排序](xxx.md)
+    * [希尔排序](xxx.md)
+    * [归并排序](xxx.md)
+    * [快速排序](xxx.md)
+    * [堆排序](xxx.md)
+    * [计数排序](xxx.md)
+    * [桶排序](xxx.md)
+    * [基数排序](xxx.md)
+  * <font color=blue>查找算法</font>
+    * [顺序查找](xxx.md)
+    * [二分查找](xxx.md)
+    * [红黑树](xxx.md)
+    * [散列表/哈希表](xxx.md)
+  * <font color=blue>图算法</font>
+    * [深度优先搜索](xxx.md)
+    * [广度优先搜索](xxx.md)
+    * [最小生成树](xxx.md)
+    * [最短路径](xxx.md)
+  * <font color=blue>字符串算法</font>
+    * [字符串排序](xxx.md)
+    * [子串查找](xxx.md)
+    * [正则表达式](Android/regx.md)
 * <font color=red>**计算机网络**</font>
   * [概述](ComputerNetwork/Chapter_1_概述.md)
   * [物理层](ComputerNetwork/Chapter_2_物理层.md) 
