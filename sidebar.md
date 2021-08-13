@@ -2,7 +2,7 @@
   * <font color=blue>准备工作</font>
     * [Android Studio基本配置](Android/config.md)
     * [ADB/Linux基础指令](Android/basicom.md)
-    * [Git工具使用](xxx.md)
+    * [Git工具使用](Android/git.md)
   * <font color=blue>基本组件</font>
     * [Activity](Android/activity.md)
     * [Broadcast](Android/broadcast.md)

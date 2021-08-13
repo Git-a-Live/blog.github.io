@@ -1,4 +1,4 @@
-进行Android开发，除了需要掌握如何使用Android Studio之外，还要知道使用命令行工具，尤其是ADB（Android Debug Bridge）工具。由于Android系统的内核是Linux，因此一部分Linux指令是可以直接使用的，但需要先通过ADB调出响应的shell工具。如果安装了Android Studio，那么ADB工具会自动安装配置好，否则需要手动安装并和Java一样，需要在系统环境变量中进行额外配置。ADB工具可以在Android Studio的“Terminal”窗口使用，也可以在相应的系统命令行程序里调用。
+进行Android开发，除了需要掌握如何使用Android Studio之外，还要知道使用命令行工具，尤其是ADB（Android Debug Bridge）工具。由于Android系统的内核是Linux，因此一部分Linux指令是可以直接使用的，但需要先通过ADB调出相应的shell工具。如果安装了Android Studio，那么ADB工具会自动安装配置好，否则需要手动安装并和Java一样，需要在系统环境变量中进行额外配置。ADB工具可以在Android Studio的“Terminal”窗口使用，也可以在相应的系统命令行程序里调用。
 
 ## 常用ADB指令
 
@@ -27,7 +27,7 @@
 |针对特定设备执行命令|adb -s devices_name shell ······|adb -s 192.168.0.100:5555 shell am force-stop com.baidu.searchbox|
 |输入文本内容|adb shell input text "some_content"|adb shell input text "fuck Baidu"|
 |输入按键事件|adb shell input keyevent key_code|adb shell input keyevent 4（常用key_code：电源键26，菜单键82，返回键4）|
-|启动Activity|||
+|启动Activity|adb shell am start -n package_name/package_name.SomeActivity|adb shell am start -n com.android.browser/com.android.browser.BrowserActivity（注意Activity要在AndroidManifest文件中设置为export = true）|
 |通过指定组件启动服务|adb shell am startservice -n package_name/.service_class_name|adb shell am startservice -n com.example.app/.DemoService|
 |通过指定action启动服务|adb shell am startservice -a some_action|adb shell am startservice -a "android.intent.action.CALL"|
 |发送广播|adb shell am broadcast -a action_or_category|adb shell am broadcast -a "android.intent.action.AdupsFota.WriteCommandReceiver"|
@@ -36,7 +36,7 @@
 
 ## 常用Linux命令
 
-**所有命令都可以通过"man [command]"来查看详情，包括man命令本身。 man可以提供被查询命令的所有选项和参数类型等信息。**
+>注意，**所有命令都可以通过"man [command]"来查看详情，包括man命令本身。 man可以提供被查询命令的所有选项和参数类型等信息。**
 
 ### 基础命令
 
