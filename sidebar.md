@@ -18,7 +18,7 @@
     * [ViewBinding](Android/vb.md)
   * <font color=blue>本地数据存储</font>
     * [Shared Preferences](Android/sp.md)
-    * [Room/SQLite](Android/room.md)
+    * [Room数据库](Android/room.md)
     * [IO操作](Android/io.md)
   * <font color=blue>序列化</font>
     * [Serializable](Android/serial.md)
@@ -112,7 +112,7 @@
   * [图/树](xxx.md)
   * [散列/哈希](xxx.md)
 * <font color=red>**算法**</font>
-  * [概述](xxx.md)
+  * [概述](Algorithm/introduction.md)
   * <font color=blue>排序算法</font>
     * [冒泡排序](xxx.md)
     * [选择排序](xxx.md)
@@ -146,3 +146,8 @@
   * [运输层](ComputerNetwork/Chapter_5_运输层.md)
   * [应用层](ComputerNetwork/Chapter_6_应用层.md)
   * [网络安全](ComputerNetwork/Chapter_7_网络安全.md)
+* <font color=red>**数学基础**</font>
+  * <font color=blue>微积分</font>
+  * <font color=blue>线性代数</font>
+  * <font color=blue>概率论</font>
+  * <font color=blue>离散数学</font>

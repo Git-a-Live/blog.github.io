@@ -62,17 +62,16 @@ data class EventMessage(
 
 ### 事件注册与注销
 
-虽然官方建议EventBus的注册在Activity的`onStart()`中进行，而注销则在`onStop()`中进行，但是在实践当中发现，**如果不使用粘性事件的话**，只有在`onCreate()`和`onDestroy()`进行注册和注销才能确保EventBus发挥作用：
+官方建议EventBus的注册在Activity的`onStart()`中进行，而注销则在`onStop()`中进行：
 
 ```
-override fun onCreate(savedInstanceState: Bundle?) {
-    super.onCreate(savedInstanceState)
-    setContentView(R.layout.activity_main)
+override fun onStart() {
+    super.onStart()
     EventBus.getDefault().register(this) //注册EventBus
 }
 
-override fun onDestroy() {
-    super.onDestroy()
+override fun onStop() {
+    super.onStop()
     if (EventBus.getDefault().isRegistered(this)) { //注销EventBus
         EventBus.getDefault().unregister(this)
     }

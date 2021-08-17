@@ -47,7 +47,7 @@ buildscript {
 }
 ```
 
->注意，截至2021年4月9日，官方旧指南中所添加的TinkerSupoort插件版本依然是1.1.5，而实际上，该插件在[JCenter](https://bintray.com/bugly/maven/TinkerSupport)的版本已经达到1.1.9.3。**只有使用最新版本的TinkerSupport插件，才能够支持4.0以上版本的Gradle插件和Android Studio，以及5.0以上版本的Gradle**。Bugly开发团队在旧指南中出现的这一严重疏忽，导致许多不了解情况的开发者在接入Bugly之后，陷入了Gradle和Android Studio都必须被迫降级使用的困境当中。
+>注意，截至2021年8月17日，官方旧指南中所添加的TinkerSupoort插件版本依然是1.1.5，而实际上，该插件在[JCenter](https://bintray.com/bugly/maven/TinkerSupport)的最新版本已经达到1.1.9.3，而[Maven仓库](https://search.maven.org/)的最新版本为1.2.3。**只有使用1.1.9.3版本及以上的TinkerSupport插件，才能够支持4.0以上版本的Gradle插件和Android Studio，以及5.0以上版本的Gradle**。
 
 接着在app级build.gradle文件中引入依赖：
 
