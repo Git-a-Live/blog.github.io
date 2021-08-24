@@ -4,7 +4,7 @@
 
 ## 基本概念
 
-### 什么是IO
+### 何为IO
 
 IO是指Input/Output，即输入和输出。IO以内存为中心：
 
@@ -154,7 +154,7 @@ Files主要封装了`copy()`、`delete()`、`exists()`、`move()`、`find()`以�
 
 在简单读写小文件的场景下，使用Files和Paths可以有效简化代码。
 
-## InputStream/OutputStream
+## 输入输出流
 
 InputStream和OutputStream都是Java标准库提供的基本输入输出流，位于`java.io`内。它们都是抽象类，也是所有输入输出流的超类。
 
@@ -538,7 +538,7 @@ PrintWriter在用法上跟PrintStream几乎是完全一样的，只不过前者�
 val file = File(fileDir,fileName)
 ```
 
-#### 存储文件：
++ **存储文件**
 
 ```
 /*使用File对象*/
@@ -552,7 +552,7 @@ context.openFileOutput(fileName, MODE_PRIVATE).use { it:FileOutputStream!
 }
 ```
 
-#### 读取文件
++ **读取文件**
 
 ```
 /*使用File对象*/
@@ -570,7 +570,7 @@ context.openFileInput("test.txt").bufferedReader().useLines { lines ->
 }
 ```
 
-#### 创建和删除缓存文件
++ **创建和删除缓存文件**
 
 创建缓存文件有两种方式，一种通过调用File的扩展函数，另一种则是构建File对象：
 
@@ -627,44 +627,18 @@ File(cacheDir.toString()).listFiles()?.let {
 |Android 10|`READ_EXTERNAL_STORAGE`<font color=blue>或</font>`WRITE_EXTERNAL_STORAGE`|同上|
 |Android 11起|`READ_EXTERNAL_STORAGE`|同上|
 
-#### 访问多媒体文件
++ **访问多媒体文件**
 
-> *MediaStore API*
-
-访问位于共享存储当中的多媒体文件——图片、视频以及音频等——需要用到一个非常重要的类：MediaStore。按照Google官方的说法，Android系统会自动扫描磁盘中的多媒体文件并进行分类，然后将它们的信息分别存进对应的表中进行维护，这样就提供了一个经过优化的媒体集合索引，称为媒体库：
+访问**位于共享存储**当中的多媒体文件需要用到一个非常重要的类：MediaStore。按照Google官方的说法，Android系统会自动扫描磁盘中的多媒体文件并进行分类，然后将它们的信息分别存进对应的表中进行维护，这样就提供了一个经过优化的媒体集合索引，称为媒体库：
 
 + 图片类：保存在`MediaStore.Images`表中
 + 视频类：保存在`MediaStore.Video`表中
 + 音频类：保存在`MediaStore.Audio`表中
-+ 下载类：保存在`MediaStore.Downloads`表中，**Android 9（API = 28）以上才能使用**
++ 下载类：保存在`MediaStore.Downloads`表中，**Android 9（API = 28）开始使用**
 
-在针对Android 10（API = 29）及其以上版本开发的应用中，如果开发者使用了Scoped Storage（分区存储），那么可以通过`MediaStore.Files`来查看那些**由该应用创建的**图片和音视频文件——但是在大多数情况下应该是用不上的。如果没使用Scoped Storage，`MediaStore.Files`会展示所有类型的多媒体文件。
+在针对Android 10（API = 29）及其以上版本开发的应用中，如果开发者使用了Scoped Storage（分区存储），通过File是没法查看特定文件的，只能通过`MediaStore.Files`来查看那些**由该应用创建的**图片和音视频文件。如果没使用Scoped Storage，`MediaStore.Files`会展示所有类型的多媒体文件。要
 
-MediaStore API需要和[ContentResolver](Android/contpro?id=使用content-resolver访问其他应用的数据)搭配使用。
+>按照Google的说法，为了让用户更好地管理自己的文件并减少混乱，以 Android 10（API 级别 29）及更高版本为目标平台的应用，在默认情况下被赋予了对外部存储空间的分区访问权限（即分区存储）。<font color=red>此类应用只能访问外部存储空间上的应用专属目录，以及本应用所创建的特定类型的媒体文件</font>。
 
-> *查询MediaStore中的多媒体文件*
-
-> *加载文件缩略图*
-
-> *打开多媒体文件*
-
-> *保存多媒体文件*
-
-> *更新多媒体文件*
-
-> *删除多媒体文件*
-
-
-#### 访问文档和其他文件
-
-> *Storage Access Framework*
-
-访问文档和其他文件需要用到一套工具：Storage Access Framework（存储访问框架）。
-
-> *创建文档*
-
-> *打开文档*
-
-> *授权访问目录内容*
-
-> *在指定位置执行操作*
++ **访问文档和其他类型文件**
++ **访问共享数据集**

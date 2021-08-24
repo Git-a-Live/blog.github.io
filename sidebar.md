@@ -37,7 +37,6 @@
   * <font color=blue>UI开发</font>
     * [基本布局](Android/lo.md)
     * [自定义控件](Android/controller.md)
-    * [Material Design](Android/md.md)
     * [Jetpack Compose](Android/jc.md)
   * <font color=blue>调试、性能与安全</font>
     * [应用调试](Android/debug.md)
@@ -65,7 +64,6 @@
     * [延迟初始化、扩展函数与密封类](Kotlin/late.md)
     * [泛型与委托](Kotlin/gen.md)
     * [Kotlin协程](Kotlin/coroutine.md)
-    * [Kotlin数据流](Android/xxx.md)
 * <font color=red>**Gradle入门**</font>
   * <font color=blue>Groovy语言</font>
     * [基础语法](Gradle/Groovy语言入门_基本语法.md)
@@ -103,6 +101,11 @@
   * [从Hello World开始](/CPP/helloworld.md)
   * [函数](/CPP/function.md)
   * [复合类型](/CPP/complex.md)
+  * [指针](xxx.md)
+  * [内存模型和名称空间](xxx.md)
+  * [对象和类](xxx.md)
+  * [友元、异常及其他](xxx.md)
+  * [输入、输出及文件](xxx.md)
 * <font color=red>**数据结构**</font>
   * [数据结构概述](/DataStructure/1.数据结构概述.md)
   * [线性表](DataStructure/2.线性表.md)
