@@ -151,6 +151,11 @@
   * [网络安全](ComputerNetwork/Chapter_7_网络安全.md)
 * <font color=red>**数学基础**</font>
   * <font color=blue>微积分</font>
+    * [函数、图像与直线](xxx.md)
+    * [极限](xxx.md)
+    * [连续](xxx.md)
+    * [微分](xxx.md)
+    * [积分](xxx.md)
   * <font color=blue>线性代数</font>
   * <font color=blue>概率论</font>
   * <font color=blue>离散数学</font>
