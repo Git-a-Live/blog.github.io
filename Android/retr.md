@@ -111,7 +111,7 @@ featureService.foo(param).execute()
 
 | 注解名称        | 含义 | 用法 |
 | :-------------- | :-------------- | :--- |
-| @FormUrlEncoded | 用于修饰@Field注解和@FieldMap注解      | 使用该注解表示请求正文将使用表单网址编码（即MIME类型为`application / x-www-form-urlencoded`）。字段应该声明为参数，并用@Field或@FieldMap注释
+| @FormUrlEncoded | 用于修饰@Field注解和@FieldMap注解      | 使用该注解表示请求正文将使用表单网址编码（即[MIME](/ComputerNetwork/Chapter_6_应用层?id=通用互联网邮件扩充mime)类型为`application / x-www-form-urlencoded`）。字段应该声明为参数，并用@Field或@FieldMap注释
 | @Multipart      | 使用该注解,表示请求体包含多个部分     | 每一部分作为一个参数，且用@Part注解声明
 | @Streaming      | 处理返回Response的方法的响应体     | 不将`body()`转换为byte []
 

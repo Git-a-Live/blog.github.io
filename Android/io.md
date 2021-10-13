@@ -627,18 +627,4 @@ File(cacheDir.toString()).listFiles()?.let {
 |Android 10|`READ_EXTERNAL_STORAGE`<font color=blue>或</font>`WRITE_EXTERNAL_STORAGE`|同上|
 |Android 11起|`READ_EXTERNAL_STORAGE`|同上|
 
-+ **访问多媒体文件**
-
-访问**位于共享存储**当中的多媒体文件需要用到一个非常重要的类：MediaStore。按照Google官方的说法，Android系统会自动扫描磁盘中的多媒体文件并进行分类，然后将它们的信息分别存进对应的表中进行维护，这样就提供了一个经过优化的媒体集合索引，称为媒体库：
-
-+ 图片类：保存在`MediaStore.Images`表中
-+ 视频类：保存在`MediaStore.Video`表中
-+ 音频类：保存在`MediaStore.Audio`表中
-+ 下载类：保存在`MediaStore.Downloads`表中，**Android 9（API = 28）开始使用**
-
-在针对Android 10（API = 29）及其以上版本开发的应用中，如果开发者使用了Scoped Storage（分区存储），通过File是没法查看特定文件的，只能通过`MediaStore.Files`来查看那些**由该应用创建的**图片和音视频文件。如果没使用Scoped Storage，`MediaStore.Files`会展示所有类型的多媒体文件。要
-
->按照Google的说法，为了让用户更好地管理自己的文件并减少混乱，以 Android 10（API 级别 29）及更高版本为目标平台的应用，在默认情况下被赋予了对外部存储空间的分区访问权限（即分区存储）。<font color=red>此类应用只能访问外部存储空间上的应用专属目录，以及本应用所创建的特定类型的媒体文件</font>。
-
-+ **访问文档和其他类型文件**
-+ **访问共享数据集**
+共享存储的数据文件包含音视频和图像等类型，这里限于篇幅不做展开，详细内容可以参考[摄像头和照片](/Android/photo)以及[音视频](/Android/msc)这两部分。
