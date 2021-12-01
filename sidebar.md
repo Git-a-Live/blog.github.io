@@ -89,7 +89,6 @@
   * [结构型设计模式](DesignPattern/结构型设计模式.md)
   * [行为型设计模式](DesignPattern/行为型设计模式.md)
 * <font color=red>**C++入门**</font>
-  * [编译器配置](/CPP/config.md)
   * [从Hello World开始](/CPP/helloworld.md)
   * [函数](/CPP/function.md)
   * [复合类型](/CPP/complex.md)

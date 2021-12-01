@@ -42,12 +42,12 @@ buildscript {
     ···
     dependencies {
         ···
-        classpath "com.tencent.bugly:tinker-support:1.1.9.3"
+        classpath "com.tencent.bugly:tinker-support:1.2.3"
     }
 }
 ```
 
->注意，截至2021年8月17日，官方旧指南中所添加的TinkerSupoort插件版本依然是1.1.5，而实际上，该插件在[JCenter](https://bintray.com/bugly/maven/TinkerSupport)和[Maven仓库](https://search.maven.org/)的最新版本已经达到1.2.3。**只有使用1.1.9.3版本及以上的TinkerSupport插件，才能够支持4.0以上版本的Gradle插件和Android Studio，以及5.0以上版本的Gradle**。考虑到JCenter已经宣布提供永久只读服务，而Gradle中的`jcenter()`又将被废弃（如果还要继续依赖JCenter，最好改为`maven { url 'http://jcenter.bintray.com/' }`），腾讯将不会继续在JCenter上更新这个依赖。
+>注意，截至2021年11月30日，TinkerSupoort插件在[Maven仓库](https://search.maven.org/artifact/com.tencent.bugly/tinker-support)的最新版本已经达到1.2.3。**只有使用1.1.9.3版本及以上的TinkerSupport插件，才能够支持4.0以上版本的Gradle插件和Android Studio，以及5.0以上版本的Gradle**。
 
 接着在app级build.gradle文件中引入依赖：
 
@@ -281,8 +281,8 @@ class MyApplicationLike(
 
 ```
 <provider
-    android:name="android.support.v4.content.FileProvider"
-    android:authorities="${applicationId}.fileProvider"
+    android:name="androidx.core.content.FileProvider"
+    android:authorities="${Gradle文件里的applicationId}.fileProvider"
     android:exported="false"
     android:grantUriPermissions="true">
     <meta-data
