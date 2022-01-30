@@ -364,9 +364,77 @@ NDK开发首先必须要安装NDK工具。在Android Studio Arctic Fox（2020.3.
 
 ![](pics/ndk3.png)
 
-
-
 ### 构建Native Libray
 
-+ **基于CMake的构建方式**
-+ **基于NDK-build的构建方式**
+#### 基于CMake的构建方式
+
+在基于CMake的构建方式下，编写好的C/C++源码文件需要放在module的`src/main/cpp`目录当中，然后在同一路径下创建名为`CMakeLists.txt`的文本文件，参照Android Studio提供的NDK示例项目：
+
+![](pics/ndk4.png)
+
+>注意，CMake的脚本文件必须命名为“CMakeLists”，而且文件格式为`.txt`。如果是通过Android Studio窗口新建C++项目，那么IDE会自动完成上述步骤。
+
+[Google官方指南中](https://developer.android.google.cn/studio/projects/configure-cmake?hl=zh-cn)介绍有如何在`CMakeLists.txt`里编写CMake脚本内容，最基本的配置参考如下：
+
+```
+# Sets the minimum version of CMake required to build your native library.
+# This ensures that a certain set of CMake features is available to
+# your build.
+
+cmake_minimum_required(VERSION X.X.X)
+
+# Specifies a library name, specifies whether the library is STATIC or
+# SHARED, and provides relative paths to the source code. You can
+# define multiple libraries by adding multiple add_library() commands,
+# and CMake builds them for you. When you build your app, Gradle
+# automatically packages shared libraries with your APK.
+
+add_library( # Specifies the name of the library. Uses lowercase letters.
+             name_of_your_library
+
+             # Sets the library as a shared library. Uses uppercase letters.
+             SHARED
+
+             # Provides a relative path to your source file(s).
+             src/main/cpp/xxx.cpp
+             src/main/cpp/yyy.cpp
+             src/main/cpp/zzz.cpp )
+
+# Specifies a path to native header files.
+
+include_directories(src/main/cpp/directory_of_header_files/)
+```
+
+Android NDK自身也提供了一系列Native API和Native库，如果要在项目中调用它们，可以在`CMakeLists.txt`里面参照以下方式进行添加：
+
+```
+# Searches for a specified prebuilt library and stores the path as a
+# variable. Because CMake includes system libraries in the search path by
+# default, you only need to specify the name of the public NDK library
+# you want to add. CMake verifies that the library exists before
+# completing its build.
+
+find_library( # Defines the name of the path variable that stores the
+              # location of the NDK library. Uses lowercase letters.
+              log-lib
+
+              # Specifies the name of the NDK library that
+              # CMake needs to locate. Uses lowercase letters.
+              log )
+
+# Specifies libraries CMake should link to your target library. You
+# can link multiple libraries, such as libraries you define in this
+# build script, prebuilt third-party libraries, or system libraries.
+
+target_link_libraries( # Specifies the target library.
+                       name_of_your_library
+
+                       # Links the log library to the target library.
+                       ${log-lib} )
+```
+
+更多配置可以参考Google官方指南，这里只对最基本的配置进行介绍。如果对CMake工具还想做进一步了解，可以访问[CMake命令的官方文档](https://cmake.org/cmake/help/latest/manual/cmake-commands.7.html)。
+
+在编写好`CMakeLists.txt`之后，还要将Native库关联到Gradle中以便在编译时
+
+#### 基于NDK-build的构建方式

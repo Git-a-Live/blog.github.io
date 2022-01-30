@@ -12,7 +12,7 @@
 |通过网络连接设备|adb connect ip:port|adb connect 192.168.0.100:5555（常见的端口号是5555）|
 |取消设备连接|adb disconnect ip:port|adb disconnect 192.168.0.100:5555|
 |从设备复制文件/目录到计算机|adb pull device_dir pc_dir|adb pull /sdcard/example.png（如果不指明pc_dir，则默认为开发者执行该指令时所处的目录）|
-|从计算机复制文件/目录到设备|adb pull pc_dir device_dir||
+|从计算机复制文件/目录到设备|adb push pc_dir device_dir||
 |从设备外部安装应用|adb install pc_dir/apk_name.apk|adb install C:\User\User\Desktop\example.apk|
 |利用设备内部安装包安装应用|adb shell pm install -r absolute_dir/package_name.apk|adb shell pm install -r /data/data/files/example.apk（注意必须使用绝对路径，参数-r表示强制安装）|
 |卸载应用|adb uninstall package_name|adb uninstall com.baidu.searchbox|
