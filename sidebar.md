@@ -99,13 +99,13 @@
   * [输入、输出及文件](xxx.md)
 * <font color=red>**数据结构与算法**</font>
   * <font color=blue>数据结构部分</font>
-  * [数据结构概述](/DataStructure/1.数据结构概述.md)
-  * [线性表](DataStructure/2.线性表.md)
-  * [栈和队列](DataStructure/3.栈和队列.md)
-  * [串](DataStructure/4.串.md)
-  * [数组和广义表](DataStructure/5.数组和广义表.md)
-  * [图/树](xxx.md)
-  * [散列/哈希](xxx.md)
+  * [数据结构概述](/DataStructure/intro.md)
+  * [表](DataStructure/list.md)
+  * [栈和队列](DataStructure/stack.md)
+  * [串](DataStructure/string.md)
+  * [树](DataStructure/tree.md)
+  * [图](DataStructure/graph.md)
+  * [散列/哈希](DataStructure/hash.md)
   * <font color=blue>算法部分</font>
   * [概述](Algorithm/introduction.md)
   * <font color=orange>排序算法</font>
