@@ -141,6 +141,8 @@
   * [运输层](ComputerNetwork/Chapter_5_运输层.md)
   * [应用层](ComputerNetwork/Chapter_6_应用层.md)
   * [网络安全](ComputerNetwork/Chapter_7_网络安全.md)
+* <font color=red>**操作系统**</font>
+  * [操作系统概述](OperatingSystem/intro.md)
 * <font color=red>**数学基础**</font>
   * <font color=blue>微积分</font>
   * [函数、图像与直线](xxx.md)
@@ -151,3 +153,4 @@
   * <font color=blue>线性代数</font>
   * <font color=blue>概率论</font>
   * <font color=blue>离散数学</font>
+  * [基础部分](Math/discrete/basic.md)
