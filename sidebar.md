@@ -56,9 +56,9 @@
   * [Java虚拟机基础](Android/jvm.md)
   * [Android虚拟机基础](Android/art.md)
   * [Module开发](Android/mod.md)
-  * [进程间通信AIDL](Android/xxx.md)
+  * [AIDL开发](Android/aidl.md)
   * [NDK开发](Android/ndk.md)
-  * [AOSP与定制Android系统](Android/xxx.md)
+  * [AOSP与定制Android系统](Android/aosp.md)
 * <font color=red>**Kotlin进阶**</font>
   * [函数式编程](Kotlin/func.md)
   * [延迟初始化、扩展函数与密封类](Kotlin/late.md)
@@ -88,6 +88,7 @@
   * [创建型设计模式](DesignPattern/创建型设计模式.md)
   * [结构型设计模式](DesignPattern/结构型设计模式.md)
   * [行为型设计模式](DesignPattern/行为型设计模式.md)
+  * [《代码整洁之道》总结](DesignPattern/代码整洁之道总结.md)
 * <font color=red>**C++入门**</font>
   * [从Hello World开始](/CPP/helloworld.md)
   * [函数](/CPP/function.md)

@@ -34,7 +34,7 @@ Java虚拟机和字节码指令集共同构成了Java跨平台的基石。尽管
 
 1. **Bootstrap ClassLoader**
 
-Bootstrap ClassLoader是引导类加载器，采用C/C++实现，用于加载制定JDK的核心类库，比如位于`$JAVA_HOME$/jre/lib`目录和`-Xbootclasspath`参数指定目录下的类。JVM的启动就是通过Bootstrap ClassLoader创建一个初始类来完成的。该加载器不能通过Java代码访问到，但是可以查询到某个类是否被它加载过。
+Bootstrap ClassLoader是引导类加载器，采用C/C++实现，用于加载指定JDK的核心类库，比如位于`$JAVA_HOME$/jre/lib`目录和`-Xbootclasspath`参数指定目录下的类。JVM的启动就是通过Bootstrap ClassLoader创建一个初始类来完成的。该加载器不能通过Java代码访问到，但是可以查询到某个类是否被它加载过。
 
 2. **Extensions ClassLoader**
 
