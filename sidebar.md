@@ -15,6 +15,7 @@
   * [DataBinding](Android/db.md)
   * [AndroidViewModel](Android/avm.md)
   * [ViewBinding](Android/vb.md)
+  * [MVI架构](Android/mvi.md)
   * <font color=blue>本地数据存储</font>
   * [Shared Preferences](Android/sp.md)
   * [Room数据库](Android/room.md)
@@ -36,40 +37,37 @@
   * <font color=blue>UI开发</font>
   * [基本布局](Android/lo.md)
   * [自定义控件](Android/controller.md)
+  * [自定义视图](Android/customview.md)
   * [Jetpack Compose](Android/jc.md)
   * [Java GUI开发](Android/gui.md)
-  * <font color=blue>调试、性能与安全</font>
+  * <font color=blue>编译调试</font>
+  * [Gradle编译](Android/gradle.md)
   * [应用调试](Android/debug.md)
   * [单元测试](Android/unit.md)
   * [性能优化](Android/perf.md)
-  * [代码混淆、应用加密与反编译](Android/proguard.md)
   * <font color=blue>框架</font>
   * [EventBus](Android/eb.md)
   * [RxJava](Android/rxjava.md)
-  * [Bugly](Android/bugly.md)
-  * [OSS](Android/oss.md)
-  * [Xposed](Android/xposed.md)
+  * [腾讯Bugly](Android/bugly.md)
+  * [阿里OSS](Android/oss.md)
   * [Glide](Android/glide.md)
-  * [GreenDAO](Android/xxx.md)
-  * [ZXing](xxx.md)
+  * [ZXing](Android/zxing.md)
   * <font color=blue>Android进阶</font>
   * [Java虚拟机基础](Android/jvm.md)
   * [Android虚拟机基础](Android/art.md)
+  * [Android热修复](Android/hotfix.md)
   * [Module开发](Android/mod.md)
-  * [AIDL开发](Android/aidl.md)
-  * [NDK开发](Android/ndk.md)
-  * [AOSP与定制Android系统](Android/aosp.md)
+  * [Android AIDL开发](Android/aidl.md)
+  * [Android NDK开发](Android/ndk.md)
+  * [混淆、加密与反编译](Android/proguard.md)
+  * [AOSP开发](Android/aosp.md)
 * <font color=red>**Kotlin进阶**</font>
   * [函数式编程](Kotlin/func.md)
   * [延迟初始化、扩展函数与密封类](Kotlin/late.md)
   * [泛型与委托](Kotlin/gen.md)
-  * [Kotlin协程](Kotlin/coroutine.md)
-* <font color=red>**Gradle入门**</font>
-  * <font color=blue>Groovy语言</font>
-  * [基础语法](Gradle/Groovy语言入门_基本语法.md)
-  * [进阶语法](Gradle/Groovy语言入门_进阶语法.md) 
-  * <font color=blue>Gradle脚本</font>
-  * [基础部分](Gradle/Gradle脚本编写_入门部分.md)
+  * [Kotlin协程：线程基础](Kotlin/coroutine.md)
+  * [Kotlin协程：协程基础](Kotlin/coroutine2.md)
+  * [Kotlin协程：协程进阶](Kotlin/coroutine3.md)
 * <font color=red>**MySQL入门**</font>
   * [基础指令](MySQL/basicom.md) 
   * [表的操作](MySQL/tables.md)

@@ -1,21 +1,3 @@
-## 一、概述
-
-Gradle脚本是一种基于Groovy语言的脚本，常用在项目构建当中。
-
-Gradle有两个重要的概念：*Project* 和 *Task*。
-
-*Project* 是指**构建产物**（比如Jar包）或**实施产物**（将应用程序部署到生产环境），通常由一些组件组成，如一个Project可以代表一个JAR库或者一个WEB应用程序，也可能包含其他项目生成的JAR包。
-
-*Task* 是指**不可分割的最小工作单元**，用于执行构建工作（比如编译项目或执行测试）。Task可以是编译一些Java类，或者创建一个JAR包，或者是生成JavaDoc，或者是发布文档到仓库。总之是作为<u><font color=red>原子操作</font></u>一类的存在。
-
-由此可以得到如下关系：
-
-· 每个gradle build由若干个Project组成；
-
-· 每个Project由若干个Task组成。
-
-在使用命令行工具通过`gradle`命令运行Gradle脚本时，该命令首先会在当前目录寻找`build.gradle`文件，这个文件是一个**构建配置脚本**（build configuration script），它定义了一个project和若干个task。
-
 ## 二、Task快速入门
 
 ### 声明与运行
