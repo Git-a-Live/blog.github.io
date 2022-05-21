@@ -34,20 +34,7 @@ Gradle中有两个非常重要的概念：**Project**和**Task**。
 
 ### Android项目中的Gradle
 
-Android项目的Gradle工具由这几部分构成：1）`build.gradle`脚本；2）`settings.gradle`脚本；3）`gradle-wrapper.properties`等配置和执行文件。这里主要关注以下四个文件：
-
-+ **`gradle-wrapper.properties`配置文件**
-
-`gradle-wrapper.properties`文件主要用于配置Gradle下载地址、本地相关执行文件的环境变量等等。下面就是某项目中的`gradle-wrapper.properties`文件内容示例：
-
-```
-#Mon Dec 20 17:46:11 CST 2021
-distributionBase=GRADLE_USER_HOME
-distributionUrl=https\://services.gradle.org/distributions/gradle-6.9.1-bin.zip
-distributionPath=wrapper/dists
-zipStorePath=wrapper/dists
-zipStoreBase=GRADLE_USER_HOME
-```
+Android项目的Gradle工具由这几部分构成：1）`build.gradle`脚本；2）`settings.gradle`脚本；3）`gradle-wrapper.properties`等配置和执行文件。这里主要关注以下三个文件：
 
 + **`gradle.properties`配置文件**
 
@@ -84,6 +71,8 @@ include ':base'
 include ':sub'
 include ':config'
 ```
+
+
 
 + **`build.gradle`脚本**
 
