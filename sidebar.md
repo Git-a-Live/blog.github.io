@@ -66,8 +66,8 @@
   * [延迟初始化、扩展函数与密封类](Kotlin/late.md)
   * [泛型与委托](Kotlin/gen.md)
   * [Kotlin协程：线程基础](Kotlin/coroutine.md)
-  * [Kotlin协程：协程基础](Kotlin/coroutine2.md)
-  * [Kotlin协程：协程进阶](Kotlin/coroutine3.md)
+  * [Kotlin协程：入门基础](Kotlin/coroutine2.md)
+  * [Kotlin协程：进阶部分](Kotlin/coroutine3.md)
 * <font color=red>**MySQL入门**</font>
   * [基础指令](MySQL/basicom.md) 
   * [表的操作](MySQL/tables.md)
