@@ -51,6 +51,8 @@
   * [腾讯Bugly](Android/bugly.md)
   * [阿里OSS](Android/oss.md)
   * [Glide](Android/glide.md)
+  * [Dagger2](Android/dagger2.md)
+  * [Hilt](Android/hilt.md)
   * [ZXing](Android/zxing.md)
   * <font color=blue>Android进阶</font>
   * [Java虚拟机基础](Android/jvm.md)
