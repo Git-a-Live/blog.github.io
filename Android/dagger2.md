@@ -184,9 +184,9 @@ class DemoModule {
     }
 }
 
-@Singleton
 // 如果有多个模块，就使用@Component(modules = [DemoModule::class, ···])
 @Component(modules = DemoModule::class)
+@Singleton
 interface DemoComponent {
     ···
 }
@@ -194,7 +194,38 @@ interface DemoComponent {
 
 ### `@Subcomponent`声明子组件
 
-子组件是继承并扩展父组件的对象图的组件。
+子组件是继承并扩展父组件的对象图的组件，因此，父组件中提供的所有对象也将在子组件中提供，这样子组件中的对象就可以依赖于父组件提供的对象(共有)，父组件向子组件提供的对象的作用域仍限定为父组件的生命周期。使用子组件可以定义**更加细致**的作用域。
 
-## 基于Dagger2的单元测试
+如何理解“使用子组件可以定义更加细致的作用域”？设想一个包含某些业务逻辑的模块，只在特定场景下才会被调用，那么这个模块显然不适合放到全局容器（比如上面的DemoComponent）当中，否则就会出现这种情况：哪怕只是一个很局限的场景，开发者也不得不再创建一个全局容器实例，而且里面有不少东西是派不上用场的。此外，将一个只在特定场景下才被调用的模块设置为全局容器，显然也不是很符合全局容器的定位；再加上各个模块之间不一定处于相同的作用域，更不可能强行塞进一个已经限定作用域的容器当中。
+
+声明子组件的方式类似下列代码所示：
+
+```
+// 定义子组件
+@Subcomponent
+interface SubDemoComponent {
+
+    @Subcomponent.Factory
+    interface Factory {
+        fun create(): SubDemoComponent
+    }
+
+    fun inject(Activity activity)
+}
+
+// 创建子组件模块
+@Module(subcomponents = SubDemoComponent::class)
+class SubDemoModule {
+}
+
+// 将声明子组件的模块添加到全局容器中
+@Component(modules = [DemoModule::class, SubDemoModule::class])
+@Singleton
+interface DemoComponent {
+    ···
+    fun getSubDemoComponent(): SubDemoComponent.Factory
+}
+```
+
+为确保子组件只在特定场景使用，还需要使用**相同的自定义`@Scope`注解**来修饰子组件和持有该子组件引用的组件，这样它们才能保持相同的生命周期。在上面的例子中，获取子组件实例对象时，需要先从全局容器调用`getSubDemoComponent()`拿到工厂对象，然后再调用工厂方法获得真正的`SubDemoComponent`类型实例。
 

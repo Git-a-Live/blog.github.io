@@ -11,14 +11,17 @@
   * [WorkManager](Android/wm.md)
   * <font color=blue>应用架构</font>
   * [ViewModel](Android/vm.md)
-  * [LiveData](Android/ld.md)
-  * [DataBinding](Android/db.md)
   * [AndroidViewModel](Android/avm.md)
+  * [LiveData](Android/ld.md)
   * [ViewBinding](Android/vb.md)
+  * [DataBinding](Android/db.md)
   * [MVI架构](Android/mvi.md)
   * <font color=blue>本地数据存储</font>
   * [Shared Preferences](Android/sp.md)
-  * [Room数据库](Android/room.md)
+  * [Jetpack DataStore](xxx.md)
+  * [MMKV](xxx.md)
+  * [Jetpack Room](Android/room.md)
+  * [greenDAO](xxx.md)
   * [IO操作](Android/io.md)
   * <font color=blue>序列化</font>
   * [Serializable](Android/serial.md)
@@ -53,6 +56,8 @@
   * [Glide](Android/glide.md)
   * [Dagger2](Android/dagger2.md)
   * [Hilt](Android/hilt.md)
+  * [Koin](xxx.md)
+  * [Coil](xxx.md)
   * [ZXing](Android/zxing.md)
   * <font color=blue>Android进阶</font>
   * [Java虚拟机基础](Android/jvm.md)
@@ -89,15 +94,6 @@
   * [结构型设计模式](DesignPattern/结构型设计模式.md)
   * [行为型设计模式](DesignPattern/行为型设计模式.md)
   * [《代码整洁之道》总结](DesignPattern/代码整洁之道总结.md)
-* <font color=red>**C++入门**</font>
-  * [从Hello World开始](/CPP/helloworld.md)
-  * [函数](/CPP/function.md)
-  * [复合类型](/CPP/complex.md)
-  * [指针](xxx.md)
-  * [内存模型和名称空间](xxx.md)
-  * [对象和类](xxx.md)
-  * [友元、异常及其他](xxx.md)
-  * [输入、输出及文件](xxx.md)
 * <font color=red>**数据结构与算法**</font>
   * <font color=blue>数据结构部分</font>
   * [数据结构概述](/DataStructure/intro.md)
@@ -146,10 +142,10 @@
   * [操作系统概述](OperatingSystem/intro.md)
 * <font color=red>**数学基础**</font>
   * <font color=blue>微积分</font>
-  * [函数、图像与直线](xxx.md)
+  * [函数](Math/calculus/function.md)
   * [极限](xxx.md)
   * [连续](xxx.md)
-  * [微分](xxx.md)
+  * [微分/求导](xxx.md)
   * [积分](xxx.md)
   * <font color=blue>线性代数</font>
   * <font color=blue>概率论</font>
