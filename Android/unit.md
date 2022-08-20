@@ -41,14 +41,18 @@ class ExampleUnitTest {
 
 前两条是JUnit本身的要求，关于最后一条注意事项，Google官方建议使用AndroidX Test提供的Robolectric工件，以执行真实的Android框架代码和原生框架代码的虚假对象，这就涉及到接下来要介绍的插桩测试。
 
+在Android Studio中进行单元测试时，如果选择运行整个测试类，里面的@Test方法在通常情况下是不按特定顺序执行的，因为单元测试通常并不认为各个@Test方法之间存在耦合关系，所以即便打乱顺序也不会影响测试结果。若确实有需要，在JUnit 4框架下，为测试类添加`@FixMethodOrder(value = MethodSorters.NAME_ASCENDING)`注解，并且确保@Test方法自上而下按照字典方式**升序**命名，即可实现各个@Test方法自上而下按序执行。
+
 ## 插桩测试
 
 Google官方对于插桩测试的解释是这样的：
 
->插桩单元测试是在实体设备和模拟器上运行的测试，此类测试可以利用 Android 框架 API 和辅助性 API，如 AndroidX Test。
+>插桩单元测试是在**实体设备**和**模拟器**上运行的测试，此类测试可以利用 Android 框架 API 和辅助性 API，如 AndroidX Test。
 
 同时强调：
 
 >我们建议只有在必须针对真实设备的行为进行测试时才使用插桩单元测试。（注：比如获取一个Context对象）
 
 和本地测试一样，插桩测试的示例在创建项目时就已经存在，位于androidTest目录，文件名为ExampleInstrumentedTest。插桩测试类的用法和本地测试类有许多相似的地方，主要区别就在于插桩测试类可以通过AndroidX Test运行JUnit 4 测试运行程序 (AndroidJUnitRunner) 和用于功能界面测试的 API（[Espresso](https://developer.android.google.cn/training/testing/espresso)和[UI Automator](https://developer.android.google.cn/training/testing/ui-automator)），在功能上比本地测试更为丰富和复杂。
+
+> 注意，插桩测试需要在debug模式下进行，否则对应的插桩测试目录不会被Android Studio识别。

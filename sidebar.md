@@ -17,11 +17,9 @@
   * [DataBinding](Android/db.md)
   * [MVI架构](Android/mvi.md)
   * <font color=blue>本地数据存储</font>
-  * [Shared Preferences](Android/sp.md)
-  * [Jetpack DataStore](xxx.md)
-  * [MMKV](xxx.md)
-  * [Jetpack Room](Android/room.md)
-  * [greenDAO](xxx.md)
+  * [键值对数据存储](Android/sp.md)
+  * [数据库：Jetpack Room](Android/room.md)
+  * [数据库：greenDAO](xxx.md)
   * [IO操作](Android/io.md)
   * <font color=blue>序列化</font>
   * [Serializable](Android/serial.md)
@@ -42,7 +40,6 @@
   * [自定义控件](Android/controller.md)
   * [自定义视图](Android/customview.md)
   * [Jetpack Compose](Android/jc.md)
-  * [Java GUI开发](Android/gui.md)
   * <font color=blue>编译调试</font>
   * [Gradle编译](Android/gradle.md)
   * [应用调试](Android/debug.md)
