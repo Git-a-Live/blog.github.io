@@ -83,11 +83,9 @@ SharedPreferences在较为复杂的数据持久化业务逻辑中，还会暴露
 
 [Jetpack DataStore](https://developer.android.google.cn/jetpack/androidx/releases/datastore?hl=zh-cn)是Google于2020年推出的一个数据存储方案。按照Google官方的说法，DataStore“以异步、一致的事务方式存储数据，克服了SharedPreferences的一些缺点”，采用的异步方案不是传统的多线程，而是Kotlin协程和Flow。
 
-DataStore提供了两种不同的实现：Preferences DataStore和Proto DataStore。其中前者和SharedPreferences一样也是键值对存储，不需要预定义的架构，但也不确保类型安全；后者则是将数据作为自定义数据类型的实例进行存储，但是需要开发者使用[协议缓冲区](https://developers.google.cn/protocol-buffers?hl=zh-cn)来定义架构，从而确保类型安全。
+DataStore提供了两种不同的实现：Preferences DataStore和Proto DataStore。其中前者和SharedPreferences一样也是键值对存储，不需要预定义的架构，但也不确保类型安全；后者则是将数据作为自定义数据类型的实例进行存储，但是需要开发者使用[协议缓冲区](https://developers.google.cn/protocol-buffers?hl=zh-cn)来定义架构，从而确保类型安全。由于Proto DataStore构建协议缓冲区的过程较为复杂，因此这里暂时只讨论Preferences DataStore，如果下文没有额外说明，DataStore均指代Preferences DataStore。
 
 DataStore目前并没有内置在Android SDK中，因此需要以依赖库的方式引入：
-
-+ **Preferences DataStore依赖方式**
 
 ```
 dependencies {
@@ -100,37 +98,100 @@ dependencies {
     implementation "androidx.datastore:datastore-preferences-rxjava3:${specified_version}"
 }
 
-// Alternatively - use the following artifact without an Android dependency.
+// 与 Android 无关的依赖项，可选
 dependencies {
     implementation "androidx.datastore:datastore-preferences-core:${specified_version}"
 }
 ```
 
-+ **Proto DataStore依赖方式**
+### 创建实例对象
+
+DataStore对象的创建方式跟以往的SharedPreferences有很大不同，参考下面由Google官方提供的示例代码：
 
 ```
-dependencies {
-    implementation "androidx.datastore:datastore:${specified_version}"
+val Context.myDataStore by preferencesDataStore("filename")
 
-    // RxJava2支持，可选
-    implementation "androidx.datastore:datastore-rxjava2:${specified_version}"
-
-    // RxJava3支持，可选
-    implementation "androidx.datastore:datastore-rxjava3:${specified_version}"
-}
-
-// Alternatively - use the following artifact without an Android dependency.
-dependencies {
-    implementation "androidx.datastore:datastore-core:${specified_version}"
+class SomeClass(val context: Context) {
+   suspend fun update() = context.myDataStore.edit {...}
 }
 ```
 
-### Preferences DataStore
+可以发现，DataStore对象**被创建为Context的扩展属性，使用代理方法完成创建，并且位于顶层**。Google在注释中的解释是：
 
+> This should only be called once in a file (at the top level), and all usages of the DataStore should use a reference the same Instance. The receiver type for the property delegate must be an instance of Context.
 
+也就是说，DataStore对象需要通过调用`preferencesDataStore`函数，采用代理方式创建实例，在一个文件中只有一次调用，并且是在顶层调用，以确保它是单例的。此外，还要将它设置为Context扩展属性，因为`preferencesDataStore`函数里有时需要传入一个以Context对象为入参的lambda表达式。Google的做法不是让`preferencesDataStore`函数接收一个Context入参，而是利用Kotlin的语法糖，让被代理的DataStore对象成为Context扩展属性，这样就可以获得一个Context类型的接收器。
 
-### Proto DataStore
+如果想从原有SharedPreferences迁移到DataStore，那么还需要在`preferencesDataStore`函数中传入一个名为produceMigrations的lambda表达式，类似于下面的代码：
+
+```
+private val Context.dataStore by preferencesDataStore(
+    name = USER_PREFERENCES_NAME,
+    produceMigrations = { context ->
+        // Since we're migrating from SharedPreferences, 
+        // add a migration based on the SharedPreferences name
+        listOf(SharedPreferencesMigration(context, USER_PREFERENCES_NAME))
+    }
+)
+```
+
+这个操作有点类似于Room迁移数据库，不过要方便得多。可以看到，迁移的核心部分，就是调用`SharedPreferencesMigration`函数，上面代码传入的context对象实际上就来源于接收器。
+
+无论是直接创建还是迁移，最后DataStore对象会在应用的[内部存储空间](/Android/io?id=存储空间)下，也就是`内部存储空间目录/files/datastore`里面，创建`.preferences_pb`格式的存储文件（双击之后可以在IDE中直接查看内容），所有的键值对数据就保存在这个文件里。值得一提的是，迁移之后，SharedPreferences所创建的`.xml`文件会被移除。
+
+### 基本使用
+
+DataStore对象有两个重要函数和一个重要属性值得关注，分别是`edit`和`updateData`函数，以及一个`data`属性，下面开始对它们进行逐一介绍。
+
+#### `edit`函数
+
+`edit`函数的源码如下：
+
+```
+public suspend fun DataStore<Preferences>.edit(
+    transform: suspend (MutablePreferences) -> Unit
+): Preferences {
+    return this.updateData {
+        // It's safe to return MutablePreferences since we freeze it in
+        // PreferencesDataStore.updateData()
+        it.toMutablePreferences().apply { transform(this) }
+    }
+}
+```
+
+Google在该函数的注释中对该函数的主要用途做了以下说明：
+
+> Edit the value in DataStore transactionally in an atomic read-modify-write operation. All operations are serialized.
+>
+> The coroutine completes when the data has been persisted durably to disk (after which DataStore.data will reflect the update). If the transform or write to disk fails, the transaction is aborted and an exception is thrown.
+
+根据上面的源码和注释内容，首先可以明确一点，这个函数在lambda表达式中提供的`MutablePreferences`对象，就是完成读写操作的关键所在；其次，该函数是一个挂起函数，也就意味着读写操作需要在Kotlin协程中执行；此外，这些读写操作是以**事务**的形式封装成原子操作，以强制保证操作能够按顺序执行；最后，如果写入磁盘的时候失败，事务就会直接被终止并抛出异常，待写入的数据也不会被保存到磁盘文件上，避免造成文件损坏。
+
+`MutablePreferences`对象通过`Preferences.Key<T>`类型的key来创建或查找键值对数据，语法上跟Map十分相似。`Preferences.Key<T>`类型key通常由专门的顶层函数`xxxPreferencesKey()`来创建，其中“xxx”前缀表示的是基本类型，比如整型、浮点型、字符串型或是布尔型等，具体可在`PreferencesKey.kt`文件中查看。
+
+#### `updateData`函数
+
+`updateData`函数在`edit`函数的源码中已经出现过，可以发现`edit`函数实际上就是以`updateData`函数作为其底层实现。`updateData`函数的源码如下：
+
+```
+public suspend fun updateData(transform: suspend (t: T) -> T): T
+```
+
+Google在该函数的注释中对该函数的主要用途做了以下说明：
+
+> Updates the data transactionally in an atomic read-modify-write operation. All operations are serialized, and the transform itself is a coroutine so it can perform heavy work such as RPCs.
+>
+> The coroutine completes when the data has been persisted durably to disk (after which data will reflect the update). If the transform or write to disk fails, the transaction is aborted and an exception is thrown.
+
+根据上面的源码和注释内容，`updateData`函数通过协程和事务封装成原子操作的形式来完成数据读写以及类似RPC（Remote Procedure Call，跨进程通信机制的一种）这样的重型任务，并且写入磁盘文件失败时就会终止事务并抛出异常。
+
+#### `data`属性
+
+通过查看源码可以知道，`data`属性是一个`Flow`类型的对象。关于`Flow`，这里只做一些简要说明，更详细的内容可以参考[冷数据流Flow](/Kotlin/coroutine3?id=冷数据流flow)。
+
+`data`属性作为一个`Flow`对象，其主要用途是对最新的、持久保留的状态，为用户提供一个高效且可缓存（如果可能的话）的访问方式。当用户试图从磁盘文件中读取数据时，`data`属性要么返回一个值，要么就抛出一个异常。
 
 ## MMKV
 
-[MMKV](https://github.com/Tencent/MMKV)是腾讯于2018年开源的一个键值对数据存储方案。MMKV名字来源于Memory Mapped Key-Value的缩写，采用Linux mmap（内存共享映射）原理，适用于**高频同步**读写的场景。MMKV同Shared Preferences和Data Store相比有一个最大的优势，就是支持多进程调用。
+[MMKV](https://github.com/Tencent/MMKV)是腾讯于2018年开源的一个键值对数据存储方案。MMKV名字来源于Memory Mapped Key-Value的缩写，采用Linux mmap（内存共享映射）原理，适用于**高频同步**读写的场景。MMKV同SharedPreferences和DataStore相比有一个最大的优势，就是支持跨进程调用。
+

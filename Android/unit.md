@@ -31,7 +31,7 @@ class ExampleUnitTest {
 }
 ```
 
-这就是Android Studio基于JUnit 4所提供的本地测试类。所谓本地测试，是指仅在本地计算机上运行的单元测试，测试代码编译为在 Java 虚拟机 (JVM) 本地运行，以最大限度地缩短执行时间。也就是说，如果要测试的代码只要有JVM就能跑，那么可以直接放到本地测试类里去执行，就像上面的示例代码。
+这就是Android Studio<font color=red>基于JUnit 4框架</font>所提供的本地测试类。所谓本地测试，是指仅在本地计算机上运行的单元测试，测试代码编译为在 Java 虚拟机 (JVM) 本地运行，以最大限度地缩短执行时间。也就是说，如果要测试的代码只要有JVM就能跑，那么可以直接放到本地测试类里去执行，就像上面的示例代码。
 
 使用Android Studio的JUnit进行基本的单元测试有几个地方需要注意：
 
@@ -41,7 +41,14 @@ class ExampleUnitTest {
 
 前两条是JUnit本身的要求，关于最后一条注意事项，Google官方建议使用AndroidX Test提供的Robolectric工件，以执行真实的Android框架代码和原生框架代码的虚假对象，这就涉及到接下来要介绍的插桩测试。
 
-在Android Studio中进行单元测试时，如果选择运行整个测试类，里面的@Test方法在通常情况下是不按特定顺序执行的，因为单元测试通常并不认为各个@Test方法之间存在耦合关系，所以即便打乱顺序也不会影响测试结果。若确实有需要，在JUnit 4框架下，为测试类添加`@FixMethodOrder(value = MethodSorters.NAME_ASCENDING)`注解，并且确保@Test方法自上而下按照字典方式**升序**命名，即可实现各个@Test方法自上而下按序执行。
+在Android Studio中进行单元测试时，如果选择运行整个测试类，里面的`@Test`方法在通常情况下是不按特定顺序执行的，因为单元测试通常并不认为各个`@Test`方法之间存在耦合关系，所以即便打乱顺序也不会影响测试结果。若确实有需要，可以采用以下两种方案：
+
++ 第一种方案，在JUnit 4框架下，为测试类添加`@FixMethodOrder(value = MethodSorters.NAME_ASCENDING)`注解，并且确保`@Test`方法自上而下按照字典方式**升序**命名，即可实现各个`@Test`方法自上而下按序执行。
+
++ 第二种方案，直接将JUnit 4框架更换为JUnit 5框架，然后为各个`@Test`方法额外添加`@Order`注解，就能直接确定这些方法的执行顺序，也不需要考虑如何重新为这些方法命名。JUnit 5框架的引入方式如下：
+    ```
+    testImplementation 'org.junit.jupiter:junit-jupiter:${specified_version}'
+    ```
 
 ## 插桩测试
 
@@ -53,6 +60,6 @@ Google官方对于插桩测试的解释是这样的：
 
 >我们建议只有在必须针对真实设备的行为进行测试时才使用插桩单元测试。（注：比如获取一个Context对象）
 
-和本地测试一样，插桩测试的示例在创建项目时就已经存在，位于androidTest目录，文件名为ExampleInstrumentedTest。插桩测试类的用法和本地测试类有许多相似的地方，主要区别就在于插桩测试类可以通过AndroidX Test运行JUnit 4 测试运行程序 (AndroidJUnitRunner) 和用于功能界面测试的 API（[Espresso](https://developer.android.google.cn/training/testing/espresso)和[UI Automator](https://developer.android.google.cn/training/testing/ui-automator)），在功能上比本地测试更为丰富和复杂。
+和本地测试一样，插桩测试的示例在创建项目时就已经存在，位于androidTest目录，文件名为ExampleInstrumentedTest。插桩测试类的用法和本地测试类有许多相似的地方，主要区别就在于插桩测试类可以通过AndroidX Test运行JUnit 4测试运行程序 (AndroidJUnitRunner) 和用于功能界面测试的 API（[Espresso](https://developer.android.google.cn/training/testing/espresso)和[UI Automator](https://developer.android.google.cn/training/testing/ui-automator)），在功能上比本地测试更为丰富和复杂。
 
 > 注意，插桩测试需要在debug模式下进行，否则对应的插桩测试目录不会被Android Studio识别。
