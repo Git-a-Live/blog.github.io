@@ -195,3 +195,49 @@ Google在该函数的注释中对该函数的主要用途做了以下说明：
 
 [MMKV](https://github.com/Tencent/MMKV)是腾讯于2018年开源的一个键值对数据存储方案。MMKV名字来源于Memory Mapped Key-Value的缩写，采用Linux mmap（内存共享映射）原理，适用于**高频同步**读写的场景。MMKV同SharedPreferences和DataStore相比有一个最大的优势，就是支持跨进程调用。
 
+### 工作原理
+
+MMKV的工作原理就是内存映射文件，也就是将一个文件或者其它对象映射到进程的地址空间，实现文件磁盘地址和进程虚拟地址空间中一段虚拟地址的一一对映关系。实现这样的映射关系后，进程就可以采用指针的方式读写操作这一段内存，而操作系统会自动回写数据到对应的文件磁盘上（这样就能避免应用崩溃导致数据丢失的问题），即完成了对文件的操作而不必再调用read,write等系统调用函数。内核空间对这段区域的修改也直接反映到用户空间，从而可以实现不同进程间的文件共享。
+
+详细的设计原理可以参考MMKV开发团队的[介绍](https://github.com/Tencent/MMKV/wiki/design)。
+
+### 基本使用
+
+MMKV的导入方式如下：
+
+```
+dependencies {
+    // 从1.2.8开始，MMKV迁移到Maven Center仓库
+    implementation 'com.tencent:mmkv:${specified_version}'
+}
+```
+
+在自定义Application类中初始化MMKV的根目录（默认就是`内部存储空间/files/mmkv/`）：
+
+```
+fun onCreate() {
+    super.onCreate()
+    val rootDir = MMKV.initialize(this)
+    println("mmkv root: $rootDir");
+    ...
+}
+```
+
+使用MMKV的全局单例存取键值对数据：
+
+```
+val kv = MMKV.defaultMMKV()
+
+kv.encode("bool", true)
+val bValue = kv.decodeBool("bool", false)
+
+kv.encode("int", 114514);
+val iValue = kv.decodeInt("int", 1919810)
+
+kv.encode("string", "Hello from mmkv")
+val str = kv.decodeString("string")
+```
+
+MMKV使用`encode`方法写入键值对数据，使用`decodeValue`方法读取键值对数据。可以发现，MMKV最多就是通过不同的`decodeValue`方法来区分读取的数据是什么类型，而要确保类型安全，还得让开发者记住一个key对应什么类型的value。另外，每个类型的`decodeValue`方法都有两种形式，一种需要用户提供默认值，防止返回null引发异常，另一种则不需要提供默认值，但存在返回null的风险。
+
+关于MMKV的进阶使用方式，可以参考MMKV开发团队的[介绍](https://github.com/Tencent/MMKV/wiki/android_advance_cn)；多进程调用的设计与实现，可以参考[这份说明](https://github.com/Tencent/MMKV/wiki/android_ipc)。

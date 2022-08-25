@@ -4,13 +4,13 @@
 
 Kotlin协程的挂起与恢复能力本质上就是挂起函数的挂起和恢复。协程挂起就是**程序执行流程发生异步调用时，当前调用流程的执行状态进入等待状态**。
 
-+ **阻塞与非阻塞**
+### 阻塞与非阻塞
 
 Kotlin协程的挂起是“非阻塞式”的，从本质上来说，就是指代码采用同步的（看起来会阻塞主线程的）写法，但实际上不会阻塞主线程。原因很简单，主线程自身当然不可能被已经脱离出去、运行在其他线程的任务所阻塞（亦即所谓的“死道友不死贫道”）。即使不用协程，仅仅使用Java最底层的Thread进行线程切换，也同样能实现非阻塞式。从这个角度来讲，Kotlin协程的异步并不比Java底层Thread的异步更高级。
 
-最后要强调的是，任何耗时操作终归会有一个线程来承载，而承载耗时操作的线程自然是处于阻塞状态的，无非是处理耗时操作有时间长短，阻塞也就有久和不久的差异。
+最后要强调的是，任何耗时操作终归会有一个线程来承载，而承载耗时操作的线程自然是处于阻塞状态的，无非是处理耗时操作有时间长短上的差异。
 
-+ **协程上下文**
+### 协程上下文
 
 启动协程需要三大元素：上下文、启动模式和协程体。这三大元素在协程源码中大致是这样的：
 
@@ -31,7 +31,7 @@ public fun CoroutineScope.launch(
 
 启动模式在上一节已经介绍过，而协程体也不用再多介绍了，它接受的是一个被`suspend`关键字修饰的函数对象，对应的就是开发者在构建器中编写的协程代码。这里主要介绍协程上下文。
 
-`CoroutineContext`类型的上下文是指完成某个任务所需要的前置资源和外部环境，其主要作用为<font color=red>携带参数、拦截协程执行以及实现线程切换</font>。在多数情况下，Kotlin提供的现成上下文已经可以满足开发需求，不用开发者自己实现。常见的上下文有两种：
+`CoroutineContext`类型的上下文是指**完成某个任务所需要的前置资源和外部环境**，其主要作用为<font color=red>携带参数、拦截协程执行以及实现线程切换</font>。在多数情况下，Kotlin提供的现成上下文已经可以满足开发需求，不用开发者自己实现。常见的上下文有两种：
 
 + CombinedContext，上下文组合，表示很多具体的上下文集合
 + EmptyCoroutineContext，什么都没有的空上下文，默认情况下就是这种
@@ -61,7 +61,8 @@ CombinedContext是一个CoroutineContext的子类，而且是一个位于Corouti
 
 ```
 GlobalScope.launch {
-    println(coroutineContext[Job.Key]) // 打印结果为StandaloneCoroutine{Active}@xxxxxxx
+    // 打印结果为StandaloneCoroutine{Active}@xxxxxxx
+    println(coroutineContext[Job.Key])
 }
 ```
 
@@ -83,25 +84,23 @@ launch(Dispatchers.Main + CoroutineName("Example")) {
 
 上下文里面还有两个值得注意的子类，一个是ContinuationInterceptor（协程拦截器），另一个是CoroutineDispatcher（协程调度器）。
 
->ContinuationInterceptor
+> ContinuationInterceptor
 
 从源码上看，ContinuationInterceptor是一个直接继承于CoroutineContext.Element的接口，但是CoroutineContext.Element本身也是CoroutineContext的子类，所以它们之间的关系就可以理清了。
 
 ContinuationInterceptor也是一个上下文的实现方向，可以左右协程的执行，同时为了保证其功能的正确性，协程上下文集合永远将它放在最后面。ContinuationInterceptor的工作方式跟OkHttp的拦截器相似，它会拦截协程的Continuation以实现回调。而下面要提到的CoroutineDispatcher在本质上就是一种拦截器，只不过需要处理线程切换的问题。
 
->CoroutineDispatcher
+> CoroutineDispatcher
 
 CoroutineDispatcher是Kotlin协程中专门执行线程切换任务的重要角色，它是一个继承于ContinuationInterceptor的抽象类。
 
 CoroutineDispatcher的`dispatch()`方法会在拦截器的`interceptContinuation()`方法中调用，进而实现协程的调度。所以如果开发者想要实现自己的调度器，继承这个类就可以了，不过通常情况下用现成的就可以了。
 
->注意，非受限调度器是一种高级机制，可以在某些极端情况下提供帮助，而不需要调度协程以便稍后执行或是由此产生副作用，因为某些操作必须立即在协程中执行。非受限调度器不应该在通常的代码中使用。
+> 注意，非受限调度器是一种高级机制，可以在某些极端情况下提供帮助，而不需要调度协程以便稍后执行或是由此产生副作用，因为某些操作必须立即在协程中执行。非受限调度器不应该在通常的代码中使用。
 
 如果开发者没有显式指明协程需要使用什么样的调度器（即直接调用构建器开启协程），那么默认就是<font color=red><u>直接运行在父协程的上下文中</u></font>。
 
 最后需要注意的一个问题是，既然协程本身是基于线程的一种良好封装，那么通过调度器切换线程就依然不能摆脱由此带来的额外性能开销。频繁的线程切换势必会影响到程序的整体性能，因此，在实际开发工作中，通常只需要在一个线程中执行业务逻辑，只有一些耗时操作才需要切换到指定的线程去处理。
-
-## Kotlin协程异常处理
 
 ## 热数据通道Channel
 
@@ -109,5 +108,7 @@ CoroutineDispatcher的`dispatch()`方法会在拦截器的`interceptContinuation
 
 ## 多路复用select
 
-## Kotlin协程并发安全
+## 并发安全
+
+## 异常处理
 
