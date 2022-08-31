@@ -8,6 +8,8 @@ ZXing只提供了基本的条码生成识别功能，如果想满足开发需求
 > 
 > 本项目处于维护模式，即只有提交的补丁会引起项目变化——除bug修复和主要的功能增强外，其他提交都不考虑。……此外，本项目也没有什么活跃的开发计划或路线图，开发者可DIY自行封装。
 
+限于篇幅，这里只介绍二维码（QR Code）的生成和识别。
+
 ## 依赖库导入
 
 ZXing支持`.jar`文件直接导入，不过Google在Maven Center上已经提供了[远程依赖](https://mvnrepository.com/artifact/com.google.zxing/core)方式，所以Android开发中使用远程依赖更为方便：
@@ -18,7 +20,115 @@ dependencies {
 }
 ```
 
+由于ZXing有生成、识别条码的功能，因此集成使用时必须配置相机和存储等权限：
+
+```
+<uses-permission android:name="android.permission.CAMERA" />
+<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
+<uses-feature android:name="android.hardware.camera" />
+<uses-feature android:name="android.hardware.camera.autofocus" />
+```
+
+在Android 6.0或更高版本的系统上，还需要配置动态权限获取的业务逻辑。
+
 ## 基本使用
 
+### 生成二维码图片
 
+首先要设置生成二维码所需的重要参数：
+```
+// 用Hashtable类型设置二维码参数
+val qrParam = Hashtable<EncodeHintType, Any>().apply {
+    // 设置二维码纠错级别，这里选择最高级别H
+    put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.H)
+    // 设置字符编码方式
+    put(EncodeHintType.CHARACTER_SET, Charsets.UTF_8.name())
+}
+```
+
+接着构建BitMatrix类型对象：
+```
+// 将内容转换成一个具有特定尺寸的比特矩阵，条码格式设置为BarcodeFormat.QR_CODE，即二维码
+val bitMatrix = MultiFormatWriter().encode(content, BarcodeFormat.QR_CODE, width, height, qrParam)
+```
+
+然后将BitMatrix转换成一维数组：
+```
+// 利用Kotlin扩展函数为BitMatrix对象提供转换一维数组的功能
+fun BitMatrix.generateQRData(): IntArray {
+    val data = IntArray(width * height)
+    for (y in 0 until height) {
+        for (x in 0 until width) {
+            // 在这里设置像素点颜色
+            data[y * width + x] = if (get(x, y)) Color.BLACK else Color.WHITE
+        }
+    }
+    return data
+}
+```
+
+最后利用一维数组的数据生成BItmap图片：
+```
+// BitMatrix对象转换成一维数组
+val data = bitMatrix.generateQRData()
+// 创建一张bitmap图片，采用最高图片效果ARGB_8888
+val bitmap = Bitmap.createBitmap(bitMatrix.width, bitMatrix.height, Bitmap.Config.ARGB_8888).apply {
+    // 传入二维码颜色数组，生成图片颜色
+    setPixels(data, 0, width, 0, 0, width, height) 
+}
+```
+
+至此，利用特定内容生成二维码图片的流程已经基本完成（类似下图所示），只要将生成的Bitmap图片传递给ImageView控件就可以展示了。
+
+![](pics/zxing.png)
+
+有些二维码的中心位置还会有图标，下面介绍如何为二维码设置中心图标。首先要将图标转换成Bitmap对象（转换过程略），然后进行以下初始化操作：
+```
+// 利用Kotlin扩展函数为Bitmap类型的中心图标提供初始化功能
+fun Bitmap.initPortrait(portraitSize: Int): Bitmap? {
+    var bitmap: Bitmap? = null
+    try {
+        val matrix = Matrix().apply {
+            setScale(portraitSize * 1F  / width, portraitSize * 1F / height)
+        }
+        bitmap = Bitmap.createBitmap(this, 0, 0, width, height, matrix, true)
+    }
+    return bitmap
+}
+```
+
+接着开始为之前生成的二维码图片添加中心图标：
+```
+// 利用Kotlin扩展函数为二维码的Bitmap图片提供绘制中心图标的功能
+fun Bitmap.createQRCodeBitmapWithPortrait(qrCodeSize: Int, portraitSize: Int, portrait: Bitmap) {
+    portrait.initPortrait(portraitSize)?.let {
+        val left = (qrCodeSize - it.width) / 2
+        val right = left + it.width
+        val top = (qrCodeSize - it.height) / 2
+        val bottom = top + it.height
+        // 设置图标要显示的位置，即居中显示
+        val rect = Rect(left, top, right, bottom)
+        // 取得二维码图片上的画笔，即要在二维码图片上绘制图标
+        val canvas = Canvas(this)
+        // 设置要绘制的图标范围大小
+        val rect2 = Rect(0, 0, it.width, it.height)
+        // 开始绘制
+        canvas.drawBitmap(it, rect2, rect, null)
+    }
+}
+```
+
+在上述流程完成之后，二维码就添加上了中心图标，类似下图所示：
+
+![](pics/zxing2.png)
+
+
+### 识别二维码内容
+
++ **通过摄像头扫码**
+
+
+
++ **通过已有图片读取**
 
