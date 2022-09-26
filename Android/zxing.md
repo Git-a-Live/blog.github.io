@@ -68,7 +68,7 @@ fun BitMatrix.generateQRData(): IntArray {
 }
 ```
 
-最后利用一维数组的数据生成BItmap图片：
+最后利用一维数组的数据生成Bitmap图片：
 ```
 // BitMatrix对象转换成一维数组
 val data = bitMatrix.generateQRData()
@@ -126,9 +126,5 @@ fun Bitmap.createQRCodeBitmapWithPortrait(qrCodeSize: Int, portraitSize: Int, po
 
 ### 识别二维码内容
 
-+ **通过摄像头扫码**
 
-
-
-+ **通过已有图片读取**
 

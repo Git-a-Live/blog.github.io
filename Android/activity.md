@@ -180,8 +180,6 @@ object ActivitiesCollector {
 }
 ```
 
-示例中的ActivitiesCollector是一个单例类，单例类的具体用法可以参考[这里](Swift/Swift语言入门_数据类型_1?id=方法)。
-
 ## Activity生命周期
 
 Activity的生命周期包括：`onCreate()`、`onStart()`、`onResume()`、`onPause()`、`onStop()`、`onRestart()`以及`onDestroy()`。具体调用时机如下图所示：
@@ -273,7 +271,7 @@ TaskRecord用来<font color=purple>表示Activity的任务栈（这个才是真�
 | taskID          | int                         |      任务栈的唯一标识符      |
 | affinity        | String                      |    该Task中第一个Activity    |
 | intent          | Intent                      |    启动这个任务栈的Intent    |
-| mActivities     | ArrayList< ActivityRecord > | 按历史顺序排列的Activity记录 |
+| mActivities     | ArrayList\<ActivityRecord> | 按历史顺序排列的Activity记录 |
 | mStack          | ActivityStack               |   当前归属的ActivityStack    |
 | mService        | ActivityManagerService      |          AMS的引用           |
 | mCallingPackage | String                      |         调用者的包名         |

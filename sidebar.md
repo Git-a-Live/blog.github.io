@@ -52,6 +52,7 @@
   * [LeakCanary](Android/leak.md)
   * [Glide](Android/glide.md)
   * [ZXing](Android/zxing.md)
+  * [CameraX](Android/camerax.md)
   * [Dagger2](Android/dagger2.md)
   * [Hilt](Android/hilt.md)
   * [greenDAO](xxx.md)
