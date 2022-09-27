@@ -26,7 +26,7 @@
   * [JSON](Android/json.md)
   * [XML](Android/xml.md)
   * <font color=blue>多媒体</font>
-  * [摄像头与照片](Android/photo.md)
+  * [CameraX](Android/camerax.md)
   * [音视频](Android/msc.md)
   * [蓝牙](Android/bt.md)
   * [网页浏览](Android/wv.md)
@@ -52,7 +52,6 @@
   * [LeakCanary](Android/leak.md)
   * [Glide](Android/glide.md)
   * [ZXing](Android/zxing.md)
-  * [CameraX](Android/camerax.md)
   * [Dagger2](Android/dagger2.md)
   * [Hilt](Android/hilt.md)
   * [greenDAO](xxx.md)

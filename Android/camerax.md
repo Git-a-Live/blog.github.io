@@ -17,6 +17,9 @@ implementation "androidx.camera:camera-lifecycle:${specified_version}"
 
 // CameraX专用视图控件
 implementation "androidx.camera:camera-view:${specified_version}"
+
+// CameraX视频拍摄功能依赖库
+implementation "androidx.camera:camera-video:${specified_version}"
 ```
 
 > 截止2022年9月26日，CameraX最新发布的稳定版本为1.1.0。更多版本信息，可访问[https://developer.android.google.cn/jetpack/androidx/releases/camera](https://developer.android.google.cn/jetpack/androidx/releases/camera)查看。
@@ -32,7 +35,10 @@ implementation "androidx.camera:camera-view:${specified_version}"
 
 <!--声明访问存储空间的权限-->
 <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
-<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" />
+<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28"/>
+
+<!--声明访问麦克风权限-->
+<uses-permission android:name="android.permission.RECORD_AUDIO"/>
 ```
 
 ## 基本使用
@@ -41,7 +47,7 @@ implementation "androidx.camera:camera-view:${specified_version}"
 
 ### 画面预览
 
-CameraX提供了专门的视图控件`androidx.camera.view.PreviewView`，只要在布局文件中摆放好即可。在Activity或Fragment中，完成相机功能初始化并展示画面预览的步骤如下：
+CameraX提供了专门的视图控件`androidx.camera.view.PreviewView`，只要在布局文件中摆放好即可。在Activity或Fragment中，完成相机功能初始化并展示画面预览的步骤如下。
 
 首先要获取`ListenableFuture<ProcessCameraProvider>`对象（如下列代码所示）。该对象的主要用途是通过调用一个单例，完成相机设备与应用生命周期的绑定。
 
@@ -49,7 +55,7 @@ CameraX提供了专门的视图控件`androidx.camera.view.PreviewView`，只要
 val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
 ```
 
-接着为ProcessCameraProvider对象设置监听器以及线程池（如下列代码所示）。监听器是`Runnable`类型，在下面代码中就是lambda表达式的部分；线程池一般会选择主线程，因此传入的参数为`ContextCompat.getMainExecutor(this)`。
+接着为`ProcessCameraProvider`对象设置监听器以及线程池（如下列代码所示）。监听器是`Runnable`类型，在下面代码中就是lambda表达式的部分；线程池选择**主线程**——而且必须是主线程，否则`ListenableFuture<ProcessCameraProvider>`没法回调处理——因此传入的参数为`ContextCompat.getMainExecutor(this)`。
 
 ```
 cameraProviderFuture.addListener({···}, ContextCompat.getMainExecutor(this)）
@@ -93,7 +99,9 @@ try {
 
 在执行完上述代码之后，开发者就能在应用上看到类似于下图的预览画面：
 
-<img src="pics/camerax.png"/>
+<img src="./pics/camerax.png" height=512/>
+
+> 注意，画面预览是**最基础**的功能，后面介绍的其他三个功能，在正常情况下都应该跟画面预览组合使用。
 
 ### 拍照
 
@@ -112,16 +120,17 @@ val imageCapture = ImageCapture.Builder()
 在调用`ImageCapture`对象的`takePicture()`方法之前，还需要对保存的照片进行配置，如保存位置和文件名：
 
 ```
-// 注意在Android 10或更高版本上，不能通过路径名直接访问外部存储空间的多媒体文件，需要使用MediaStore
-val photoFile = File(···)
-val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
+val name = "···"
+// 使用MediaStore，以确保应用在高版本系统上也能正常访问到外部共享存储的文件
+val outputOptions = ImageCapture.OutputFileOptions.Builder(contentResolver,
+        MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+        ContentValues().apply { put(MediaStore.Images.Media.DISPLAY_NAME, name) }).build()
 ```
 
-开始执行拍照动作：
+设置拍照动作：
 
 ```
-imageCapture.takePicture(outputOptions, ContextCompat.getMainExecutor(this), 
-    object : ImageCapture.OnImageSavedCallback {
+imageCapture.takePicture(outputOptions, cameraExecutor, object : ImageCapture.OnImageSavedCallback {
         override fun onError(exc: ImageCaptureException) {
             // TODO: 捕获和处理照片保存过程中出现的异常
         }
@@ -133,6 +142,14 @@ imageCapture.takePicture(outputOptions, ContextCompat.getMainExecutor(this),
         }
     })
 ```
+
+将用例传给到`ProcessCameraProvider`对象：
+
+```
+cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture)
+```
+
+上述步骤完成后，基础的拍照功能就实现了。
 
 ### 帧捕捉
 
@@ -196,19 +213,136 @@ val analyzer = object: ImageAnalysis.Analyzer {
 在经过上面两个步骤之后，还需要把实现好的`ImageAnalysis.Analyzer`接口通过`setAnalyzer()`传给之前创建好的`ImageAnalysis`对象：
 
 ```
-// cameraExecutor是另外创建的线程池，不能使用UI线程池来代替
+// cameraExecutor是另外创建的线程池，不能在主线程执行图像分析功能
 imageAnalyzer.setAnalyzer(cameraExecutor, analyzer)
 ```
 
-`ImageAnalysis`对象作为用例，最后也是跟预览用例一样要传给`ProcessCameraProvider`对象使用：
+`ImageAnalysis`对象作为用例，最后也是跟预览以及拍照用例一样，传给`ProcessCameraProvider`对象使用：
 
 ```
-cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageAnalyzer)
+cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture, imageAnalyzer)
 ```
 
 下图展示的是应用从图像流中对各帧亮度（也就是image.planes[0]的数据）进行分析，并展示在界面左上角：
 
-<img src="pics/camerax2.png"/>
+<img src="./pics/camerax2.png" height=512/>
 
 ### 视频拍摄
+
+视频拍摄和上面三个功能相比要复杂得多，因为视频拍摄不光要考虑处理视频流，还要考虑处理音频流。下图是Google官方在其文档中所提供的视频与音频捕获系统的概念图。可以看到，视频和音频最开始是分别捕获和编码的，然后经过Muxer（Google官方称之为媒体复用器）对这两个流进行多路复用，最后才写入磁盘中。
+
+![](pics/camerax3.png)
+
+在CameraX中，视频拍摄使用的是`VideoCapture`用例。下图为Google官方在其文档中所提供的概念图，用于描述这一解决方案所需的架构组件。
+
+![](pics/camerax4.png)
+
+
+从图中可以看到，`VideoCapture`用例所包含的高级架构组件包括：
+
++ SurfaceProvider，表示视频来源；
++ AudioSource，表示音频来源；
++ 用于对视频/音频进行编码和压缩的两个编码器；
++ 用于对两个流进行多路复用的媒体复用器；
++ 用于输出结果的文件保存器。
+
+#### VideoCapture API概述
+
+VideoCapture API会对复杂的捕获引擎进行抽象化处理，为应用提供更加简单且直观的API。VideoCapture API包含可与应用通信的以下对象：
+
++ `VideoCapture`：顶级用例类，通过`CameraSelector`和其他`CameraX`用例绑定到`LifecycleOwner`。
++ `Recorder`：与`VideoCapture`紧密耦合的`VideoOutput`实现，用于视频和音频捕获，通过它创建录制对象。
++ `PendingRecording`：用于配置录制对象，提供启用音频和设置事件监听器等选项，必须使用`Recorder`来创建，否则不会录制任何内容。
++ `Recording`：用于执行实际录制操作，必须使用`PendingRecording`来创建。
+
+下图展示了这些对象之间是如何交互的：
+
+![](pics/camerax5.png)
+
+1. 使用`QualitySelector`创建`Recorder`；
+2. 使用其中一个`OutputOptions`配置`Recorder`；
+3. 如果需要，使用`withAudioEnabled()`启用音频；
+4. 使用`VideoRecordEvent`监听器调用`start()`以开始录制；
+5. 针对`Recording`使用`pause()`/`resume()`/`stop()`来控制录制操作；
+6. 在事件监听器内响应`VideoRecordEvents`。
+
+#### VideoCapture API的基本使用
+
++ **创建`Recorder`对象**
+
+`Recorder`是一个实现了`VideoOutput`接口的类，其实例对象用于接收保存`VideoCapture`用例所捕获到视频帧（通常是MPEG4格式的）。`Recorder`可以将视频文件以`File`、`ParcelFileDescriptor`或者`MediaStore`的方式保存到磁盘上，按照现在的系统版本分布情况，通常建议使用`MediaStore`执行保存功能。`Recorder`会选择最适合系统的格式，最常见的视频编解码器是`H.264 AVC`，其容器格式为`MPEG-4`。
+
+> 注意，截止2022年9月26日，`Recorder`仍然无法配置最终的视频编解码器和容器格式，因此默认录制的视频格式仅有mp4一种。
+
+`Recorder`对象的构建采用的是[生成器模式](DesignPattern/创建型设计模式?id=三、builder)，并且需要跟`QualitySelector`搭配使用，类似于下列代码所示：
+
+```
+val qualitySelector = QualitySelector.fromOrderedList(listOf(
+    Quality.UHD, Quality.FHD, Quality.HD, Quality.SD),
+    FallbackStrategy.lowerQualityOrHigherThan(Quality.SD))
+
+val videoRecorder = Recorder.Builder().setExecutor(cameraExecutor).setQualitySelector(qualitySelector).build()
+```
+
+首先来看`QualitySelector`。`QualitySelector`的作用是配置视频分辨率，Google提供的预定义分辨率有以下四种：
+
+|预定义分辨率|描述说明|
+|:--------:|:--------:|
+|`Quality.UHD`|适用于**4K超高清**视频大小（2160p）|
+|`Quality.FHD`|适用于**全高清**视频大小（1080p）|
+|`Quality.HD`|适用于**高清**视频大小（720p）|
+|`Quality.SD`|适用于**标清**视频大小（480p）|
+
+目前市面上绝大多数手机都能支持上述四种分辨率当中的至少一种，因此`QualitySelector`对象一般采用的是上面示例代码的构建方式，即提供几个首选分辨率，并包含一个后备策略，以备在不支持任何首选分辨率时使用。在默认情况下，应用会请求设备所能支持的最高录制分辨率，如果所有请求分辨率都不受支持（这种情况极为少见），则授权CameraX选择最接近某一预定义标准的录制分辨率，比如示例代码中设置的`Quality.SD`。
+
+在构建完`QualitySelector`对象之后，就可以将其传给`Recorder`对象。从上面的示例代码中还可以发现，`Recorder`对象的构建还需要传入一个线程池，这个线程池跟之前一样，也是不能选择UI线程，必须通过Java并发包创建专门的线程池，否则会导致应用主线程被阻塞引发ANR。
+
++ **创建`VideoCapture`用例**
+
+`VideoCapture`用例的作用跟前面三个功能用例类似，也是要传给`ProcessCameraProvider`使用。但是要注意，<font color=red>`VideoCapture`用例不能跟`ImageAnalysis`用例同时使用</font>，否则它们会因为同时对图像帧进行处理而发生冲突，导致预览画面无法正常显示：
+
+```
+val videoCapture = VideoCapture.withOutput(videoRecorder)
+
+cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture, videoCapture)
+```
+
++ **创建`Recording`对象**
+
+从实际开发来看，真正执行录制操作的其实不是`Recorder`对象，而是`Recording`对象（更确切地说是`PendingRecording`）。`Recording`对象的创建方式有两种（如此下列代码所示），但在本质上都相同；一个`Recorder`一次仅支持一个`Recording`对象。
+
+```
+// 从Recorder对象直接创建
+val recording = videoRecorder.prepareRecording(context, mediaStoreOutput)
+    .withAudioEnabled() // 录制视频的同时进行录音
+    .start(cameraExecutor)) {
+        // TODO: 监听VideoRecordEvent
+    }
+
+// 从VideoCapture用例获得Recorder对象再创建
+val recording = videoCapture.output.prepareRecording(context, mediaStoreOutput)
+    .withAudioEnabled() // 录制视频的同时进行录音
+    .start(cameraExecutor) {
+        // TODO: 监听VideoRecordEvent
+    }
+```
+
+注意到在调用`prepareRecording()`时还传入了一个mediaStoreOutput参数，这个参数的类型为`MediaStoreOutputOptions`。从类名就可以看出，它和上面三个功能的“XXXOptions”一样，也是用来配置输出文件属性的。`MediaStoreOutputOptions`参数的配置方式可参考下列示例代码：
+
+```
+val name = "XXXX.mp4"
+
+// 为文件配置属性，比如这里的DISPLAY_NAME
+val contentValues = ContentValues().apply { put(MediaStore.Video.Media.DISPLAY_NAME, name) }
+
+// contentResolver可以从Context对象中直接获取
+val mediaStoreOutput = MediaStoreOutputOptions.Builder(contentResolver, MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
+            .setFileSizeLimit(···)            // 设置文件大小限制
+            .setContentValues(contentValues)  // 设置文件属性
+            .build()
+```
+
+在`Recording`对象创建的示例代码部分，可以看到它被创建之后调用了`start()`开始进行视频录制，这个函数传入了一个线程池（同样地，如果不想引发ANR，就不要传入主线程）和监听器的lambda表达式作为参数。监听器的唯一参数是`VideoRecordEvent`类型，主要提供`RecordingStats`和`OutputOptions`两个类型的字段，前者用于了解录制状态，后者用于了解录制文件的一些属性。监听器入参还可以通过检测类型是否属于`VideoRecordEvent.Finalize`，来判断录制是否已经结束。
+
+除了`start()`之外，`Recording`对象还可以调用`pause()`、`resume()`以及`stop()`来分别让视频录制过程暂停、恢复以及终止。值得注意的是，当调用`stop()`时，不光录制过程会停止，所有关联的对象也会被自动清空，以免发生内存泄漏问题。因此一旦调用过`stop()`，在重新开始录制工作之前，应用必须重新配置`Recording`对象，防止发生NPE。
 

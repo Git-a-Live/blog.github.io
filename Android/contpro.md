@@ -6,39 +6,67 @@ Content Provider主要用于<font color=red>在不同应用程序间有选择性
 
  所谓运行时权限，就是指**应用在运行过程中申请使用的一类权限，这类权限即使被用户拒绝，也不应该影响到其他功能的使用**。 Android将所有权限划分为两类，一类是普通权限，系统会自动授权，另一类则是危险权限，必须经过用户授权方可使用。 显然，危险权限就应该列入运行时权限的范围内，否则会给用户带来潜在的隐私和财产安全威胁。
 
-普通权限只需要在AndroidManifest文件的\<uses-permission>中进行声明就可以直接使用。危险权限除了声明之外， 还要在代码中加入用户授权验证的模块，如果确认获得用户授权，那么就可以使用相关功能，反之就不能使用。当然，如果开发者认为某些普通权限也需要得到用户授权， 那么也可以按照下面这种方式进行用户授权验证：
+普通权限只需要在AndroidManifest文件的\<uses-permission>中进行声明就可以直接使用。危险权限除了声明之外，还要在代码中加入用户授权验证的模块，如果确认获得用户授权，那么就可以使用相关功能，反之就不能使用。当然，如果开发者认为某些普通权限也需要得到用户授权， 那么也可以按照下面这种方式进行用户授权验证：
 
 ```
 val permission = ContextCompat.checkSelfPermission(applicationContext,Manifest.permission.XXX)
 if (permission != PackageManager.PERMISSION_GRANTED) {
     val access = arrayOf(Manifest.permission.XXX)
-    ActivityCompat.requestPermissions(this, access, REQUEST_CODE) //若没有权限则申请授权
+    val requestCode = 114514
+    // 若没有权限则申请授权
+    ActivityCompat.requestPermissions(activity, access, requestCode)
 } else {
-    try { //如果用户已授权，则尝试调用相关应用
+    try { 
+        // 如果用户已授权，则尝试调用相关应用
         val intent = Intent(Intent.XXX)
         intent.data = Uri.parse("PROTOCOL:···")
         startActivity(intent)
     } catch (e: SecurityException) {
-        //TODO
+        // TODO
     }
 }
 ```
 
-授权验证一般可以将其封装成一个模块，比如封装成方法，这样可以提高代码的复用性。 在应用调用`requestPermissions()`之后，会弹出一个权限申请对话框，无论用户是否同意授权，都会回调到`onRequestPermissionsResult()`：
+但是，如果需要申请的权限很多，上面的做法还是比较繁琐的，通常可以利用Kotlin的标准函数来简化多个权限的判断和申请步骤，如下列代码所示：
+
+```
+// 构建需要申请的权限列表
+val requiredPermissions = arrayOf(···)
+
+// 利用none函数简化业务逻辑，判断是否不存在尚未获得授权的权限
+fun isAllPermissionsGranted(): Boolean = requiredPermissions.none {
+    ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
+}
+
+// 如果检测到存在未授予的权限，则执行动态授权的操作
+if (!isPermissionsAllGranted) {
+    val requestCode = 114514
+    // 这里筛选出尚未授予的权限，然后统一动态授权
+    requiredPermissions.filter {
+        ContextCompat.checkSelfPermission(context, it) != PackageManager.PERMISSION_GRANTED
+    }.toTypedArray().apply {
+        ActivityCompat.requestPermissions(activity, this, 10086)
+    }
+    return
+}
+···
+```
+
+授权验证一般可以将其封装成一个模块，比如封装成方法，这样可以提高代码的复用性。在应用调用`requestPermissions()`之后，会弹出一个权限申请对话框，无论用户是否同意授权，都会回调到`onRequestPermissionsResult()`：
 
 ```
 override fun onRequestPermissionsResult(
         requestCode: Int,
-        permissions: Array< out String>,
+        permissions: Array<out String>,
         grantResults: IntArray
     ) {
     super.onRequestPermissionsResult(requestCode, permissions, grantResults)
     when (requestCode) {
          REQUEST_CODE_1 -> //对每个请求码所对应的权限授权情况进行检查
-         if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            //TODO：同意授权，执行相关功能
+         if (grantResults.isNotEmpty() && grantResults.first() == PackageManager.PERMISSION_GRANTED) {
+            // TODO：同意授权，执行相关功能
          } else {
-            //TODO：不同意授权，执行后续操作
+            // TODO：不同意授权，执行后续操作
          }
          REQUEST_CODE_2 -> ···
          ···
@@ -81,7 +109,7 @@ try {
     }
     ···
 } catch (e: Exception) {
-     //TODO
+     // TODO
 } finally {
      ···
      cursor?.close()
@@ -112,7 +140,7 @@ try {
 ```
 val values = contentValuesOf(column1 to value1, column2 to value2, ···)
 contentResolver.insert(uri,values)
-//等效于SQL语句：INSERT INTO table_name(···) VALUES(···)
+// 等效于SQL语句：INSERT INTO table_name(···) VALUES(···)
 ```
 
 更新数据的方法如下：
@@ -122,7 +150,7 @@ val values = contentValuesOf(column1 to newValue1, column2 to newValue2, ···)
 val selection = "column1 = ? and column2 = ? and ···" //?是占位符，相当于${value}
 val selectionArgs = arrayOf("ARG_1","ARG_2",···)
 contentResolver.update(uri,values,selection,selectionArgs)
-//等效于SQL语句：UPDATE table_name SET···WHERE···
+// 等效于SQL语句：UPDATE table_name SET···WHERE···
 ```
 
 删除数据的方法如下：
@@ -146,33 +174,33 @@ contentResolver.delete(uri,selection,selectionArgs)
 class DemoContentProvider : ContentProvider() {
 
     override fun delete(uri: Uri, selection: String?, selectionArgs: Array< String>?): Int {
-        //TODO
+        // TODO
     }
 
     override fun getType(uri: Uri): String? {
-        //TODO
+        // TODO
     }
 
     override fun insert(uri: Uri, values: ContentValues?): Uri? {
-        //TODO
+        // TODO
     }
 
     override fun onCreate(): Boolean {
-        //TODO
+        // TODO
     }
 
     override fun query(
         uri: Uri, projection: Array< String>?, selection: String?,
         selectionArgs: Array< String>?, sortOrder: String?
     ): Cursor? {
-        //TODO
+        // TODO
     }
 
     override fun update(
         uri: Uri, values: ContentValues?, selection: String?,
         selectionArgs: Array< String>?
     ): Int {
-        //TODO
+        // TODO
     }
 }
 ````
@@ -211,7 +239,7 @@ init {
     val authority = "com.example.app.provider"
     uriMatcher.addURI(authority,path1,CUSTOM_CODE_1)
     uriMatcher.addURI(authority,path2,CUSTOM_CODE_2)
-    //这里的path既包括表也包括表的内容
+    // 这里的path既包括表也包括表的内容
     ···
 }
 ```
@@ -226,6 +254,6 @@ when (uriMatcher.match(uri)) {
     CUSTOM_CODE_2 -> //TODO
     ···
     else -> //TODO
-    //else分支视情况决定是否添加
+    // else分支视情况决定是否添加
 }
 ```

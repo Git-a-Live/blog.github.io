@@ -627,4 +627,5 @@ File(cacheDir.toString()).listFiles()?.let {
 |Android 10|`READ_EXTERNAL_STORAGE`<font color=blue>或</font>`WRITE_EXTERNAL_STORAGE`|同上|
 |Android 11起|`READ_EXTERNAL_STORAGE`|同上|
 
-共享存储的数据文件包含音视频和图像等类型，这里限于篇幅不做展开，详细内容可以参考[摄像头和照片](/Android/photo)以及[音视频](/Android/msc)这两部分。
+#### MediaStore的使用
+
