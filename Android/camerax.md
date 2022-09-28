@@ -97,10 +97,6 @@ try {
 }
 ```
 
-在执行完上述代码之后，开发者就能在应用上看到类似于下图的预览画面：
-
-<img src="./pics/camerax.png" height=512/>
-
 > 注意，画面预览是**最基础**的功能，后面介绍的其他三个功能，在正常情况下都应该跟画面预览组合使用。
 
 ### 拍照
@@ -222,10 +218,6 @@ imageAnalyzer.setAnalyzer(cameraExecutor, analyzer)
 ```
 cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture, imageAnalyzer)
 ```
-
-下图展示的是应用从图像流中对各帧亮度（也就是image.planes[0]的数据）进行分析，并展示在界面左上角：
-
-<img src="./pics/camerax2.png" height=512/>
 
 ### 视频拍摄
 

@@ -47,7 +47,6 @@
   * [Paho MQTT](Android/paho.md)
   * [EventBus](Android/eb.md)
   * [RxJava](Android/rxjava.md)
-  * [腾讯Bugly](Android/bugly.md)
   * [阿里OSS](Android/oss.md)
   * [LeakCanary](Android/leak.md)
   * [Glide](Android/glide.md)

@@ -126,5 +126,37 @@ fun Bitmap.createQRCodeBitmapWithPortrait(qrCodeSize: Int, portraitSize: Int, po
 
 ### 识别二维码内容
 
+识别二维码需要先配置以下参数：
+```
+// 设置二维码读取配置参数
+val readerParam = EnumMap<DecodeHintType, Any>(DecodeHintType::class.java).apply {
+    // 配置优化精度
+    put(DecodeHintType.TRY_HARDER, true)
+    // 配置解码所使用的编码格式
+    put(DecodeHintType.CHARACTER_SET, Charsets.UTF_8)
+}
+```
 
+接着创建二维码解析功能所需的核心对象——解析器：
+```
+val qrReader = QRCodeReader()
+```
 
+然后对转换成Bitmap的二维码图片进行处理：
+```
+// 定义一个整型数组，长度为转换成Bitmap图片的长度 ✖️ 宽度
+val array = IntArray(bitmap.width * bitmap.height)
+
+// 将Bitmap的像素点全部导入到刚才定义好的数组
+bitmap.getPixels(array, 0, width, 0, 0, width, height)
+
+// 将Bitmap转换成BinaryBitmap
+val binaryBitmap = BinaryBitmap(HybridBinarizer(RGBLuminanceSource(bitmap.width, bitmap.height, array)))
+```
+
+最后传给二维码解析器进行解析，将内容解析出来：
+```
+val cintent = qrReader.decode(binaryBitmap, readerParam).text
+```
+
+至此，利用ZXing已经可以开发出最基本的二维码生成与识别功能。
