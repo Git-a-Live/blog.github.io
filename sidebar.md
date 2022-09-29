@@ -89,8 +89,7 @@
   * [结构型设计模式](DesignPattern/结构型设计模式.md)
   * [行为型设计模式](DesignPattern/行为型设计模式.md)
   * [《代码整洁之道》总结](DesignPattern/代码整洁之道总结.md)
-* <font color=red>**数据结构与算法**</font>
-  * <font color=blue>数据结构部分</font>
+* <font color=red>**数据结构**</font>
   * [数据结构概述](/DataStructure/intro.md)
   * [表](DataStructure/list.md)
   * [栈和队列](DataStructure/stack.md)
@@ -98,7 +97,7 @@
   * [树](DataStructure/tree.md)
   * [图](DataStructure/graph.md)
   * [散列/哈希](DataStructure/hash.md)
-  * <font color=blue>算法部分</font>
+* <font color=red>**算法**</font>
   * [概述](Algorithm/introduction.md)
   * <font color=orange>排序算法</font>
   * [冒泡排序](xxx.md)
@@ -135,14 +134,22 @@
   * [网络安全](ComputerNetwork/Chapter_7_网络安全.md)
 * <font color=red>**操作系统**</font>
   * [操作系统概述](OperatingSystem/intro.md)
-* <font color=red>**数学基础**</font>
-  * <font color=blue>微积分</font>
+  * [进程和线程](OperatingSystem/process%26threads.md)
+  * [内存管理](OperatingSystem/ram.md)
+  * [文件系统](OperatingSystem/filesystem.md)
+  * [输入和输出](OperatingSystem/io.md)
+  * [死锁](OperatingSystem/deadlock.md)
+  * [虚拟化与云服务](OperatingSystem/virtual%26cloud.md)
+  * [多处理机系统](OperatingSystem/mulitiple.md)
+  * [系统安全](OperatingSystem/security.md)
+* <font color=red>**计算机组成**</font>
+* <font color=red>**微积分**</font>
   * [函数](Math/calculus/function.md)
   * [极限](xxx.md)
   * [连续](xxx.md)
   * [微分/求导](xxx.md)
   * [积分](xxx.md)
-  * <font color=blue>线性代数</font>
-  * <font color=blue>概率论</font>
-  * <font color=blue>离散数学</font>
+* <font color=red>**线性代数**</font>
+* <font color=red>**概率论**</font>
+* <font color=red>**离散数学**</font>
   * [基础部分](Math/discrete/basic.md)

@@ -627,5 +627,17 @@ File(cacheDir.toString()).listFiles()?.let {
 |Android 10|`READ_EXTERNAL_STORAGE`<font color=blue>或</font>`WRITE_EXTERNAL_STORAGE`|同上|
 |Android 11起|`READ_EXTERNAL_STORAGE`|同上|
 
-#### MediaStore的使用
+在更高版本的Android系统上，Google已经决意抛弃Java File的IO操作方案，改用一套统一的API为应用提供统一的访问共享存储数据文件的方式。这个方案就是[MediaStore](https://developer.android.google.cn/reference/android/provider/MediaStore)。MediaStore在Android系统问世之初就已经存在，但彼时的Android系统远比今天要更开放（但功能也更少更不安全），因此它并没有得到许多开发者的关注。随之Android系统对存储空间的约束日益严格，以及高版本系统的市场占有率逐步提升，MediaStore将发挥越来越重要的作用。可以认为，（在高版本系统上）应用访问共享存储数据文件，就是围绕MediaStore的使用来展开的。
+
+### MediaStore的基本使用
+
+MediaStore通常会跟[ContentProvider](Android/contpro)一起搭配使用。也就是说，如果使用MediaStore对共享目录的数据文件实施操作，体验上跟使用数据库十分类似。
+
+#### 媒体文件
+
+#### 文档和其他文件
+
+#### 数据集
+
+
 
