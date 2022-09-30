@@ -34,7 +34,7 @@
   * [基本布局](Android/lo.md)
   * [自定义控件](Android/controller.md)
   * [自定义视图](Android/customview.md)
-  * [Jetpack Compose](Android/jc.md)
+  * [应用微件](Android/xxx.md)
   * <font color=blue>编译调试</font>
   * [Gradle编译](Android/gradle.md)
   * [应用调试](Android/debug.md)
@@ -63,6 +63,9 @@
   * [Android NDK开发](Android/ndk.md)
   * [混淆、加密与反编译](Android/proguard.md)
   * [AOSP开发](Android/aosp.md)
+* <font color=red>**Jetpack Compose**</font>
+* <font color=red>**Flutter**</font>
+* <font color=red>**Hybrid**</font>
 * <font color=red>**Kotlin进阶**</font>
   * [函数式编程](Kotlin/func.md)
   * [延迟初始化、扩展函数与密封类](Kotlin/late.md)

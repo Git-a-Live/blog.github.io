@@ -519,9 +519,7 @@ val writer = OutputStreamWriter(FileOutputStream(···))
 
 PrintWriter在用法上跟PrintStream几乎是完全一样的，只不过前者输出的是Char类型的数据，后者输出的是Byte类型的数据。
 
-## 在Android上使用IO
-
-### 访问应用专属存储的数据文件
+## 在Android上访问应用专属存储的数据文件
 
 前面已经提到过，应用程序访问专属存储的数据文件是不需要申请权限的，而且Android为应用专属存储提供了以下方法用于获取文件所在的目录：
 
@@ -616,7 +614,7 @@ File(cacheDir.toString()).listFiles()?.let {
 >
 >以`ACTION_CLEAR_APP_CACHE`作为action参数的Intent会对设备电量产生显著影响并移除大量文件。
 
-### 访问共享存储的数据文件
+## 在Android上访问共享存储的数据文件
 
 共享存储的数据文件包括多媒体、文档以及其他可以被共享使用的文件（Shared Preferences和数据库不在此列），如果要访问它们，就必须在AndroidManifest当中声明以下权限：
 
@@ -627,17 +625,33 @@ File(cacheDir.toString()).listFiles()?.let {
 |Android 10|`READ_EXTERNAL_STORAGE`<font color=blue>或</font>`WRITE_EXTERNAL_STORAGE`|同上|
 |Android 11起|`READ_EXTERNAL_STORAGE`|同上|
 
-在更高版本的Android系统上，Google已经决意抛弃Java File的IO操作方案，改用一套统一的API为应用提供统一的访问共享存储数据文件的方式。这个方案就是[MediaStore](https://developer.android.google.cn/reference/android/provider/MediaStore)。MediaStore在Android系统问世之初就已经存在，但彼时的Android系统远比今天要更开放（但功能也更少更不安全），因此它并没有得到许多开发者的关注。随之Android系统对存储空间的约束日益严格，以及高版本系统的市场占有率逐步提升，MediaStore将发挥越来越重要的作用。可以认为，（在高版本系统上）应用访问共享存储数据文件，就是围绕MediaStore的使用来展开的。
+### 存储访问框架的使用
 
-### MediaStore的基本使用
+[存储访问框架](https://developer.android.google.cn/guide/topics/providers/document-provider)（Storage Access Framework，SAF）是Google提供的一个跨应用文件访问方案。SAF在Android 4.4时期就已经引入，借助SAF，用户可轻松浏览和打开各种文档、图片及其他文件，而不用考虑这些文件来自其首选文档存储提供程序中的哪一个。用户可通过易用的标准界面，跨所有应用和提供程序以统一的方式浏览文件并访问最近用过的文件。
 
-MediaStore通常会跟[ContentProvider](Android/contpro)一起搭配使用。也就是说，如果使用MediaStore对共享目录的数据文件实施操作，体验上跟使用数据库十分类似。
+更多有关SAF的介绍，可以参考[Google官方文档](https://developer.android.google.cn/guide/topics/providers/document-provider)。
 
-#### 媒体文件
+#### 创建新文件
 
-#### 文档和其他文件
+#### 打开文件
 
-#### 数据集
+#### 修改文件
+
+#### 删除文件
+
+### MediaStore的使用
+
+在更高版本的Android系统上，Google已经决意抛弃Java File的IO操作方案，改用一套统一的API为应用提供统一的访问共享存储媒体文件（媒体文件是指图片、音频和视频这三大类型文件）的方式。这个方案就是[MediaStore](https://developer.android.google.cn/reference/android/provider/MediaStore)。MediaStore在Android系统问世之初就已经存在，但彼时的Android系统远比今天要更开放（但功能也更少更不安全），因此它并没有得到许多开发者的关注。随之Android系统对存储空间的约束日益严格，以及高版本系统的市场占有率逐步提升，MediaStore将发挥越来越重要的作用。可以认为，（在高版本系统上）应用访问共享存储的媒体文件，就是围绕MediaStore的使用来展开的。
+
+MediaStore通常会跟[ContentProvider](Android/contpro)一起搭配使用。也就是说，如果使用MediaStore对共享目录的数据文件实施操作，体验上跟使用数据库十分类似。基于这一特点，下面有关MediaStore的基本使用，会根据“增删查改”这四大类操作来展开。
+
+#### 访问媒体文件
+
+#### 添加媒体文件
+
+#### 移除媒体文件
+
+#### 修改媒体文件
 
 
 
