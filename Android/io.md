@@ -627,13 +627,54 @@ File(cacheDir.toString()).listFiles()?.let {
 
 ### 存储访问框架的使用
 
-[存储访问框架](https://developer.android.google.cn/guide/topics/providers/document-provider)（Storage Access Framework，SAF）是Google提供的一个跨应用文件访问方案。SAF在Android 4.4时期就已经引入，借助SAF，用户可轻松浏览和打开各种文档、图片及其他文件，而不用考虑这些文件来自其首选文档存储提供程序中的哪一个。用户可通过易用的标准界面，跨所有应用和提供程序以统一的方式浏览文件并访问最近用过的文件。
+[存储访问框架](https://developer.android.google.cn/guide/topics/providers/document-provider)（Storage Access Framework，SAF）是Google提供的一个跨应用文件访问方案。SAF在Android 4.4时期就已经引入，借助SAF，用户可轻松浏览和打开各种文档、图片及其他文件，而不用考虑这些文件来自其首选文档存储提供程序中的哪一个。用户可通过易用的**标准界面**，跨所有应用和提供程序以统一的方式浏览文件并访问最近用过的文件。
 
 更多有关SAF的介绍，可以参考[Google官方文档](https://developer.android.google.cn/guide/topics/providers/document-provider)。
 
 #### 创建新文件
 
+SAF创建新文件时采用的是隐式Intent，action名为`Intent.ACTION_CREATE_DOCUMENT`。在配置Intent时，应指定文件的名称和MIME类型，并且还可以根据需要使用`EXTRA_INITIAL_URI`的Intent extra配置，来指定文件选择器在首次加载时应显示的文件或目录的URI。示例代码如下：
+
+```
+val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+    addCategory(Intent.CATEGORY_OPENABLE)
+    // 设置文件MIME类型
+    type = "application/pdf"
+    // 设置文件名称
+    putExtra(Intent.EXTRA_TITLE, "invoice.pdf")
+    // Android 8.0开始才有DocumentsContract.EXTRA_INITIAL_URI
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        putExtra(DocumentsContract.EXTRA_INITIAL_URI, pickerInitialUri)
+    }
+}
+```
+
+> 常见的MIME类型，可参考[这里](ComputerNetwork/Chapter_6_应用层?id=通用互联网邮件扩充mime)。
+
+在调用上述Intent之后，设备会弹出类似于下图的标准界面，指示要创建的文件需保存到何种目录下，同时也可以让用户自己选择要保存的位置：
+
+<img src="./Android/pics/saf.png" width="270" height="480" /> <img src="./Android/pics/saf2.png" width="270" height="480" />
+
 #### 打开文件
+
+SAF打开文件也是使用隐式Intent，action名为`ACTION_OPEN_DOCUMENT`。此Intent会打开系统的文件选择器应用，若要仅显示应用支持的文件类型，还需指定MIME类型。此外，还可以根据需要使用`EXTRA_INITIAL_URI`的Intent extra配置，来指定文件选择器在首次加载时应显示的文件的URI。示例代码如下：
+
+```
+val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+    addCategory(Intent.CATEGORY_OPENABLE)
+    // 设置仅显示应用所支持的文件类型
+    type = "application/pdf"
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+       putExtra(DocumentsContract.EXTRA_INITIAL_URI, Environment.DIRECTORY_DOCUMENTS.toUri())
+    }
+}
+```
+
+在调用上述Intent之后，设备会弹出类似于下图的标准界面，让用户自行选择在何种目录下打开何种文件：
+
+<img src="./Android/pics/saf3.png" width="270" height="480" /> <img src="./Android/pics/saf4.png" width="270" height="480" />
+
+注意到上面左图中PDF文件的右侧有一个图标，点击该图标之后，系统会自动为用户搜索合适的应用程序以打开该类型文件。
 
 #### 修改文件
 
