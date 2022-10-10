@@ -623,3 +623,53 @@ try {
 ```
 
 一个线程内允许创建和使用多个ThreadLocal。
+
+## Handler
+
+Android系统中使用Handler处理异步消息，从而实现子线程与主线程之间的切换。Handler机制包含四个部分：Message、Handler、MessageQueue以及Looper。下面简要介绍一下这四个部分以及Handler的基本使用方式。
+
++ `Message`
+
+可以在内部携带少量信息，在不同线程间传递数据。
+
++ `Handler`
+
+主要用于发送和处理消息。发送消息调用的是`sendMessage()`或`post()`等方法，处理消息则调用`handleMessage()`方法。
+
++ `MessageQueue`
+
+主要用于存放所有通过Handler发送并等待处理的消息。每个线程只会有一个MessageQueue对象。
+
++ `Looper`
+
+主要用于从MessageQueue中取出Message，并传递到Handler的`handleMessage()`中。每个线程只包含一个Looper对象，且Looper会调用`loop()`方法进入一个无限循环，以持续检测MessageQueue中是否有Message。
+
+> 注意，Looper调用`looper()`进入无限循环并不会引起ANR，因为`Looper.loop()`是主线程执行消息循环的必要组成部分，即便它可能引起主线程的阻塞，**只要它的消息循环没有被阻塞，能够一直处理事件，就不会产生ANR异常**。
+
+Handler机制的一种典型用法如下：
+
+1. 在主线程中创建Handler对象，并重写`handleMessage()`：
+   ```
+   val handler = object: Handler() {
+       override fun handleMessage(msg: Message) {
+           //在此处可进行UI操作
+       }
+   }
+   ```
+2. 在子线程中创建Message对象，并通过Handler实例发送出去：
+   ```
+   thread {
+        val msg = Message()
+        msg.what = value1
+        // 整型数据
+        msg.arg1 = value2 
+        // 整型数据
+        msg.arg2 = value3
+        // Object对象
+        msg.obj = object
+        handler.sendMessage(msg)
+   }
+   ```
+3. Message被添加到子线程的MessageQueue中等待处理，Looper取出Message后将其发回主线程的`handleMessage()`进行后续处理。
+
+经过上述步骤之后，就可以实现子线程更新UI线程的操作了。

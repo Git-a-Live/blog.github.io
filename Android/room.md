@@ -4,6 +4,8 @@ Room是Google提供的一个ORM库，它在SQLite的基础上提供了一个抽�
 
 2. 开发者需要使用大量样板代码，在SQL查询和数据对象之间进行转换。
 
+## 前置工作
+
 要使用Room，需要在相应模块（注意不是项目本身）的build.gradle文件中添加如下依赖：
 
 ```
@@ -83,8 +85,6 @@ data class DemoEntity(
 
 从上面的代码中可以看到，Entity类的创建过程和数据库创建表的过程很相似。 Entity类中必须对每个列（包括主键）都创建get/set方法，否则无法对表中的记录进行操作（Kotlin使用data class会自动实现这些get/set方法）。
 
->注意，如果将列设置为可空的（例如Int?、String?等）会在编译过程中报错。
-
 ### Database
 
 Database的创建方法如下：
@@ -119,11 +119,11 @@ abstract class DemoDatabase: RoomDatabase() {
 
 在Android开发中，对于数据库的操作通常不允许放在主线程中进行，因为这可能会导致应用响应迟缓甚至无响应（ANR），严重降低用户体验。
 
- 为了解决上述问题，就必须引入多线程。Java一般使用Thread和Runnable创建多线程任务，而Android一般使用Handler和AsyncTask，前者相对麻烦，而后者相对更容易上手。 
+为了解决上述问题，就必须引入多线程。Java一般使用Thread和Runnable创建多线程任务，而Android一般使用Handler和AsyncTask，前者相对麻烦，而后者相对更容易上手。 
  
- 当然，在实际开发中会使用第三方框架来代替AsyncTask。 此外，由于[Kotlin协程](Kotlin/coroutine.md)的出现和应用， AsyncTask类已经被Google官方明确会在Android R中废弃。 尽管如此，AsyncTask依然可以在Android R以下版本的设备上运行，考虑到这些设备目前还是占据大多数，因此有必要了解一下AsyncTask的基本使用方法。
+当然，在实际开发中会使用第三方框架来代替AsyncTask。 此外，由于[Kotlin协程](Kotlin/coroutine2.md)的出现和应用， AsyncTask类已经被Google官方明确会在Android R中废弃。 尽管如此，AsyncTask依然可以在Android R以下版本的设备上运行，考虑到这些设备目前还是占据大多数，因此有必要了解一下AsyncTask的基本使用方法。
 
- AsyncTask是一个抽象类，因此需要定义一个子类继承AsyncTask并重写相关方法：
+AsyncTask是一个抽象类，因此需要定义一个子类继承AsyncTask并重写相关方法：
 
 ```
 class DemoAsyncTask: AsyncTask<Params, Progress, Results>() {
@@ -204,108 +204,6 @@ class DemoRepository(context: Context) {
 ```
 
 Repository通常还会跟ViewModel配合使用，即Repository提供异步执行方法的接口，ViewModel编写调用这些异步接口的方法，主线程调用ViewModel提供的方法来执行异步任务。
-
-## RecyclerView和RecyclerView Adapter
-
-在应用中查看由大量数据组成的列表时，由于屏幕尺寸的限制，不可能将这些数据一次性全部展示。因此，开发者往往采用翻页或滚动的方式来呈现数据。 这里只讨论滚动方式。
-
-Android Studio提供了一些可以实现页面滚动的组件，最主要的是ListView、ScrollView和Recyclerview。 ListView是一个相对较老的控件，它使用到Adapter这个类，可以在早期的Android开发中实现MVC架构； ScrollView通常用于实现简单的滚动效果，一般做法是直接在ScrollView中嵌套一个子元素。 还有两个组件与它相似，分别是HorizontalScrollView（水平滑动）以及NestedScrollView（支持嵌套滑动）； RecyclerView出现于Android 5.0，目前可以在很大程度上替代ListView，接下来会对它进行详细介绍。
-
-### RecyclerView
-
-和ListView相比，RecyclerView具有如下优势：
-
-1. 封装了ViewHolder的回收复用，写起来更加简单；
-2. 高度解耦，使用灵活，扩展性强，可简便控制Item的显示方式和样式。
-
-RecyclerView主要由LayoutManager（管理Item的布局）、Adapter（为Item提供数据）、 Item Decoration（提供Item之间的分割线）、 Item Animator（添加、删除Item动画）四个部分组成。其中，LayoutManager和Adapter是必须使用的组件，其他两个可以视情况选用。
-
-LayoutManager提供了三种布局管理，分别是LinerLayoutManager（以垂直或者水平列表方式展示Item）、GridLayoutManager（以网格方式展示Item）， 以及StaggeredGridLayoutManager（以瀑布流方式展示Item）。 LayoutManager提供了如下常见API：
-
-```
-canScrollHorizontally()：设置能否横向滚动
-
-canScrollVertically()：设置能否纵向滚动
-
-scrollToPosition(int position)：设置滚动到指定位置
-
-setOrientation(int orientation)：设置滚动的方向
-
-getOrientation()：获取滚动方向
-
-findViewByPosition(int position)：获取指定位置的Item View
-
-findFirstCompletelyVisibleItemPosition()：获取第一个完全可见的Item位置
-
-findFirstVisibleItemPosition()：获取第一个可见Item的位置
-
-findLastCompletelyVisibleItemPosition()：获取最后一个完全可见的Item位置
-
-findLastVisibleItemPosition()：获取最后一个可见Item的位置
-```
-
-LinerLayoutManager的常用方法：
-
-```
-onLayoutChildren()：对RecyclerView进行布局的入口方法
-
-fill()：负责填充RecyclerView。
-
-scrollVerticallyBy()：根据手指的移动滑动一定距离，并调用fill()填充
-
-canScrollVertically()/canScrollHorizontally()：判断是否支持纵向滑动或横向滑动
-```
-
-GridLayoutManager继承于LinerLayoutManager，在使用上差别不大；StaggeredGridLayoutManager的使用在网上也有很多资料可查，在此略过。
-
-### RecyclerView Adapter
-
-Adapter一般通过如下方式进行创建：
-
-```
-class DemoAdapter(var dataList: List<T>): RecyclerView.Adapter<DemoAdapter.ViewHolder>() {
-    
-    class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        //TODO：容纳View视图，绑定布局控件，避免在其他地方使用不必要的findViewById()
-        val ctrl1: Type = itemView.findViewById(R.id.ctrl_name1)
-        val ctrl2: Type = itemView.findViewById(R.id.ctrl_name2)
-        val ctrl3: Type = itemView.findViewById(R.id.ctrl_name3)
-        ···
-    }
-
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        //TODO：创建item视图。一旦有了够用的ViewHolder，RecyclerView就会停止调用onCreateViewHolder()方法，
-            随后回收利用旧的ViewHolder以节约时间和内存。注意下面的R.layout.xxx是指item的布局文件
-        return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.xxx, parent, false))
-    }
-
-    override fun getItemCount(): Int {
-        //TODO：查询有多少个待展示的视图
-        return dataList.size
-    }
-
-    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        //TODO：将数据集的数据分别显示到目标位置ViewHolder的特定控件上，通常是文本和图片
-        holder.ctrl1.prop = dataList[position].prop1
-        holder.ctrl2.prop = dataList[position].prop2
-        holder.ctrl3.prop = dataList[position].prop3
-        ···
-    }
-}
-```
-在MainActivity或Fragment当中调用RecyclerView和Adapter的方式如下：
-
-```
-val demoAdapter = DemoAdapter()
-recyclerView.layoutManager = LinearLayoutManager(context) //其他LayoutManager类似
-recyclerView.adapter = demoAdapter
-
-val demoViewModel = DemoViewModel(application)
-demoViewModel.getData().observe(this, Observer {
-      demoAdapter.data = it //注意是将ViewModel的数据赋值给Adapter中的数据集
-      demoAdapter.notifyDataSetChanged() //刷新视图上的所有数据内容
-})
-```
 
 ## 数据库版本迁移
 
@@ -421,9 +319,9 @@ recyclerView.layoutManager = LinearLayoutManager(···)
 recyclerView.adapter = demoPagedAdapter
 val demoViewModel = DemoViewModel(application)
 val demoPaged = LivePagedListBuilder(demoViewModel.getData(),pageSize: Int).build()
-//获取数据并设置视图每次加载的内容数量
+// 获取数据并设置视图每次加载的内容数量
 demoPaged.observe(this, Observer {
   demoPagedAdapter.submitList(it)
-  //只进行局部更新，不会再像notifyDataSetChanged()那样将视图的内容全部刷新
+  // 只进行局部更新，不会再像notifyDataSetChanged()那样将视图的内容全部刷新
 })
 ```

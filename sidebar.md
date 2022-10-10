@@ -9,13 +9,11 @@
   * [Service](Android/service.md)
   * [Fragment](Android/fg.md)
   * [WorkManager](Android/wm.md)
-  * <font color=blue>应用架构</font>
-  * [ViewModel](Android/vm.md)
-  * [AndroidViewModel](Android/avm.md)
-  * [LiveData](Android/ld.md)
-  * [ViewBinding](Android/vb.md)
-  * [DataBinding](Android/db.md)
-  * [MVI架构](Android/mvi.md)
+  * <font color=blue>MVVM架构组件</font>
+  * [View Model](Android/vm.md)
+  * [Live Data](Android/ld.md)
+  * [View Binding](Android/vb.md)
+  * [Data Binding](Android/db.md)
   * <font color=blue>本地数据存储</font>
   * [键值对数据存储](Android/sp.md)
   * [Jetpack Room](Android/room.md)
@@ -25,13 +23,14 @@
   * [Parcelable](Android/parcel.md)
   * [JSON](Android/json.md)
   * [XML](Android/xml.md)
-  * <font color=blue>多媒体</font>
+  * <font color=blue>常用硬件</font>
   * [CameraX](Android/camerax.md)
-  * [音视频](Android/msc.md)
+  * [音视频播放](Android/msc.md)
   * [蓝牙](Android/bt.md)
-  * [网页浏览](Android/wv.md)
+  * [Wifi](Android/xxx.md)
   * <font color=blue>UI开发</font>
   * [基本布局](Android/lo.md)
+  * [常用控件](Android/controls.md)
   * [自定义控件](Android/controller.md)
   * [自定义视图](Android/customview.md)
   * [应用微件](Android/xxx.md)
@@ -51,18 +50,19 @@
   * [LeakCanary](Android/leak.md)
   * [Glide](Android/glide.md)
   * [ZXing](Android/zxing.md)
+  * [greenDAO](Android/greendao.md)
+  * [ObjectBox](Android/objectbox.md)
   * [Dagger2](Android/dagger2.md)
   * [Hilt](Android/hilt.md)
-  * [greenDAO](xxx.md)
   * <font color=blue>Android进阶</font>
   * [Java虚拟机基础](Android/jvm.md)
   * [Android虚拟机基础](Android/art.md)
-  * [Android热修复](Android/hotfix.md)
   * [Module开发](Android/mod.md)
   * [Android AIDL开发](Android/aidl.md)
   * [Android NDK开发](Android/ndk.md)
   * [混淆、加密与反编译](Android/proguard.md)
-  * [AOSP开发](Android/aosp.md)
+  * [MVI架构](Android/mvi.md)
+  * [Android热修复](Android/hotfix.md)
 * <font color=red>**Jetpack Compose**</font>
 * <font color=red>**Flutter**</font>
 * <font color=red>**Hybrid**</font>

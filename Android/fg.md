@@ -59,10 +59,10 @@ Fragment特有的控件、元素以及动作等要在对应的Fragment源文件�
 Fragment之间的跳转和Activity不同，前者采用的是Navigation，后者使用Intent。Navigation的核心代码非常简单：
 
 ```
-//onViewCreated()：
+// onViewCreated()：
 Navigation.findNavController(view).navigate(R.id.action_aFragment_to_bFragment)
 
-//onActivityCreated()：
+// onActivityCreated()：
 Navigation.findNavController(it).navigate(R.id.action_aFragment_to_bFragment)
 ```
 

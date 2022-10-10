@@ -11,7 +11,7 @@
 动态注册的方式如下：
 
 ```
-//MainActivity：
+// MainActivity：
 class MainActivity : AppCompatActivity() {
     private lateinit var intentFilter: IntentFilter
     private lateinit var demoBroadcastReceiver: DemoBroadcastReceiver
@@ -20,25 +20,26 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        //利用intentFilter指定action等信息，效果类似于在AndroidManifest文件中编写intent-filter信息
+        // 利用intentFilter指定action等信息，效果类似于在AndroidManifest文件中编写intent-filter信息
         intentFilter = IntentFilter()
         intentFilter.addAction("ActionTag")
-        //设置广播接收器，注册广播
+        // 设置广播接收器，注册广播
         demoBroadcastReceiver = DemoBroadcastReceiver()
-        registerReceiver(demoBroadcastReceiver,intentFilter)
+        registerReceiver(demoBroadcastReceiver, intentFilter)
     }
 
     override fun onDestroy() {
         super.onDestroy()
+        // Activity被销毁时必须注销所有的广播接收器，
+        // 如果是在异步任务中启用广播接收器，那么最后要调用finish()将其回收
         unregisterReceiver(demoBroadcastReceiver)
-        //Activity被销毁时注销广播接收器，如果是在异步任务中启用广播接收器，那么最后要调用finish()将其回收
     }
 }
 
-//DemoBroadcastReceiver：
+// DemoBroadcastReceiver：
 class DemoBroadcastReceiver: BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent?) {
-        //TODO：重写该方法以指定接收到广播后的业务逻辑
+        // 重写该方法以指定接收到广播后的业务逻辑
     }
 }
 ```
@@ -117,7 +118,8 @@ Permission是一个与权限相关的字符串，如果在\<uses-permission>中�
 <receiver android:name=".MyReceiver"
              android:enabled="true"
              android:exported="true">
-       <intent-filter android:priority="Priority"> <!--Priority是整数，数字越大则优先级越高-->
+       <!--Priority是整数，数字越大则优先级越高-->
+       <intent-filter android:priority="Priority">
             < action android:name="ActionTag"/>
        </intent-filter>
 </receiver>
@@ -129,8 +131,4 @@ Permission是一个与权限相关的字符串，如果在\<uses-permission>中�
 
 广播截断的实现方法非常简单，就是在重写`onReceive()`时直接调用`abortBroadcast()`即可。
 
-### 其他
-
-之前谈到的标准广播和有序广播都属于系统全局广播，使用系统全局广播虽然很方便， 但也因此存在一定的隐患：若广播中携带有重要数据，则可能会被某些应用截获，带来安全性问题；此外，某些应用会不停发送垃圾广播， 这可能也会影响到其他应用的正常使用。 在这种情况下，本地广播（Local Broadcast）就可以发挥重要作用了。
-
-然而，本地广播的使用已经在2018年年底被Google 废弃了， 官方的建议是使用LiveData的观察模式或是其他方式来替代本地广播。
+之前谈到的标准广播和有序广播都属于系统全局广播，使用系统全局广播虽然很方便，但也因此存在一定的隐患：若广播中携带有重要数据，则可能会被某些应用截获，带来安全性问题；此外，某些应用会不停发送垃圾广播，这可能也会影响到其他应用的正常使用。在这种情况下，本地广播（Local Broadcast）就可以发挥重要作用了。然而，本地广播已经在2018年年底被Google废弃了，官方的建议是使用Live Data的观察模式或是其他方式来替代本地广播。

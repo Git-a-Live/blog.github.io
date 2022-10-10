@@ -17,10 +17,10 @@ Activity通过在`onCreate()`方法中调用`setContentView()`来设置对应的
 
 #### 界面组件响应
 
-常用的引用界面组件的方式为调用`findViewById()`。Kotlin中通过导入`kotlinx.android.synthetic`实现直接调用组件（但本质上也是使用了`findViewById()`），而Google官方目前推荐使用[ViewBinding](Android/vb)方式来调用界面组件。
+常用的引用界面组件的方式为调用`findViewById()`。Kotlin中通过导入`kotlinx.android.synthetic`实现直接调用组件（但本质上也是使用了`findViewById()`，已被废弃），而Google官方目前推荐使用[ViewBinding](Android/vb)方式来调用界面组件。
 
 ```
-//使用findViewById()获取组件引用，有几个组件就调用几次
+// 使用findViewById()获取组件引用，有几个组件就调用几次
 val control = findViewById(R.id.xxx) 
 ```
 
@@ -31,7 +31,7 @@ val control = findViewById(R.id.xxx)
 Toast用于展示内容较少的提示信息，不仅会自动消失，而且不需要在布局文件上编写专门的组件。其具体使用方式为：
 
 ```
-Toast.makeText(Context, Content, Duration).show
+Toast.makeText(Context, Content, Duration).show()
 ```
 
 通过调用`makeText()`来设置上下文Context、提示内容Content以及展示时长Duration，最后调用`show()`来展示Toast。
@@ -44,8 +44,9 @@ Menu分为布局文件和业务逻辑两部分，布局文件的内容详见<fon
 
 ```
 override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-    menuInflater.inflate(R.menu.xxx, menu) //menuInflater是Activity自带的属性
-    return true
+  // menuInflater是Activity自带的属性
+  menuInflater.inflate(R.menu.xxx, menu)
+  return true
 }
 ```
 
@@ -136,11 +137,11 @@ setResult(RESULT_OK, intent) //一般只用RESULT_OK或RESULT_CANCELED
 期望获得结果的Activity：
 
 ```
-//调用startActivityForResult()：
+// 调用startActivityForResult()：
 val intent = Intent(···)
 startActivityForResult(intent, reqCode) //reqCode是全局唯一的自定义请求码，用于判断是哪个Intent需要返回结果
 
-//从onActivityResult()中获取结果：
+// 从onActivityResult()中获取结果：
 override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
     super.onActivityResult(requestCode, resultCode, data)
     when (requestCode) {
@@ -200,11 +201,10 @@ Zygote进程是Android系统的首个Java进程，也是所有Java进程的父�
 
 以<font color=red>用户点击桌面图标启动应用</font>为例，在这一过程中，Activity的启动流程如下。
 
-图1 中的Launcher进程是Android系统启动之后的第一个应用程序，它的作用有两个：
+图1中的Launcher进程是Android系统启动之后的第一个应用程序，它的作用有两个：
 
-> （1）作为Android系统的<font color=blue>**启动器**</font>，用于启动应用程序
-> 
-> （2）作为Android系统的<font color=blue>**桌面**</font>，用于显示和管理其他应用程序的快捷图标和桌面组件
+1. 作为Android系统的<font color=blue>**启动器**</font>，用于启动应用程序
+2. 作为Android系统的<font color=blue>**桌面**</font>，用于显示和管理其他应用程序的快捷图标和桌面组件
 
 Launcher作为一个应用程序，本身有包含Activity，因此它的启动过程自然也会有和其他应用程序相似甚至相同的地方。
 
