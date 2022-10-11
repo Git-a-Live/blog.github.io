@@ -1,6 +1,6 @@
 [Dagger2](https://dagger.dev/)是一个在Android开发中广泛应用的依赖注入框架，前身是Square公司开发的Dagger（在Google介入共同开发维护之后才有的Dagger2）。通常情况下，为了区分Square旗下已停止维护的Dagger，就把前者称为Dagger2。鉴于原来由Square开发的Dagger已经停止维护，文中主要讨论的是新版Dagger，因此后续在不做特殊说明的情况下，Dagger和Dagger2均用于指代Google接手开发维护的那个依赖注入框架。
 
-Google还在Dagger2的基础上进行二次封装，针对Android开发进行场景化定制，于是就有了下一节要介绍的Hilt框架。无论是Dagger2还是Hilt，都是采用<font color=red>性能更高</font>的**编译时注解**静态方案来实现依赖注入，旧版Dagger采用的是基于反射的动态方案（所以后来被淘汰了）。在了解Dagger2和Hilt框架如何使用之前，需要先简单了解什么是依赖注入。
+Google还在Dagger2的基础上进行二次封装，针对Android开发进行场景化定制，于是就有了之后要介绍的Hilt框架。无论是Dagger2还是Hilt，都是采用<font color=red>性能更高</font>的**编译时注解**静态方案来实现依赖注入，旧版Dagger采用的是基于反射的动态方案（所以后来被淘汰了）。在了解Dagger2和Hilt框架如何使用之前，需要先简单了解什么是依赖注入。
 
 ## 控制反转与依赖注入
 
@@ -24,7 +24,7 @@ dependencies {
 }
 ```
 
-截至2022年6月，Dagger2最新版本为2.42，具体版本发布详见[google/dagger](https://github.com/google/dagger)和[sonatype](https://github.com/google/dagger)。
+截至2022年10月，Dagger2最新版本为2.44，具体版本发布详见[google/dagger](https://github.com/google/dagger)。
 
 
 ### `@Component`+`@Inject`构造方法注入

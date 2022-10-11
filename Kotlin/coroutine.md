@@ -673,3 +673,60 @@ Handler机制的一种典型用法如下：
 3. Message被添加到子线程的MessageQueue中等待处理，Looper取出Message后将其发回主线程的`handleMessage()`进行后续处理。
 
 经过上述步骤之后，就可以实现子线程更新UI线程的操作了。
+
+## AsyncTask
+
+Android系统的异步方案，除了Handler之外还有一个AsyncTask。当然，在实际开发中往往会使用第三方框架来代替AsyncTask。此外，由于Kotlin协程的出现和应用，AsyncTask已经被Google官方明确会在Android R中废弃。尽管如此，AsyncTask依然可以在Android R以下版本的设备上运行，考虑到这些设备目前还是占据大多数，因此有必要了解一下AsyncTask的基本使用方法。
+
+AsyncTask是一个抽象类，因此需要定义一个子类继承AsyncTask并重写相关方法：
+
+```
+class DemoAsyncTask: AsyncTask<Params, Progress, Results>() {
+    override fun doInBackground(vararg params: Params?): Boolean {
+             //在这里开启子线程执行耗时操作任务
+        }
+
+        override fun onPreExecute() {
+            //在后台任务开始执行前调用，用于进行一些界面上的初始化操作
+        }
+
+        override fun onProgressUpdate(vararg values: Progress?) {
+            //此处可以进行UI操作，利用传递进来的参数对界面进行更新
+        }
+
+        override fun onPostExecute(result: Results?) {
+            //在后台任务执行结束之后返回结果，可以进行UI操作
+        }
+
+        override fun onCancelled(result: Results?) {
+            //后台任务取消时调用
+        }
+
+        override fun onCancelled() {
+            //后台任务取消时调用
+        }
+}
+```
+
+AsyncTask有三个泛型参数：
+
++ **Params**
+
+在执行异步任务时需要传入的参数。
+
++ **Progress**
+
+显示任务进度，通常会选择Int或者Double。
+
++ **Result**
+
+任务执行完毕之后需要返回的结果。
+
+AsyncTask中只声明了一个抽象方法`doInBackground()`，其余方法可以根据需要有选择性地去重写。
+
+在实现AsyncTask之后，在主线程中调用`execute()`方法执行后台任务即可：
+
+```
+val demoAsyncTask: AsyncTask = DemoAsyncTask()
+demoAsyncTask.execute(param: Param?) //execute方法是可以传递任意数量的参数的
+```

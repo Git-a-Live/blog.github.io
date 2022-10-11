@@ -113,97 +113,9 @@ abstract class DemoDatabase: RoomDatabase() {
 
 在实际开发过程中，Entity和Dao可以集中到一起组成一个Module，供上层其他模块调用，而每个模块分别定义自己的Database，根据需要接入指定的Dao。最后可以在本模块中，或者更上层的模块中定义下面要讲到的Repository，以集中编写数据库操作方法，对外（特别是ViewModel）提供简洁的接口。
 
-## AsyncTask和Repository
+## Repository
 
-### AsyncTask
-
-在Android开发中，对于数据库的操作通常不允许放在主线程中进行，因为这可能会导致应用响应迟缓甚至无响应（ANR），严重降低用户体验。
-
-为了解决上述问题，就必须引入多线程。Java一般使用Thread和Runnable创建多线程任务，而Android一般使用Handler和AsyncTask，前者相对麻烦，而后者相对更容易上手。 
- 
-当然，在实际开发中会使用第三方框架来代替AsyncTask。 此外，由于[Kotlin协程](Kotlin/coroutine2.md)的出现和应用， AsyncTask类已经被Google官方明确会在Android R中废弃。 尽管如此，AsyncTask依然可以在Android R以下版本的设备上运行，考虑到这些设备目前还是占据大多数，因此有必要了解一下AsyncTask的基本使用方法。
-
-AsyncTask是一个抽象类，因此需要定义一个子类继承AsyncTask并重写相关方法：
-
-```
-class DemoAsyncTask: AsyncTask<Params, Progress, Results>() {
-    override fun doInBackground(vararg params: Params?): Boolean {
-             //在这里开启子线程执行耗时操作任务
-        }
-
-        override fun onPreExecute() {
-            //在后台任务开始执行前调用，用于进行一些界面上的初始化操作
-        }
-
-        override fun onProgressUpdate(vararg values: Progress?) {
-            //此处可以进行UI操作，利用传递进来的参数对界面进行更新
-        }
-
-        override fun onPostExecute(result: Results?) {
-            //在后台任务执行结束之后返回结果，可以进行UI操作
-        }
-
-        override fun onCancelled(result: Results?) {
-            //后台任务取消时调用
-        }
-
-        override fun onCancelled() {
-            //后台任务取消时调用
-        }
-}
-```
-
-AsyncTask有三个泛型参数：
-
-+ **Params**
-
-在执行异步任务时需要传入的参数。
-
-+ **Progress**
-
-显示任务进度，通常会选择Int或者Double。
-
-+ **Result**
-
-任务执行完毕之后需要返回的结果。
-
-AsyncTask中只声明了一个抽象方法` doInBackground()`，其余方法可以根据需要有选择性地去重写。
-
-在实现AsyncTask之后，在主线程中调用`execute()`方法执行后台任务即可：
-
-```
-val demoAsyncTask: AsyncTask = DemoAsyncTask()
-demoAsyncTask.execute(param: Param?) //execute方法是可以传递任意数量的参数的
-```
-
-### Repository
-
-Repository类用于访问多个数据源。Repository并不是架构组件库的一部分，而是代码解耦和架构比较推荐的方法。 Repository可以处理数据操作，并为应用程序提供一个整洁的API。Repository一般负责管理数据的查询线程，可使用多个后端。 通常情况下，Repository主要实现从服务端或本地的数据库中拉取数据的逻辑。因此可以想到，AsyncTask相关的代码应该写在Repository当中。
-
-下列代码展示的是一般的Repository的编写方法：
-
-```
-class DemoRepository(context: Context) {
-    private val demoDao = DemoDataBase.getImpl(context).getDemoDao()
-
-    //使用协程的写法（此处仅为编写挂起函数）
-    suspend fun foo1() = demoDao.foo1()
-
-    //使用AsyncTask的写法
-    fun foo2(vararg params: Params?){
-        DemoAsyncTask(vararg params: Params?).execute(param: Param?)
-    }
-
-    class DemoAsyncTask(param: Param?): AsyncTask<Params, Progress, Results>(){
-        override fun doInBackground(vararg params: Params?): Void? {
-            //TODO
-        }
-        ···
-    }
-}
-```
-
-Repository通常还会跟ViewModel配合使用，即Repository提供异步执行方法的接口，ViewModel编写调用这些异步接口的方法，主线程调用ViewModel提供的方法来执行异步任务。
+Repository并不是架构组件库的一部分，而是代码解耦和架构比较推荐的方法。Repository类用于访问多个数据源，处理数据操作，并为应用程序提供一个整洁的API。Repository一般负责管理数据的查询线程，可使用多个后端。通常情况下，Repository主要实现从服务端或本地的数据库中拉取数据的逻辑。Repository通常还会跟ViewModel配合使用，即Repository提供封装好了的业务逻辑API，ViewModel编写调用这些API的方法，然后再由其他组件调用ViewModel提供的方法。
 
 ## 数据库版本迁移
 
