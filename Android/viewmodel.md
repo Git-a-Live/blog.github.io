@@ -1,173 +1,149 @@
-ViewModel的出现使得应用架构由以往的MVC（Model-View-Controller）或MVP（Model-View-Presenter）转变成MVVM（Model-View-ViewModel）， 实现了数据操作与界面显示等功能的解耦。ViewModel通常和Live Data以及Data Binding搭配使用，以确保数据的存放， 不至于因为Activity的某些活动（如屏幕旋转导致Activity重新创建）使得数据总是被清空得不到保留。
+## 何为ViewModel
 
-## ViewModel
+`ViewModel`是Google推出的Android Jepack组件当中对MVVM模式的具体实现方案。按照Google官方的说法，`ViewModel`类旨在以注重生命周期的方式存储和管理界面相关数据，并且可以让这些数据在发生屏幕旋转等配置更改的情形后继续留存。`ViewModel`类的生命周期如下图所示：
 
-下面以一个简单的例子来说明ViewModel的使用。创建一个带有滑动条和文本框的简单应用，让滑动条滑动时， 显示框内的数字会随之变化，同时要实现应用在屏幕旋转或者切到后台再返回的情况下，文本框能继续显示当前滑动条所指示的数字。
+![](pics/viewmodel1.png)
 
-首先在build.gradle（Module:app）文件中的dependencies部分添加如下内容：
+可以看到，`ViewModel`的生存周期覆盖了Activity/Fragment的大部分生命周期，这就是为什么当Activity因旋转等情形发生重建时，数据还能继续留存的重要原因。`ViewModel`会在页面彻底销毁（也就是其作用域`ViewModelStoreOwner`永久消失）的时候被自动销毁，所以并不需要开发者额外增加手动解除持有的业务逻辑，也能避免发生内存泄漏问题。
 
-```
-implementation 'androidx.lifecycle:lifecycle-extensions: ‹the latest version on official website›'
-```
+> `ViewModel`类作为MVVM在Android开发领域的具体实现方案，自然要符合MVVM的要求，最关键的一点就是不能像Presenter那样持有View层，否则会引发内存泄漏。
 
-修改gradle文件之后，需要重新同步Gradle， 然后在MainActivity文件所在的目录下，编写一个继承于ViewModel的类，比如本例中的MyViewModel：
+注意，如果下文不做特殊说明，ViewModel默认表示MVVM中的ViewModel层概念，而`ViewModel`或者`ViewModel`类用于描述Google Jetpack组件库中MVVM的ViewModel具体实现。
 
-```
-class MyViewModel: ViewModel(){
-    var number = 0;
-}
-```
+## ViewModel的基本使用
 
-之后在MainActivity的onCreate方法中添加一个类型为MyViewModel的变量，并用ViewModelProvider初始化：
+### 继承抽象类
+
+Google通过`androidx.lifecycle`为开发者提供了`ViewModel`的抽象类，用于继承和重写函数——事实上，继承`ViewModel`抽象类唯一需要重写的函数只有一个`onCleared()`。这个函数会在`ViewModel`被销毁时调用，因此继承`ViewModel`的子类如果要统一释放资源，通常会在`onCleared()`当中执行。
+
+`ViewModel`的继承比较简单，类似于下列代码所示：
 
 ```
-override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-        val myViewModel: MyViewModel = ViewModelProvider(this,ViewModelProvider.NewInstanceFactory())[MyViewModel::class.java]
+class MyViewModel: ViewModel() {
+    
+    // 重写onCleared()函数
+    override fun onCleared() {
+        super.onCleared()
         ···
+    }
+
+    // 其他业务逻辑
+    fun foo() {
+        ···
+    }
+    ···
 }
 ```
 
-接着编写与控件相关的内容：
+### 工厂模式实例化
+
+`ViewModel`的实例化比较特殊，不是像普通类一样直接通过构造器去创建，而是要通过工厂模式创建一个单例出来才能使用。这种设计的考量在于，通过特定的工厂方法调用，可以将`ViewModel`实现类与生命周期组件（Google将其称作LifecycleOwner）的生命周期绑定在一起，起到监听生命周期从而自动执行销毁步骤的作用。如果通过构造器直接创建一个实例出来，那么LifecycleOwner顶多就是持有`ViewModel`实现类的引用，除此之外没有任何联系，更不用说让`ViewModel`实现类去监听这些组件的生命周期了。在这种情况下，ViewModel就退化成了一个不持有View层引用的Presenter，其优势也无法发挥，自然也就失去了使用MVVM架构的意义。
+
++ **无构造参数的`ViewModel`实例创建**
+
+无构造参数的`ViewModel`通过工厂模式创建实例的流程非常简单，类似于下列代码所示：
 
 ```
-···
-textView.text = myViewModel.number.toString()
-seekBar.progress = myViewModel.number
-seekBar.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener{
-    override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
-        myViewModel.number = progress
-            textView.text = myViewModel.number.toString()
-   }
-    override fun onStartTrackingTouch(seekBar: SeekBar) {}
-    override fun onStopTrackingTouch(seekBar: SeekBar) {}
-})
+// Activity的lifecycleOwner传入this即可
+val myViewModel: MyViewModel = ViewModelProvider(this)[MyViewModel::class.java]
+
+// 归属于某个Activity的Fragment，lifecycleOwner通常传入requireActivity()，否则拿不到同一个实例
+val myViewModel = ViewModelProvider(requireActivity())[MyViewModel::class.java]
 ```
 
-最后编译运行，应用在屏幕旋转以及切到后台再返回的情况下，可以继续显示文本框之前的内容。但是如果退出应用再返回，就会发现文本框已经被清空了，滑动条也被初始化为原来的状态。
+当然，在添加AndroidX的`activity-ktx`和`fragment-ktx`依赖库之后，无参构造器的`ViewModel`实例还可以通过更为简单的方式创建：
 
-利用Bundle和SavedState只能起到数据临时保存和复现的作用， 一旦发生应用闪退、手机关机等强制杀死应用的情况，保存在内存中的数据也会随之丢失，上述两种临时方法根本无法应对。 要彻底解决这个问题，就得等引入数据持久化技术，如SharedPreferences或是SQLite数据库等才行。
+```
+dependencies {
+    // 注意从1.6.0版本开始，activity-ktx要求targetSDK和compileSDK的最低版本达到33
+    implementation 'androidx.activity:activity-ktx:$specified_version'
+    // Fragment可以通过这个依赖库调用viewModels代理方法
+    implementation 'androidx.fragment:fragment-ktx:$specified_version'
+}
+```
 
-## AndroidViewModel
+```
+class MainActivity : AppCompatActivity() {
+    // 采用委托代理的方式直接创建实例，不需要修饰为延迟初始化
+    private val myViewModel by viewModels<MyViewModel>()
+    ···
+}
 
-AndroidViewModel是ViewModel的一个子类，但是它和ViewModel相比有一个优点，即可以通过构造函数访问全局资源， 因此在配合LiveData，DataBinding以及SharedPreferences等基础上，能够发挥极大的作用。值得注意的是， SharedPreferences对于AndroidViewModel来说也是必需的，正如ViewModel必须搭配LiveData和DataBinding一样。
+class MyFragment : Fragment() {
+    // Fragment虽然也可以采用委托代理的方式创建ViewModel实例，但是获取到的实例跟上层Activity创建的不是同一个
+    private val myViewModel by viewModels<MyViewModel>()
+    ···
+}
+```
 
-本次实践将构建一个同时使用AndroidViewModel和SharedPreferences的例子，该实例的界面和功能都很简单， 应用界面只包含一个文本框和按键，当用户按下按键时，文本框内的数字就会+1，同时在用户翻转屏幕以及退出应用重新进入的情况下， 显示的内容依然能够得到保留。
++ **有构造参数的`ViewModel`实例创建**
 
-由于AndroidViewModel继承于ViewModel，因此添加的依赖和ViewModel完全一致； 而DataBinding的启用在[之前](Android/db.md)也有叙述，在此不再多做说明。
+这里新建一个带有构造器参数的`ViewModel`实现类：
 
-通过Android Studio新建一个项目，在MainActivity文件的同一目录下新建一个继承于AndroidViewModel的类文件MyAndroidViewModel：
+```
+// 注意ViewModel的构造器参数不能包含Activity/Fragment的上下文
+class MyViewModel(private val repository: Repository): ViewModel() {
+    ···
+}
+```
+
+构建一个实现了`ViewModelProvider.Factory`的自定义工厂类：
+
+```
+class MyFactory(private val repository: Repository): ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        // 判断传进来的类型是否属于ViewModel的目标实现类
+        if (modelClass.isAssignableFrom(MyViewModel::class.java)) {
+            return MyViewModel(repository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
+    }
+}
+```
+
+在Activity/Fragment中通过普通方式创建带构造参数的`ViewModel`实例：
+
+```
+// 创建工厂实例
+val factory = MyFactory(Repository())
+
+// 将工厂实例传入ViewModelProvider中，即可创建出带构造参数的ViewModel实例
+val myViewModel = ViewModelProvider(lifecycleOwner, factory)[MyViewModel::class.java]
+```
+
+通过委托代理方式创建带构造参数的`ViewModel`实例：
+
+```
+// 创建工厂实例
+val factory = MyFactory(Repository())
+
+// 通过委托代理创建实例
+val myViewModel by viewModels<MyViewModel> { factory }
+```
+
+### AndroidViewModel
+
+`AndroidViewModel`是`ViewModel`的一个子类，带有一个`Application`类型的构造参数。通过这个参数，`AndroidViewModel`可以在不持有View层上下文的情况下全局访问相关资源。
+
+这里新建一个继承`AndroidViewModel`的实现类：
 
 ```
 class MyAndroidViewModel(application: Application): AndroidViewModel(application) {
-    //TODO
+    ···
 }
 ```
 
-注意，在使用AndroidViewModel的时候，IDE会提示添加一个构造函数以获取Application对象，从而可以访问全局资源：
+`AndroidViewModel`作为一个带构造参数的`ViewModel`类，在创建实例的时候自然要传入工厂实例，不过Google已经提供了现成的。下列代码展示的是普通方式如何创建`AndroidViewModel`实例：
 
 ```
-//Activity
-val myViewModel = ViewModelProvider(this, ViewModelProvider.AndroidViewModelFactory.getInstance(application))[MyAndroidViewModel::class.java]
-
-//Fragment
-val myViewModel = ViewModelProvider(requireActivity(), ViewModelProvider.AndroidViewModelFactory.getInstance(requireActivity().application))[MyAndroidViewModel::class.java]
+val androidViewModel = ViewModelProvider(lifecycleOwner, ViewModelProvider.AndroidViewModelFactory(application))[MyAndroidViewModel::class.java]
 ```
 
->注意：尽管AndroidViewModel自带构造器，但是**强烈不建议**直接通过构造器的方式去创建AndroidViewModel实例。<font color=red>因为直接通过构造器创建实例对象，起不到绑定组件生命周期的作用，这样使用ViewModel和LiveData的意义就没有了。</font>
-
-接着继续完成MyAndroidViewModel文件的编写，通过application对象调用get()方法，可以直接在MainActivity以外创建SharedPreferences对象：
+通过委托代理方式创建`AndroidViewModel`实例：
 
 ```
-private val shp = application.getSharedPreferences("KEY",MODE_PRIVATE)
-private val editor = shp.edit()
-private var number = MutableLiveData(0)
-
-fun getNumber():MutableLiveData<Int>{
-    number.value = shp.getInt("KEY",0)
-    return number
-}
-
-fun add(){
-    number.value = number.value!!.plus(1)
-    editor.putInt("KEY", number.value!!)
-    editor.apply()
-}
+val androidViewModel by viewModels<MyAndroidViewModel> { ViewModelProvider.AndroidViewModelFactory(application) }
 ```
 
-DataBinding对象的创建以及在布局文件中操作和之前完全一致，不再重复。完成上述工作之后，编译运行，通常可以成功。 至此，采用AndroidViewModel、Data Binding以及SharedPreferences所开发的应用，已经比较好地实现了界面与代码解耦， 还有数据的简单保存和复现。
-
-## LiveData
-
-LiveData是一个可观察的数据持有者类。与常规的可观察性不同，LiveData是生命周期感知的，意味着它遵循其他应用程序组件（例如Activity，Fragment或Service）的生命周期。这种意识确保LiveData只更新处于活动生命周期状态的应用程序组件观察者。
-
-使用LiveData具有以下优点：
-
-+ **保证用户界面与数据状态匹配**
-
-LiveData遵循观察者模式。在生命周期状态更改时LiveData会通知Observer对象。您可以升级代码在observer对象中更新UI，不必每次数据改变时手动更新UI，观察者可以在每次更改时更新UI。
-
-+ **没有内存泄漏**
-
-观察者与Lifecycle对象绑定，并在具有生命周期的对象被destroyed后自行清理。
-
-+ **停止activities不会导致崩溃**
-
-如果观察者的生命周期处于非活动状态，例如在后退堆栈中的活动，则不会收到任何LiveData事件。
-
-+ **无需手动处理生命周期**
-  
-UI组件只是观察相关数据，不会停止或恢复观察。LiveData自动管理所有这些操作，因为在观察时它实时响应相关的生命周期状态的变化。
-
-+ **始终保持最新的数据**
-
-如果生命周期变为非活动状态，它将在再次变为活动状态时接收到最新的数据。例如，后台Activity在返回到前台后立即收到最新数据。
-
-+ **正确的配置更改**
-
-如果由于配置更改（如设备旋转）而重新创建Activity或Fragment，则会立即收到最新的可用数据。
-
-+ **共享资源**
-
-可以使用单例模式来扩展LiveData对象来包装系统服务，以便它们可以在应用程序中共享。LiveData对象一旦连接到系统服务，然后其他任何需要系统资源的观察者只需要观看该LiveData 对象就可以。
-
-这里继续使用[View Model](Android/vm)的例子。首先对MyViewModel中的变量number进行修改， 将其类型改为MutableLiveData\<Int>，并且用private修饰以避免其被随意修改， 之后再编写一个get函数来获取number的值。
-
-```
-//Before:
-var number: Int = 0;
-
-//After:
-private var number: MutableLiveData<Int> = MutableLiveData(0);
-fun getNumber(): MutableLiveData<Int>{
-    return number
-}
-```
-
-接着在MainActivity中修改如下两行，为Live Data添加一个Observer：
-
-```
-//Before:
-textView.text = myViewModel.number.toString()
-seekBar.progress = myViewModel.number
-
-//After:
-myViewModel.getNumber().observe(this, Observer {
-textView.text = myViewModel.getNumber().value.toString()
-    seekBar.progress = myViewModel.getNumber().value!!
-})
-```
-还有seekBar里面的两处：
-
-```
-//Before:
-myViewModel.number = progress
-textView.text = myViewModel.number.toString()
-
-//After:
-myViewModel.getNumber().value = progress
-textView.text = myViewModel.getNumber().value.toString()
-```
-
-最后编译运行，通常可以实现和[View Model](Android/vm)例子相同的效果。
+> 注意，在Fragment中使用委托代理创建`AndroidViewModel`实例时，传入的`Application`参数通常是`requireActivity().application`。<font color=red>尽管如此，这样创建出来的实例跟上层Activity的依然不是同一个</font>，因为lifecycleOwner默认就是不同的。
