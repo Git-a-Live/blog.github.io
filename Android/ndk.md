@@ -212,8 +212,8 @@ Compiled from "MainActivity.kt"
 public final class com.example.myapplication.MainActivity extends androidx.appcompat.app.AppCompatActivity {
   public static final com.example.myapplication.MainActivity$Companion Companion;
     descriptor: Lcom/example/myapplication/MainActivity$Companion;
-  private com.example.myapplication.databinding.ActivityMainBinding binding;
-    descriptor: Lcom/example/myapplication/databinding/ActivityMainBinding;
+  private com.example.myapplication.Data Binding.ActivityMainBinding binding;
+    descriptor: Lcom/example/myapplication/Data Binding/ActivityMainBinding;
   public com.example.myapplication.MainActivity();
     descriptor: ()V
 

@@ -173,7 +173,7 @@ class MyViewModel: ViewModel() {
 }
 ```
 
-在Fragment对应源文件的onCreateView()中添加ViewModel类型对象和DataBinding对象：
+在Fragment对应源文件的onCreateView()中添加ViewModel类型对象和Data Binding对象：
 
 ```
 private lateinit var myViewModel: MyViewModel
@@ -183,14 +183,14 @@ override fun onCreateView(
         savedInstanceState: Bundle?
     ): View? {
         myViewModel = ViewModelProvider(requireActivity())[MyViewModel::class.java]
-        binding = DataBindingUtil.inflate(inflater, R.layout.fragment_???, container, false)
+        binding = Data BindingUtil.inflate(inflater, R.layout.fragment_???, container, false)
         binding.data = myViewModel
         binding.lifecycleOwner = requireActivity()
         return binding.root
 }
 ```
 
-注意，DataBinding对象的类型名称为<font color=red>“布局文件名称+Binding”</font>。例如MainActivity对应的DataBinding类型为ActivityMainBinding，HomeFragment对应的则是FragmentHomeBinding。
+注意，Data Binding对象的类型名称为<font color=red>“布局文件名称+Binding”</font>。例如MainActivity对应的Data Binding类型为ActivityMainBinding，HomeFragment对应的则是FragmentHomeBinding。
 
 此外，在Fragment中调用ViewModelProvider时，带入的参数是`requireActivity()`， 而不是和Activity一样的this，否则会报错。同理，使用AndroidViewModel时，传入的是`requireActivity().application`。
 

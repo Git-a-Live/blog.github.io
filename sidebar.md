@@ -13,7 +13,7 @@
   * [从MVC到MVVM](Android/architecture.md)
   * [ViewModel](Android/viewmodel.md)
   * [LiveData](Android/livedata.md)
-  * [Databinding](Android/databinding.md)
+  * [Data Binding](Android/databinding.md)
   * [MVI架构](Android/mvi.md)
   * **<font color=orange>本地数据存储</font>**
   * [键值对数据存储](Android/sp.md)
