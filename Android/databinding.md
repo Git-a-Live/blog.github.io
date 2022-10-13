@@ -1,6 +1,6 @@
 Datainding是Google推出的Android Jetpack的重要组件，它和`ViewModel`一样都是Android MVVM架构的具体实现方案。按照Google的说法，Data Binding采用“声明式”（declartive）的编程方法将布局中的控件绑定到应用中的数据源。
 
-最直白的解释就是，借助Data Binding，`ViewModel`可以直接跟`xml`文件进行数据和动作交互，而不必像以往那样在Activity/Fragment当中为控件编写大量的赋值和监听回调语句。这种方式减少了Activity/Fragment的工作负担，更加提高了ViewModel层和View层的解耦程度。总体来看，Data Binding在MVVM架构当中发挥的作用主要有两个：1）<font color=red>简化控件引用方式；</font>2）<font color=red>实现数据单向或双向绑定到布局文件。</font>如果只是想简化控件引用，那么应该考虑选用[Viewbinding](Android/viewbinding)。
+最直白的解释就是，借助Data Binding，`ViewModel`可以直接跟`xml`文件进行数据和动作交互，而不必像以往那样在Activity/Fragment当中为控件编写大量的赋值和监听回调语句。这种方式减少了Activity/Fragment的工作负担，更加提高了ViewModel层和View层的解耦程度。总体来看，Data Binding在MVVM架构当中发挥的作用主要有两个：1）<font color=red>简化控件引用方式；</font>2）<font color=red>实现数据单向或双向绑定到布局文件。</font>如果只是想简化控件引用，那么应该考虑选用[View Binding](Android/viewbinding)。
 
 > Data Binding的使用对AGP版本有要求，即项目使用的AGP版本不能低于**1.5.0**。
 
@@ -297,7 +297,7 @@ android:onClick="@{(p1, p2, ···) -> viewModel.bar(p1, p2, ···)}"/>
 <import type="com.example.real.estate.View" alias="Vista"/>
 ```
 
-最后要提醒的是，如果绑定变量的`type`是**泛型类**，**在设置的时候要将`<`转义成`&lt;`**，如下列代码所示：
+最后要提醒的是，如果绑定变量的`type`是**泛型类**，在设置的时候要将`<`转义成`&lt;`，如下列代码所示：
 
 ```
 <data>
@@ -310,7 +310,58 @@ android:onClick="@{(p1, p2, ···) -> viewModel.bar(p1, p2, ···)}"/>
 
 + **变量**
 
+变量类型在编译时进行检查，因此，如果变量实现`Observable`或者是可观察集合，则应反映在类型中。如果该变量是不实现`Observable`接口的基类或接口，则变量是“不可观察的”。
+
+如果不同配置（例如横向或纵向）有不同的布局文件，则变量会合并在一起。这些布局文件之间**不得存在有冲突的变量定义**。
+
+在生成的Binding类中，每个描述的变量都有一个对应的setter和getter。在调用 setter之前，这些变量会被赋予默认值，例如引用类型采用`null`，`int`采用0，`boolean`采用false等等。
+
+系统会根据需要生成名为context的特殊变量，用于绑定表达式。context的值是根视图`getContext()`方法提供的`Context`对象。context变量会被具有该名称的显式变量声明替换。
+
 + **包含**
 
+通过使用应用命名空间和特性中的变量名称，变量可以从上层布局传递到被包含在里面的下一层布局，并实现绑定。以下示例展示了来自name.xml和contact.xml布局文件的被包含变量——user：
 
-### 双向绑定
+
+<?xml version="1.0" encoding="utf-8"?>
+    <layout xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:bind="http://schemas.android.com/apk/res-auto">
+       <data>
+           <variable name="user" type="com.example.User"/>
+       </data>
+       <LinearLayout
+           android:orientation="vertical"
+           android:layout_width="match_parent"
+           android:layout_height="match_parent">
+           <include layout="@layout/name"
+               bind:user="@{user}"/>
+           <include layout="@layout/contact"
+               bind:user="@{user}"/>
+       </LinearLayout>
+    </layout>
+    
+数据绑定不支持`include`作为`merge`元素的直接子元素。例如以下这种布局就是不受支持的：
+
+
+<?xml version="1.0" encoding="utf-8"?>
+    <layout xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:bind="http://schemas.android.com/apk/res-auto">
+       <data>
+           <variable name="user" type="com.example.User"/>
+       </data>
+       <!-- Doesn't work -->
+       <merge>
+           <include layout="@layout/name"
+               bind:user="@{user}"/>
+           <include layout="@layout/contact"
+               bind:user="@{user}"/>
+       </merge>
+    </layout>
+
+### 双向数据绑定
+
+### 其他高级用法简介
+
++ **Observable数据对象**
+
++ **Data Binding适配器**
