@@ -2,7 +2,7 @@ Datainding是Google推出的Android Jetpack的重要组件，它和`ViewModel`�
 
 最直白的解释就是，借助Data Binding，`ViewModel`可以直接跟`xml`文件进行数据和动作交互，而不必像以往那样在Activity/Fragment当中为控件编写大量的赋值和监听回调语句。这种方式减少了Activity/Fragment的工作负担，更加提高了ViewModel层和View层的解耦程度。总体来看，Data Binding在MVVM架构当中发挥的作用主要有两个：1）<font color=red>简化控件引用方式；</font>2）<font color=red>实现数据单向或双向绑定到布局文件。</font>如果只是想简化控件引用，那么应该考虑选用[View Binding](Android/viewbinding)。
 
-> Data Binding的使用对AGP版本有要求，即项目使用的AGP版本不能低于**1.5.0**。
+> Data Binding的使用对AGP版本有要求，即项目使用的AGP版本不能低于**1.5.0**。当然，现在新项目是不需要考虑这个问题的，只有那些在Android Studio 1.0刚出来的时期就开发的老旧项目，想要接入Data Binding功能时才要考虑AGP的版本兼容问题。
 
 ## Data Binding入门
 
@@ -322,46 +322,90 @@ android:onClick="@{(p1, p2, ···) -> viewModel.bar(p1, p2, ···)}"/>
 
 通过使用应用命名空间和特性中的变量名称，变量可以从上层布局传递到被包含在里面的下一层布局，并实现绑定。以下示例展示了来自name.xml和contact.xml布局文件的被包含变量——user：
 
-
+```
 <?xml version="1.0" encoding="utf-8"?>
-    <layout xmlns:android="http://schemas.android.com/apk/res/android"
-            xmlns:bind="http://schemas.android.com/apk/res-auto">
-       <data>
-           <variable name="user" type="com.example.User"/>
-       </data>
-       <LinearLayout
-           android:orientation="vertical"
-           android:layout_width="match_parent"
-           android:layout_height="match_parent">
-           <include layout="@layout/name"
-               bind:user="@{user}"/>
-           <include layout="@layout/contact"
-               bind:user="@{user}"/>
-       </LinearLayout>
-    </layout>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:bind="http://schemas.android.com/apk/res-auto">
+    <data>
+        <variable name="user" type="com.example.User"/>
+    </data>
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <include layout="@layout/name"
+            bind:user="@{user}"/>
+        <include layout="@layout/contact"
+            bind:user="@{user}"/>
+    </LinearLayout>
+</layout>
+```
     
 数据绑定不支持`include`作为`merge`元素的直接子元素。例如以下这种布局就是不受支持的：
 
-
+```
 <?xml version="1.0" encoding="utf-8"?>
-    <layout xmlns:android="http://schemas.android.com/apk/res/android"
-            xmlns:bind="http://schemas.android.com/apk/res-auto">
-       <data>
-           <variable name="user" type="com.example.User"/>
-       </data>
-       <!-- Doesn't work -->
-       <merge>
-           <include layout="@layout/name"
-               bind:user="@{user}"/>
-           <include layout="@layout/contact"
-               bind:user="@{user}"/>
-       </merge>
-    </layout>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:bind="http://schemas.android.com/apk/res-auto">
+    <data>
+        <variable name="user" type="com.example.User"/>
+    </data>
+    <!-- Doesn't work -->
+    <merge>
+        <include layout="@layout/name"
+            bind:user="@{user}"/>
+        <include layout="@layout/contact"
+            bind:user="@{user}"/>
+    </merge>
+</layout>
+```
 
 ### 双向数据绑定
 
-### 其他高级用法简介
+#### 双向绑定快速入门
 
-+ **Observable数据对象**
+上文所提到的绑定数据到布局文件的方式属于“单向数据绑定”，即布局文件可以通过绑定变量来感知数据源的变化并刷新界面，但是不能将用户与界面交互时产生的数据（比如通过文本框输入一串字符）直接传递给数据源，而是要借助事件处理机制，或者在View层载体中另外调用控件的交互事件监听器，来间接地修改数据源。比如下列代码就是在单向数据绑定情况下，控件感知数据变化和传递交互数据需要分开执行的一个典型例子：
 
-+ **Data Binding适配器**
+```
+<CheckBox
+    android:id="@+id/rememberMeCheckBox"
+    android:checked="@{viewmodel.rememberMe}"
+    android:onCheckedChanged="@{viewmodel.rememberMeChanged}" />
+```
+
+可以看到，如果一个控件同时具备展示数据和产生数据的功能，那么至少要在布局文件中写两种执行逻辑。在控件数量较多的情况下，Data Binding的简洁优势很快就会被这种重复工作所抵消。于是Data Binding由提供了一种被称作“双向数据绑定”的工作方式，如下列示例代码所示：
+
+```
+<CheckBox
+    android:id="@+id/rememberMeCheckBox"
+    android:checked="@={viewmodel.rememberMe}" />
+```
+
+注意到示例代码中使用的表达式格式跟之前相比有些许差异。**单向数据绑定采用的是`@{}`表示法，而双向数据绑定采用的是`@={}`表示法（多了一个`=`符号）**。通过双向数据绑定，控件可以在一行代码中实现两种功能：接收对应属性的数据更改，同时监听用户与控件交互所产生的数据更新。需要注意的是，双向数据绑定不是什么地方都能用，在一般情况下，只有具备“双向特性”的控件属性才能像上面示例代码那样使用这个功能。官方已经预定义了一些的支持双向特性的控件属性，具体如下表所示：
+
+|类|预置的双向特性属性|
+|:-----:|:-----:|
+|`AdapterView`|`android:selectedItemPosition`、`android:selection`|
+|`CalendarView`|`android:date`|
+|`CompoundButton`|`android:checked`|
+|`DatePicker`|`android:year`、`android:month`、`android:day`|
+|`NumberPicker`|`android:value`|
+|`RadioButton`|`android:checkedButton`|
+|`RatingBar`|`android:rating`|
+|`SeekBar`|`android:progress`|
+|`TabHost`|`android:currentTab`|
+|`TextView`|`android:text`|
+|`TimePicker`|`android:hour`、`android:minute`|
+
+这些属性之所以能够支持双向特性，最关键的一点在于配置了Binding适配器。事实上，如果知道了怎么编写Binding适配器，原本不支持双向特性的控件属性，还有开发者自定义的控件属性，都可以具备双向特性，从而用上双向数据绑定功能，而这些内容将会在下文进行更为详细的介绍。
+
+#### 可观察数据对象
+
+“可观察性”是指**一个对象将其数据变化告知其他对象**的能力。Data Binding库提供了可让开发者轻松观察数据更改情况的类和方法，因此开发者不需要操心在底层数据源发生更改时应该如何刷新界面。借助该库，开发者可以将对象、字段、控件属性或集合设为可观察。
+
+按照Google官方的说法，任何普通对象（plain-old object，一个典型的例子就是Java当中未继承实现任何父类，并且未被其他框架入侵过的POJO）都能够用于数据绑定，但是它们自身是不能自动通知UI去刷新界面的。Data Binding就为这些普通对象提供了在数据变化时通知控件监听器的能力。当然，还有一种途径，就是让这些普通对象自己成为可观察对象。像`LiveData`这类可观察对象被绑定到UI界面之后，就可以自动刷新UI界面了。Google在Data Binding库中提供了一系列继承`BaseObservable`的可观察类，供开发者使用。但是Google后来在[开发文档](https://developer.android.google.cn/topic/libraries/data-binding/observability#kotlin)中增加了一条提示，表示从Android Studio 3.1开始，`LiveData`已经可以取代可观察类，承担可观察类原有的功能。换句话说，现在Data Binding通常是跟`LiveData`搭配使用，原来这些基于`BaseObservable`类的可观察类基本上已经没有用武之地了。
+
+#### Binding适配器
+
+每一个布局表达式都有一个对应的Binding适配器，用于进行框架调用来设置相应的属性或监听器。例如，Binding适配器可以通过调用`setText()`方法来设置文本属性，或者通过调用`setOnClickListener()`方法向点击事件添加监听器。常用的Bidning适配器可以在[Google官方文档](https://developer.android.google.cn/topic/libraries/data-binding/two-way#two-way-attributes)中查看了解，开发者在`android.databinding.adapters`依赖库中就可以调用它们。事实上，官方提供的这些Binding适配器在大多数情况下都已经够用了，因为它们覆盖了大多数的控件类型。如果要为某一现成类型的控件增加适配器方法，利用Kotlin的[扩展函数](Kotlin/late?id=扩展函数)就基本可以解决问题。当然，如果是开发者自定义的控件类型，可能确实需要自定义的Binding适配器来满足开发需要。限于篇幅，这里并不深入介绍如何自定义Binding适配器，如有需要可以访问相应的[Google开发文档](https://developer.android.google.cn/topic/libraries/data-binding/binding-adapters)。
+

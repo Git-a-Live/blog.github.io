@@ -7,8 +7,6 @@
   * [Broadcast](Android/broadcast.md)
   * [Content Provider](Android/contpro.md)
   * [Service](Android/service.md)
-  * [Fragment](Android/fg.md)
-  * [WorkManager](Android/wm.md)
   * **<font color=orange>应用架构</font>**
   * [从MVC到MVVM](Android/architecture.md)
   * [ViewModel](Android/viewmodel.md)
@@ -27,6 +25,7 @@
   * **<font color=orange>UI开发</font>**
   * [基本布局](Android/lo.md)
   * [View Binding](Android/viewbinding.md)
+  * [Fragment](Android/fg.md)
   * [常用控件](Android/controls.md)
   * [自定义视图](Android/controller.md)
   * [应用微件](Android/xxx.md)
@@ -37,6 +36,7 @@
   * [性能优化](Android/perf.md)
   * **<font color=orange>框架工具</font>**
   * [CameraX](Android/camerax.md)
+  * [WorkManager](Android/wm.md)
   * [OkHttp](Android/oh.md)
   * [Retrofit](Android/retr.md)
   * [Volley](Android/volley.md)
@@ -49,9 +49,9 @@
   * [ZXing](Android/zxing.md)
   * [greenDAO](Android/greendao.md)
   * [ObjectBox](Android/objectbox.md)
-  * [Dagger2](Android/dagger2.md)
   * [Hilt](Android/hilt.md)
   * [Koin](Android/xxx.md)
+  * [Dagger2](Android/dagger2.md)
   * **<font color=orange>Android进阶</font>**
   * [Android Module开发](Android/mod.md)
   * [Android AIDL开发](Android/aidl.md)
