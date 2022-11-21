@@ -37,6 +37,7 @@
   * **<font color=orange>框架工具</font>**
     * [CameraX](Android/camerax.md)
     * [WorkManager](Android/wm.md)
+    * [DownloadManager](Android/downloadmanager)
     * [OkHttp](Android/oh.md)
     * [Retrofit](Android/retr.md)
     * [Volley](Android/volley.md)
