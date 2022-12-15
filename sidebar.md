@@ -51,8 +51,6 @@
     * [greenDAO](Android/greendao.md)
     * [ObjectBox](Android/objectbox.md)
     * [Hilt](Android/hilt.md)
-    * [Koin](Android/xxx.md)
-    * [Dagger2](Android/dagger2.md)
   * **<font color=orange>Android进阶</font>**
     * [Android Module开发](Android/mod.md)
     * [Android AIDL开发](Android/aidl.md)
