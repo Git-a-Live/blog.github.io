@@ -1,4 +1,4 @@
-Datainding是Google推出的Android Jetpack的重要组件，它和`ViewModel`一样都是Android MVVM架构的具体实现方案。按照Google的说法，Data Binding采用“声明式”（declartive）的编程方法将布局中的控件绑定到应用中的数据源。
+Data Binding是Google推出的Android Jetpack的重要组件，它和`ViewModel`一样都是Android MVVM架构的具体实现方案。按照Google的说法，Data Binding采用“声明式”（declartive）的编程方法将布局中的控件绑定到应用中的数据源。
 
 最直白的解释就是，借助Data Binding，`ViewModel`可以直接跟`xml`文件进行数据和动作交互，而不必像以往那样在Activity/Fragment当中为控件编写大量的赋值和监听回调语句。这种方式减少了Activity/Fragment的工作负担，更加提高了ViewModel层和View层的解耦程度。总体来看，Data Binding在MVVM架构当中发挥的作用主要有两个：1）<font color=red>简化控件引用方式；</font>2）<font color=red>实现数据单向或双向绑定到布局文件。</font>如果只是想简化控件引用，那么应该考虑选用[View Binding](Android/viewbinding)。
 
