@@ -27,8 +27,8 @@
     * [View Binding](Android/viewbinding.md)
     * [Fragment](Android/fg.md)
     * [常用控件](Android/controls.md)
-    * [自定义视图](Android/controller.md)
-    * [应用微件](Android/xxx.md)
+    * [自定义View](Android/controller.md)
+    * [应用微件Widget](Android/xxx.md)
   * **<font color=orange>编译调试</font>**
     * [Gradle编译](Android/gradle.md)
     * [应用调试](Android/debug.md)

@@ -114,6 +114,10 @@ CoroutineDispatcher的`dispatch()`方法会在拦截器的`interceptContinuation
 
 如果是`async`，情况就比较复杂了：当`async`**作为根协程**（也就是创建了一个`CoroutineScope`实例或是做为supervisorScope的直接子协程）时，异常不会被抛出，只有到调用`await`的时候才会抛出异常，因此`try-catch`应当包裹的是调用`await`的代码；而当`async`在coroutineScope构建器或其他协程创建的子协程中被调用时，它所抛出的异常不仅无法捕获，而且还会传播到它所在的父协程，导致父协程以及同级的其他子协程都被影响，从而全部取消。
 
+#### CoroutineExceptionHandler
+
+#### SupervisorJob
+
 ### 异常传播机制
 
 协程的异常是会分发传播的，牵连到其他兄弟协程以及父协程。
@@ -131,10 +135,6 @@ CoroutineDispatcher的`dispatch()`方法会在拦截器的`interceptContinuation
 + supervisorScope
 
 它的取消操作只会向下传播，一个子协程的运行失败不会影响到其他子协程，内部的异常不会向上传播，不会影响父协程和兄弟协程的运行。
-
-#### SupervisorJob
-
-#### CoroutineExceptionHandler
 
 ## 并发安全
 

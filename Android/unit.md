@@ -11,7 +11,7 @@
 
 同时Google官方也强调：
 
->单元测试不适用于测试复杂的界面互动事件。
+> 单元测试不适用于测试复杂的界面互动事件。
 
 鉴于单元测试在开发中的重要地位，Android Studio提供了一整套相对完善的单元测试工具，使用了JUnit、Robolectric、AndroidJUnitRunner以及Espresso等单元测试框架，基本能够满足开发者的需要。当然，Google还推荐使用[Mockito框架](https://github.com/mockito/mockito)，但是限于篇幅，这里不作展开。
 
@@ -58,8 +58,12 @@ Google官方对于插桩测试的解释是这样的：
 
 同时强调：
 
->我们建议只有在必须针对真实设备的行为进行测试时才使用插桩单元测试。（注：比如获取一个Context对象）
+> 我们建议只有在必须针对真实设备的行为进行测试时才使用插桩单元测试。（注：比如获取一个Context对象）
 
 和本地测试一样，插桩测试的示例在创建项目时就已经存在，位于androidTest目录，文件名为ExampleInstrumentedTest。插桩测试类的用法和本地测试类有许多相似的地方，主要区别就在于插桩测试类可以通过AndroidX Test运行JUnit 4测试运行程序 (AndroidJUnitRunner) 和用于功能界面测试的 API（[Espresso](https://developer.android.google.cn/training/testing/espresso)和[UI Automator](https://developer.android.google.cn/training/testing/ui-automator)），在功能上比本地测试更为丰富和复杂。
 
 > 注意，插桩测试需要在debug模式下进行，否则对应的插桩测试目录不会被Android Studio识别。
+
+### 与UI交互无关的插桩测试
+
+### UI交互插桩测试
