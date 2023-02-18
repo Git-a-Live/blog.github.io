@@ -80,9 +80,7 @@
     * [Kotlin协程：线程基础](Kotlin/coroutine.md)
     * [Kotlin协程：入门基础](Kotlin/coroutine2.md)
     * [Kotlin协程：进阶部分](Kotlin/coroutine3.md)
-  * **<font color=orange>C++入门</font>**
-  * **<font color=orange>Dart入门</font>**
-  * **<font color=orange>Python入门</font>**
+  * **<font color=orange>Dart进阶</font>**
   * **<font color=orange>MySQL入门</font>**
     * [基础指令](MySQL/basicom.md) 
     * [表的操作](MySQL/tables.md)
@@ -98,6 +96,7 @@
     * [窗口函数](MySQL/window.md)
 * **<font color=red>跨平台/混合开发</font>**
   * **<font color=orange>Flutter</font>**
+  * [Flutter入门](Flutter/basic.md)
   * **<font color=orange>Compose</font>**
   * **<font color=orange>Hybrid</font>**
 * **<font color=red>爬虫技术</font>**
