@@ -6,9 +6,7 @@ Kotlin协程的挂起与恢复能力本质上就是挂起函数的挂起和恢�
 
 ### 阻塞与非阻塞
 
-Kotlin协程的挂起是“非阻塞式”的，从本质上来说，就是指代码采用同步的（看起来会阻塞主线程的）写法，但实际上不会阻塞主线程。原因很简单，主线程自身当然不可能被已经脱离出去、运行在其他线程的任务所阻塞（亦即所谓的“死道友不死贫道”）。即使不用协程，仅仅使用Java最底层的Thread进行线程切换，也同样能实现非阻塞式。从这个角度来讲，Kotlin协程的异步并不比Java底层Thread的异步更高级。
-
-最后要强调的是，任何耗时操作终归会有一个线程来承载，而承载耗时操作的线程自然是处于阻塞状态的，无非是处理耗时操作有时间长短上的差异。
+Kotlin协程的挂起是“非阻塞式”的，从本质上来说，就是指代码采用同步的（看起来会阻塞主线程的）写法，但实际上不会阻塞主线程。原因很简单，主线程自身当然不可能被已经脱离出去、运行在其他线程的任务所阻塞（亦即所谓的“死道友不死贫道”）。即使不用协程，仅仅使用Java最底层的Thread进行线程切换，也同样能实现非阻塞式。从这个角度来讲，Kotlin协程的异步并不比Java底层Thread的异步更高级。任何耗时操作终归会有一个线程来承载，而承载耗时操作的线程自然就是处于阻塞状态的。
 
 ### 协程上下文
 
@@ -112,47 +110,175 @@ CoroutineDispatcher的`dispatch()`方法会在拦截器的`interceptContinuation
 
 如果是`launch`，异常会在它发生的第一时间被抛出，可以将抛出异常的代码包裹到`try-catch`当中直接捕获。
 
-如果是`async`，情况就比较复杂了：当`async`**作为根协程**（也就是创建了一个`CoroutineScope`实例或是做为supervisorScope的直接子协程）时，异常不会被抛出，只有到调用`await`的时候才会抛出异常，因此`try-catch`应当包裹的是调用`await`的代码；而当`async`在coroutineScope构建器或其他协程创建的子协程中被调用时，它所抛出的异常不仅无法捕获，而且还会传播到它所在的父协程，导致父协程以及同级的其他子协程都被影响，从而全部取消。
-
-#### CoroutineExceptionHandler
-
-#### SupervisorJob
+如果是`async`，情况就比较复杂了：当`async`**作为根协程**（也就是创建了一个`CoroutineScope`实例或是作为supervisorScope的直接子协程）时，异常不会被抛出，只有到调用`await`的时候才会抛出异常，因此`try-catch`应当包裹的是调用`await`的代码；而当`async`在coroutineScope构建器或其他协程创建的子协程中被调用时，它所抛出的异常**不仅无法捕获，而且还会传播到它所在的父协程，导致父协程以及同级的其他子协程都被影响，从而全部取消**。
 
 ### 异常传播机制
 
-协程的异常是会分发传播的，牵连到其他兄弟协程以及父协程。
+从前文可以了解到，`try-catch`并不是万无一失的，原因在于Kotlin协程的异常传播机制并不是像人们所想象的那般“循规蹈矩”地只将异常局限在抛出它的地方，而是逐级向上传播直到父协程，并最终导致父协程被取消。这在前面的[结构化并发](Kotlin/coroutine2?id=结构化并发)特性中有过简单描述。
+
+换句话说，Kotlin协程的异常是会分发传播的，并最终牵连到其他兄弟协程以及父协程。
 
 当协程因出现异常失败时，它会将异常传播到它的父级，父级会取消其余的子协程，同时取消自身的执行。最后将异常再传播给它的父级。当异常到达当前层次结构的根，在当前协程作用域启动的所有协程都将被取消。
 
-一般情况下这样的异常传播是合理的，但是在应用中处理与用户的交互，当其中一个子协程出现异常，那就可能导致所在作用域被取消，也就无法开启新的协程，最后整个UI组件都无法响应。
+一般情况下这样的异常传播是合理的，但是在应用中处理与用户的交互，当其中一个子协程出现异常，那就可能导致所在作用域被取消，也就无法开启新的协程，最后整个UI组件都无法响应。这种时候，Kotlin协程的异常传播机制就会成为一个比抛出异常更棘手的问题。通常采用的解决方案有两种：一种是使用全局的异常处理器`CoroutineExceptionHandler`，另一种则是使用`SupervisorScope`。
 
-当协程出现异常时，会根据当前作用域触发异常传递：
+#### CoroutineExceptionHandler
 
-+ coroutineScope
-  
-一般情况下，协程的取消操作会通过协程的层次结构来进行传播。如果取消父协程或者父协程抛出异常，那么子协程都会被取消。而如果子协程被取消，则不会影响同级协程和父协程，但如果子协程抛出异常则也会导致同级协程被取消和将异常传递给父协程，进而导致整个协程作用域失败。
+`CoroutineExceptionHandler`是**处理无法捕获类型的异常**的一种手段。按照官方的说法，`CoroutineExceptionHandler`只用于处理未被捕获的异常，其他能够被正常捕获处理的异常是不会触发其作用的。
 
-+ supervisorScope
+> Kotlin官方文档的说明为：“CoroutineExceptionHandler is invoked only on uncaught exceptions — exceptions that were not handled in any other way.”
 
-它的取消操作只会向下传播，一个子协程的运行失败不会影响到其他子协程，内部的异常不会向上传播，不会影响父协程和兄弟协程的运行。
+值得注意的是，`CoroutineExceptionHandler`的使用范围很有限。首先，把它传给子协程是没用的，因为子协程最终会委托父协程去处理异常，所以只能传给父协程使用；其次，前面提到过的`async`构造器也不能用`CoroutineExceptionHandler`，因为`async`捕获的所有异常最后都会传给`Deferred`对象，并不会直接抛出，所以`CoroutineExceptionHandler`也不会起任何作用。
 
-## 并发安全
+此外，即便用了`CoroutineExceptionHandler`，开发者也不能在里面恢复协程，因为当它捕获到异常的时候，说明协程已经挂掉了，不会再有任何响应。所以官方建议在`CoroutineExceptionHandler`进行的处理通常只有输出日志、提示错误信息、以及终止或重启应用等。
 
-## Channel
+最后要提醒的是，由于`CoroutineExceptionHandler`是**全局异常处理手段**，它并不能保护一个父协程下面的所有子协程不被异常所牵连。所以开发者如果想确保某一子协程抛出的异常不会连累到其他的兄弟协程，要么在局部继续使用传统的`try-catch`，要么考虑使用下文要提到的`SupervisorScope`。
 
-## Flow
+#### SupervisorScope
 
-Flow是Kotlin协程与响应式编程模型结合的产物，它与[RxJava](/Android/rxjava)非常像，而且二者之间也有相互转换的API，使用起来非常方便。
+`SupervisorScope`主要是为解决`CoroutineExceptionHandler`无法保护兄弟协程不受异常牵连的问题而诞生的。当开发者在`SupervisorScope`中开启多个并行任务时，任何一个子协程的运行失败都不会影响到其他子协程，因为内部的异常不会向上传播，也就不会导致父协程被牵连取消，从而影响其他兄弟协程的运行。
 
-Flow可以看作是介于[LiveData](/Android/livedata)与RxJava之间的一个解决方案，它有以下特点：
+#### 小结
 
-+ Flow支持线程切换和背压；
-+ Flow入门的门槛很低，没有那么多傻傻分不清楚的操作符；
+通过简单探讨Kotlin协程的异常传播机制以及不同场景下的异常处理手段，可以得出以下结论：
+
++ 如果想要在代码的特定部分捕获并处理异常，可以使用传统的`try-catch`；
+
++ 如果是在某个并行任务异常便取消其他所有并行任务的场景，那就利用Kotlin协程的异常传播机制，顶多加个`CoroutineExceptionHandler`去处理；
+
++ 如果希望多个并行任务间互不干扰，任何一个并行任务失败都不影响其他任务的执行，那就使用`SupervisorScope`。
+
+## Kotlin Flow
+
+`Flow`是Kotlin协程与响应式编程模型结合的产物，它与[RxJava](/Android/rxjava)非常像，而且二者之间也有相互转换的API，使用起来非常方便。
+
+`Flow`可以看作是介于[LiveData](/Android/livedata)与RxJava之间的一个解决方案，它有以下特点：
+
++ `Flow`支持线程切换和背压；
++ `Flow`入门的门槛很低，没有RxJava那么多的操作符；
 + 简单的数据转换与操作符，如`map`等等；
 + 冷数据流，**不消费则不生产数据**；
 + 属于Kotlin协程的一部分，可以很好地与协程基础设施结合。
 
-现在Google官方也在Android开发领域推动Flow替换LiveData和RxJava，可以预见的是，只要项目是基于Kotlin开发的，那么迟早都会用到Flow。
+> 注意，一般的`Flow`是冷数据流，但是有一部分`Flow`的具体实现，如`ChannelFlow`、`MutableStateFlow`以及`MutableSharedFlow`等却是热数据流。
 
-## Select
+现在Google官方也在Android开发领域推动`Flow`替换LiveData和RxJava，可以预见的是，只要项目是基于Kotlin开发的，那么迟早都会用到`Flow`。
 
+### Flow的基本使用
+
+`Flow`的创建有三种方式，分别如下列示例代码所示：
+
+```
+// 方式一：利用flow构造器
+val flow1 = flow {
+    // 使用emit“发射”（生产）数据
+    emit(···)
+}
+
+// 方式二：从可迭代对象调用asFlow扩展函数
+val flow2 = (···).asFlow
+
+// 方式三：利用flowOf函数，传入单个值或vararg可变参数
+val flow3 = flowOf(···)
+```
+
+注意，创建一个`Flow`对象是不需要在协程作用域里进行的。另外，无论是`asFlow`还是`flowOf`，它们的底层实现都是调用了`flow {}`构造器。
+
+`Flow`对象生产的数据想要被消费，就需要调用`collect`函数，如下列示例代码所示：
+
+```
+flow {
+    ···
+}.collect { value ->
+    // 消费者在这里消费数据
+}
+```
+
+由于`collect`函数是一个挂起函数，因此必须在一个协程作用域中进行调用。如果想要取消一个`Flow`，只需要取消`collect`函数被调用的协程作用域即可——前文已经说过，`Flow`是冷数据流，只要没有消费就不会生产数据，因此不必担心会带来资源浪费的问题。后面要提到的`Channel`则跟`Flow`完全相反，不消费也照样生产数据，所以是热数据流。
+
++ **线程切换**
+
+线程切换是一个在使用`Flow`的过程中值得高度关注的问题。官方在设计`Flow`的时候，就禁止开发者在创建`Flow`的阶段编写线程调度的业务逻辑，原因是为了保证`Flow`上下文的一致性。因此类似于下面的这种代码虽然在静态编译阶段不会出问题，但是只要运行起来就会报错：
+
+```
+// 下面这种代码运行时会提示Flow invariant is violated的错误
+flow {
+    for (i in 1..10) {
+        delay(100)
+        if (i % 2 == 0) {
+            withContext(Dispatchers.IO) {
+                emit(i)
+            }
+        } else {
+            emit(i)
+        }
+    }
+}.collect { println("value :$it") }
+```
+
+注意，官方只是禁止开发者在创建`Flow`的时候加入线程调度的逻辑，而不是禁止开发者在使用`Flow`的整个过程中进行线程调度，否则就没必要声称`Flow`跟RxJava相似，还白白在宣传上翻车。
+
+最后要说明的是，如果`Flow`想进行线程调度，就得使用下面要介绍到的操作符`flowOn`，这里先不做展开。
+
+### Flow常用操作符
+
+`Flow`的操作符有很多，按照它们各自的调用位置，可以大致划分成起始、中间以及末端三个大类（虽然不是什么官方的划分方式）。
+
+#### 起始操作符
+
+就目前而言，`Flow`的起始操作符实际上就是一系列构造器。因为没有这些构造器的话，`Flow`对象就不知从何而来，更不必讨论后面的操作符了。
+
+起始操作符前面已经介绍一部分了，这里仅仅简单列个表出来：
+
+|操作符|作用描述|
+|:-----:|:-----:|
+|`flow`||
+|`flowOf`||
+|`asFlow`||
+|`channelFlow`|热数据`Flow`构造器，允许内部切换线程|
+|`callbackFlow`|将回调改成`Flow`，类似于`suspendCoroutine`|
+|`emptyFlow`|构造一个空数据流|
+
+#### 中间操作符
+
+|操作符|作用描述|
+|:-----:|:-----:|
+|`onStart`|在上游`Flow`**启动之前**被调用|
+|`onEach`|在上游`Flow`的每个值被下游**消费之前**调用|
+|`onCompletion`|在流程完成（包括因异常被取消）后调用，传递执行结果和异常（如果有的话）|
+|`map`|将上游所发送数据的**值**进行变换|
+|`mapLatest`|当有上游发送新数据时，若上个变换还没结束就先将其取消掉|
+|`mapNotNull`|仅发送经过变换后其值不为null的数据|
+|`transform`|将上游发送数据的**值甚至类型**进行变换，可以执行或跳过变换，也可以重复发送数据，非常灵活|
+|`transformLatest`|类似于`mapLatest`|
+|`transformWhile`|执行该变换需要返回一个布尔值，若为false则不再进行后续变换|
+|`take`||
+|`onEmpty`||
+|`catch`||
+
+#### 末端操作符
+
+|操作符|作用描述|
+|:-----:|:-----:|
+|`collect`||
+|`collectIndexed`||
+|`collectLatest`||
+|`toCollection`||
+|`toList`||
+|`toSet`||
+|`launchIn`||
+|`last`||
+|`lastOrNull`||
+|`first`||
+|`firstOrNull`||
+|`single`||
+|`singleOrNull`||
+|`count`||
+|`fold`||
+|`reduce`||
+
+## Kotlin Channel
+
+## Kotlin Select
+
+## 并发安全
