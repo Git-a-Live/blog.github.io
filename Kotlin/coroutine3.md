@@ -252,30 +252,36 @@ flow {
 |`transform`|将上游发送数据的**值甚至类型**进行变换，可以执行或跳过变换，也可以重复发送数据，非常灵活|
 |`transformLatest`|类似于`mapLatest`|
 |`transformWhile`|执行该变换需要返回一个布尔值，若为false则不再进行后续变换|
-|`take`||
-|`onEmpty`||
-|`catch`||
+|`filter`|对上游发送的数据进行过滤，返回符合筛选条件的数据|
+|`filterNot`|对上游发送的数据进行过滤，返回**不符合**筛选条件的数据|
+|`filterIsInstance<*>`|对上游发送的数据进行过滤，返回属于某一类型的数据|
+|`filterNotNull`|对上游发送的数据进行过滤，返回非空数据|
+|`zip`|将两个`Flow`发送的数据组合成一个，功能和RxJava中的`zip`一样|
+|`take`|从上游数据流中截取前若干个数据，作为新的数据流发送到下游|
+|`takeWhile`|类似于`filter`，但是当判断条件为false时就会中断后续操作|
+|`drop`|和`take`相反，从上游数据流中丢弃掉前若干个数据，剩余部分作为新的数据流发送到下游|
+|`onEmpty`|当上游发送的数据流为空时，对数据流进行处理|
+|`catch`|捕获上游处理数据流时所发生的异常，每个有可能抛出异常的中间操作后面，都可以使用该操作符；还可以将异常通过`emit`继续发送出去|
+|`flowOn`|切换当前数据流的上下文，仅对当前数据流生效，且不影响`collect`所用的协程上下文；可以在中间操作阶段重复组合使用|
 
 #### 末端操作符
 
 |操作符|作用描述|
 |:-----:|:-----:|
-|`collect`||
-|`collectIndexed`||
-|`collectLatest`||
-|`toCollection`||
-|`toList`||
-|`toSet`||
-|`launchIn`||
-|`last`||
-|`lastOrNull`||
-|`first`||
-|`firstOrNull`||
-|`single`||
-|`singleOrNull`||
-|`count`||
-|`fold`||
-|`reduce`||
+|`collect`|触发`Flow`的运行，最基础常用的数据消费操作|
+|`collectIndexed`|带有下标的数据消费操作|
+|`collectLatest`|上游发送新数据时，若上一个数据尚未消费完毕，则取消上一个数据的消费操作|
+|`toCollection`|将数据流转换成集合，不能在各类`collect`操作后面进行|
+|`toList`|将数据流转换成列表，不能在各类`collect`操作后面进行|
+|`toSet`|将数据流转换成数据集，不能在各类`collect`操作后面进行|
+|`launchIn`|直接触发`Flow`的执行，需要传入协程作用域上下文，返回一个`Job`，通常跟`onEach`之类的操作符搭配使用|
+|`first`|获取上游数据流的第一个数据，若遭遇空值则抛出异常|
+|`firstOrNull`|在`first`的基础上提高了空安全性|
+|`single`|仅尝试获取上游数据流的第一个数据，若为空或有多个值就抛出异常|
+|`singleOrNull`|在`single`的基础上提高空安全性，仅保留第一个数据，多余的数据全部置为null|
+|`count()`|计算数据流中所包含数据的数量，注意跟带有lambda入参的另一个`count{}`相区别|
+|`fold`|接收一个初始值，然后需要在lambda表达式中，返回一个初始值与数据流内各个数据交互（比如数学运算）之后的最终结果|
+|`reduce`|作用跟`fold`相似，只不过初始值变成了数据流的第一个数据|
 
 ## Kotlin Channel
 
