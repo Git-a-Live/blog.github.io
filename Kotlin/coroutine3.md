@@ -410,11 +410,90 @@ val customChannel = Channel<T>(customCapacity)
 
 ## Kotlin协程的多路复用
 
-### await的多路复用
+Kotlin协程的多路复用概念，实际上来源于UNIX的IO多路复用。所谓IO多路复用，是指用户通过调用系统内核提供的select等多路复用API，在一个线程或进程内同时处理多个IO请求，从而提高资源利用率。Kotlin协程也提供有同样名为`select`的函数，来实现多路复用的操作。除了提供`select`函数之外，Kotlin协程库还提供了`SelectClause0`、`SelectClause1`以及`SelectClause2`这三种类型的回调。
+
++ `SelectClause0`：无返回值回调；
++ `SelectClause1`：有一个返回值的回调；
++ `SelectClause2`：有两个返回值的回调。
+
+三种回调通常在`select`函数当中使用，并且常以`onXXX`的名称出现，其中`XXX`部分往往代表着Kotlin协程中的某些挂起函数。换句话说，如果一个挂起函数`XYZ`支持select多路复用，那么它一定有对应的SelectClause回调`onXYZ`，并且两边的返回值类型和个数都保持一致。
+
+Kotlin协程基于`select`函数的多路复用，其最主要的作用就是同时监听多个协程任务，并返回最先获取到的结果。一方面提高了获取结果的速度，另一方面监听多个协程任务的返回值增加了获取结果的渠道数量，从而提高结果的可靠性。
+
+### async-await的多路复用
+
+`async-await`是Kotlin协程创建并行任务的常用方式，对其进行多路复用的基本操作，可以参考下面的示例代码：
+
+```
+// 在父协程中执行多路复用
+launch {
+    val deferred1 = async { ··· }
+    ···
+    val deferredN = async { ··· }
+
+    // 在这里调用select函数进行多路复用操作，哪个协程任务先返回结果就用哪个
+    val result = select<T> {
+        deferred1.onAwait { ··· }
+        ···
+        deferredN.onAwait { ··· }
+    }
+}
+```
 
 ### Channel的多路复用
 
+对于多个`Channel`的复用，可以参考下面的示例代码：
+
+```
+// 模拟程序中有多个Channel存在
+val channels = List(···) { Channel<T>() }
+
+launch {
+    // 模拟随机某个Channel发送数据
+    while (true) {
+        delay(1000)
+        channels[Random.nextInt(10)].send(···)
+    }
+}
+
+val result = select {
+    // 模拟查找到最先发送数据的Channel，并接收处理其数据
+    channels.forEach { c ->
+        // 如果Channel被关闭，调用onReceive会抛出异常
+        c.onReceive { it }
+        // 如果不想让select抛出异常，就用onReceiveCatching，并做好判空
+        c.onReceiveCatching { it.getOrNull() }
+    }
+}
+```
+
 ### Flow的多路复用
+
+`Flow`的多路复用操作跟前面所说的两种不太一样，不是使用`select`函数，而是使用一个中间操作符`merge`。鉴于`Channel`可以转换成`Flow`，这里继续沿用前面的示例代码进行部分改造：
+
+```
+// 模拟程序中有多个Channel存在
+val channels = List(···) { Channel<T>() }
+
+launch {
+    // 模拟随机某个Channel发送数据
+    while (true) {
+        delay(1000)
+        channels[Random.nextInt(10)].send(···)
+    }
+}
+
+channels.map {
+    // 将Channel诸逐个转换成Flow
+    it.consumeAsFlow()
+}
+.merge() // 将若干个Flow整合成一个Flow进行处理
+.collectIndexed { index, value ->
+    ···
+}
+```
+
+可以看到，使用`merge`操作符整合成一体的`Flow`，在进行多路复用操作上比使用`select`更为简洁优雅。如果遇到调用多个`Flow`但是只取其中一个结果的应用场景，采用`merge`进行多路复用无疑是比较好的选择。
 
 ## 并发安全
 
