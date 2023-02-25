@@ -264,6 +264,9 @@ flow {
 |`catch`|捕获上游处理数据流时所发生的异常，每个有可能抛出异常的中间操作后面，都可以使用该操作符；还可以将异常通过`emit`继续发送出去|
 |`flowOn`|切换当前数据流的上下文，仅对当前数据流生效，且不影响`collect`所用的协程上下文；可以在中间操作阶段重复组合使用|
 |`buffer`|创建一个缓冲区接收上游（以较慢速度）发送的数据，避免下游消费数据速度也比较慢导致整个生产消费流程耗时极长，这样总时长大约只相当于上游发送第一个数据的耗时 + 下游消费所有数据的总耗时|
+|`conflate`|上游发送数据的速度超过下游消费数据的速度时，直接舍弃旧数据，只处理下游来得及消费的新数据|
+
+> `buffer`和`conflate`都是针对响应式编程所出现的背压问题的应对手段，前者是缓冲，后者则是取舍。所谓的背压（back pressure），是指生产者的生产速率**高于**消费者的消费速率，这种速率的不匹配就会造成数据积压。
 
 #### 末端操作符
 
@@ -286,6 +289,182 @@ flow {
 
 ## Kotlin Channel
 
-## Kotlin Select
+`Channel`是一种**热数据通道**。如果要探究`Channel`的本质，就会发现它实际上就是一个**并发安全**的队列。通常情况下，`Channel`被用作两个协程之间进行通信的管道。
+
+### Channel的基本使用
+
+#### `Channel`的创建
+
+要创建一个`Channel`，就目前的源码来看，一共有两种方式：一种是调用Kotlin协程库提供的`Channel<*>()`工厂函数，另一种就是创建一个子类或匿名类去实现`Channel`。前者是最为简单的，而后者相当麻烦，因为`Channel`作为一个接口，其内部要实现的接口函数实在是太多了。下面的示例代码就初步展示了两种创建方式麻烦程度的差异：
+
+```
+// 通过协程库内置的工厂函数直接创建
+val channel = Channel<T>()
+
+// 通过实现Channel接口来获得Channel对象
+val channelImpl = object ::Channel<T> {
+    ···
+    override fun cancel(cause: Throwable?): Boolean {
+        ···
+    }
+
+    override fun close(cause: Throwable?): Boolean {
+        ···
+    }
+
+    override suspend fun send(element: T) {
+        ···
+    }
+
+    override suspend fun receive(): T {
+        ···
+    }
+
+    ···
+}
+```
+
+注意，`Channel`本身是一个接口，而且还继承了`SendChannel`和 `ReceiveChannel`，因此`Channel`对象同时具备发送和接收数据的能力，这也是它能作为协程间通信管道的重要原因。另外，从上面的示例代码中还可以发现，`Channel`接口的`send`和`receive`全都是**挂起函数**，这进一步强化了`Channel`与Kotlin协程的绑定。最后要说明的是，除非确有强烈需求，否则通常情况下只要使用工厂函数直接创建一个`Channel`对象使用就行。
+
+#### `Channel`数据生产与接收
+
+在创建`Channel`对象之后，不同角色的协程就可以利用这个`Channel`来进行通信了，如下列代码所示。再次强调，`Channel`是并发安全的队列，开发者可以直接利用它来传递普通类型的数据，而不需要使用Atomic类进行额外封装。
+
+```
+// 创建一个传递指定类型数据的Channel
+val channel = Channel<T>()
+
+// 创建一个生产者协程
+val producer = launch {
+    while (true) {
+        // 生产者发送数据
+        channel.send(···)
+    }
+}
+
+// 创建一个消费者协程
+val consumer = launch {
+    while (true) {
+        // 消费者接收数据
+        channel.receive()
+    }
+}
+
+// 如果有必要就阻塞父协程，确保生产者和消费者可以一直发送和接收数据
+producer.join()
+consumer.join()
+```
+
+值得注意的是，`Channel`通常都用于**一对一**的通信场景。也就是说，一个`Channel`的两头只能是一个生产者和一个消费者。
+
+如果有多个消费者调用了同一个`Channel`对象的`receive`函数，那么最先调用者将消费掉生产者发送的数据，而其他消费者只能空等。基于这种情况，如果想要确保逻辑执行的可预测性，一个`Channel`只应被一个消费者所持有。或者也可以这样认为：消费者通过一般的`Channel`对数据进行接收和消费的操作是**互斥**的。如果希望一个`Channel`可以支持多个消费者接收数据，那么就应该考虑使用`BroadcastChannel`，但是截止到Kotlin协程1.6.4版本，该功能依然处于实验性状态，未来还存在诸多变数。
+
+反过来，如果一个`Channel`被多个生产者持有并发送数据，情况就不太一样了。先发送者的数据先被消费，但是只要有消费者继续接收，不同生产者通过相同`Channel`发送的数据，最终都会被消费掉。这听起来似乎跟之前说的“一对一”通信相互矛盾，实际上，如果仔细想想就会发现这样一件事：尽管有多个生产者通过同一个`Channel`发送数据，但是考虑到Kotlin协程结构化并发的特点，这些生产者之间终究不是绝对的并行操作；另外，`Channel`的并发安全特性也不会允许多个生产者在同一时刻对自己进行操作，必然有一个生产者能抢在其他所有生产者之前把数据先发送出去。因此，从某种角度来说，多个生产者通过同一个`Channel`发送数据，事实上可以视为一个生产者在不同时刻调用`Channel`的`send`函数。
+
+#### `Channel`的关闭
+
+和前文介绍的`Flow`不同，`Channel`有自己专门的关闭手段——`close`函数，也就是说通信双方都可以调用同一个`Channel`对象的`close`函数来直接关闭`Channel`，而不是像`Flow`那样只能取消`Flow`所处的协程。如下面代码所示：
+
+```
+// close函数可以传入Throwable，在发生异常需要关闭Channel的场景当中，
+// 传入的Throwable可以为开发者分析排查问题带来一定的便利
+channel.close()
+```
+
+当一个`Channel`被关闭的时候，它首先会**立即**停止接收新元素，如果这时候去调它的`isClosedForSend`字段，会马上返回`true`的结果；但是对于已经被发送出去的数据，如果消费者那一端还没有处理完，直接调`isClosedForReceive`字段可能会返回`false`，直到消费者处理完所有已发送数据之后，`isClosedForReceive`字段才会返回`true`。
+
+产生这种差异的根本原因在于`Channel`内部存在**缓冲区**，更为详细的内容会在“`Channel`的背压问题”一节进行讨论。虽然创建`Channel`之后没有关闭的做法并不会造成系统资源的泄漏，但依然强烈建议在适当的时机关闭掉`Channel`，具体原因会在后面解释。
+
+最后要讨论的一个问题是：谁来关闭`Channel`？在单向通信的情况下，显然应该由生产者主动关闭；而在双向通信的情况下，尽管通信双方在技术上是对等的，但是要从业务场景中去考虑谁是主导的一方。从实践来看，通常是由主导通信的一方去主动关闭`Channel`比较合适。
+
+### Channel的背压问题
+
+只要开发者在程序设计当中使用到了生产者-消费者模型，毫无疑问，就有机会遇到背压问题。`Channel`也是这样的，当生产者发送数据的速率超过了消费者接收处理的速率时就会不可避免地出现数据积压。前面已经提到过，`Channel`是一个并发安全的队列，当队列空间不足时，再往里面添加元素就会出现两种情况：要么阻塞，等待队列空出空间；要么直接拒绝添加元素。
+
+既然已经知道了`Channel`采用的是队列的实现方式，那么就可以确定它一定存在缓冲区。这个缓冲区的大小可以通过协程库内置的`Channel`工厂函数设置：
+
+```
+// 默认的缓冲区容量为0，即默认传入Channel.RENDEZVOUS
+val rendezvousChannel = Channel<T>()
+
+// 无限容量的缓冲区传入Channel.UNLIMITED，实际大小为Int类型最大值
+val unlimitedChannel = Channel<T>(Channel.UNLIMITED)
+
+// 只保留最后一个元素的缓冲区传入Channel.CONFLATED
+val conflatedChannel = Channel<T>(Channel.CONFLATED)
+
+// 自定义缓冲区容量
+val customCapacity = ···
+val customChannel = Channel<T>(customCapacity)
+```
+
+上面示例代码所展示的就是几种最常用的`Channel`缓冲区容量配置。对于`Channel.RENDEZVOUS`，它表示的含义是只要没有消费者接收处理数据，生产者调用的`send`函数就会挂起等待；对于`Channel.UNLIMITED`，就表示`Channel`来者不拒，无论有没有消费者接收处理这些数据。
+
+而对于`Channel.CONFLATED`来说，如果没有消费者接收处理，那么`Channel`就表现得跟配置了`Channel.UNLIMITED`一样；如果有消费者但是处理数据太慢，那么缓冲区里只会保留生产者发送的最后一个数据，其余的全部舍弃掉。
+
+假如开发者为`Channel`配置了自定义缓冲区容量，那么`Channel`的表现是这样的：生产者发送数据，只要没填满缓冲区引起队列阻塞就会持续发送；一旦队列出现阻塞，`Channel`的`send`函数就会挂起等待。
+
+刚刚讨论的是只有生产者生产数据而没有消费者消费数据的情形，如果倒过来，也就是只有消费者在尝试接收处理数据，而生产者没有数据可发送，会发生什么事情？答案也很简单，那就是`receive`函数直接挂起等待。
+
+到这里已经基本上弄清楚一个事实：`Channel`在遭遇背压时所采取的流量控制的手段，就是让`send`或`receive`这两个挂起函数挂起等待。同时这也可以解答前文所提出的一个问题：即便不关闭`Channel`也不会引起系统资源泄漏，为什么还是要选择关闭？因为不关闭`Channel`就会导致接收端一直处于挂起等待的状态，很可能会影响到其他业务逻辑的执行。
+
+## Kotlin协程的多路复用
+
+### await的多路复用
+
+### Channel的多路复用
+
+### Flow的多路复用
 
 ## 并发安全
+
+在JVM平台上，Kotlin协程是线程的一个良好封装方案，这在之前的内容中已经多次强调过。既然Kotlin协程的底层实现是线程，那么就不可避免地会遇到并发安全问题。说到并发安全，前面介绍的`Channel`就是一个典型的并发安全的数据结构，可以在不同协程间安全使用。而对于不使用`Channel`的场景而言，则需要采取另外的方式来确保并发安全。目前常用的保证Kotlin协程并发安全的操作有几种：1）避免协程间共享变量；2）使用原子类型封装再调用；3）使用协程框架提供的其他并发安全工具。这里主要简单介绍第三种操作。
+
+Kotlin协程框架提供了`Mutex`锁和`Semaphore`信号量这两种并发安全工具。
+
+`Mutex`是一种轻量级锁，它在使用上跟线程锁类似，但是由于用在Kotlin协程上，当它获取不到锁的时候只是挂起等待锁的释放，而不会像传统线程锁那样阻塞线程。下面的示例代码展示了`Mutex`的基本使用方式：
+
+```
+// 创建一个Mutex对象
+val mutex = Mutex()
+
+// 在协程中为原本不安全的并发操作加锁
+val job1 = launch {
+    mutex.withLock {
+        ···
+    }
+}
+
+···
+
+val jobN = launch {
+    mutex.withLock {
+        ···
+    }
+}
+
+```
+
+`Semaphore`是一种轻量级的信号量，它可以有多个，协程在获取到信号量后即可执行并发操作。下面的示例代码展示里`Semaphore`的基本使用方式：
+
+```
+// 创建一个Semaphore对象
+val semaphore = Semaphore(···)
+
+// 在协程中为原本不安全的并发操作加锁
+val job1 = launch {
+    semaphore.withPermit {
+        ···
+    }
+}
+
+···
+
+val jobN = launch {
+    semaphore.withPermit {
+        ···
+    }
+}
+```
+
+`Semaphore`有两个入参，一个名为permit，用于配置许可个数；另一个名为acquiredPermits，表示已经被分配使用的许可个数，不能超过permit的值，否则运行时会抛出异常。当permit减去acquiredPermits的值大于0时，`Semaphore`的效果等价于使用`Mutex`；若permit与acquiredPermits相等，被`Semaphore.withPermit{}`包裹起来的操作便不会执行，相当于获取不到`Mutex`锁只能挂起等待。
