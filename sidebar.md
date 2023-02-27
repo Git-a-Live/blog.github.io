@@ -98,11 +98,11 @@
     * [CASE表达式](MySQL/case.md)
     * [集合运算](MySQL/set.md)
     * [窗口函数](MySQL/window.md)
-* **<font color=red>跨平台/混合开发</font>**
+* **<font color=red>跨平台开发</font>**
   * **<font color=orange>Flutter</font>**
-    * [Flutter入门](Flutter/basic.md)
-  * **<font color=orange>Compose</font>**
-  * **<font color=orange>Hybrid</font>**
+    * [Flutter简介](Flutter/basic.md)
+  * **<font color=orange>Jetpack Compose</font>**
+    * [Jetpack Compose简介](Compose/basic.md)
 * **<font color=red>爬虫技术</font>**
 * **<font color=red>数据结构</font>**
   * [数据结构概述](/DataStructure/intro.md)
