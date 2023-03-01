@@ -101,7 +101,12 @@
 * **<font color=red>跨平台开发</font>**
   * **<font color=orange>Compose</font>**
     * [Compose简介](Compose/basic.md)
-    * [从Hello World开始](Compose/step1.md)
+    * [从Hello World开始](Compose/helloworld.md)
+    * [基础组件](Compose/widgets.md)
+    * [布局组件](Compose/layouts.md)
+    * [设计](Compose/design.md)
+    * [Jetpack Compose进阶](Compose/advanced.md)
+    * [Compose Multiplatform](Compose/multiplatform.md)
   * **<font color=orange>Flutter</font>**
     * [Flutter简介](Flutter/basic.md)
 * **<font color=red>爬虫技术</font>**
