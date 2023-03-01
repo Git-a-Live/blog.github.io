@@ -102,7 +102,7 @@
   * **<font color=orange>Compose</font>**
     * [Compose简介](Compose/basic.md)
     * [从Hello World开始](Compose/helloworld.md)
-    * [基础组件](Compose/widgets.md)
+    * [基础组件：Text](Compose/widgets_text.md)
     * [布局组件](Compose/layouts.md)
     * [设计](Compose/design.md)
     * [Jetpack Compose进阶](Compose/advanced.md)
