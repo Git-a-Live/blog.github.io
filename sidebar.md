@@ -102,9 +102,26 @@
   * **<font color=orange>Compose</font>**
     * [Compose简介](Compose/basic.md)
     * [从Hello World开始](Compose/helloworld.md)
-    * [基础组件：Text](Compose/widgets_text.md)
-    * [布局组件](Compose/layouts.md)
-    * [设计](Compose/design.md)
+    * **<font color=blue>基础组件</font>**
+    * [Text](Compose/widgets_text.md)
+    * [Image](Compose/widgets_image.md)
+    * [Icon]()
+    * [Button]()
+    * [Slider]()
+    * [TextField]()
+    * [AlertDialog]()
+    * **<font color=blue>布局组件</font>**
+    * [Column](Compose/layouts.md)
+    * [Row]()
+    * [Surface]()
+    * [Box]()
+    * [Scaffold]()
+    * [BottomNavigation]()
+    * [Spacer]()
+    * [TopAppBar]()
+    * [ModalBottomSheetLayout]()
+    * **<font color=blue>进阶扩展</font>**
+    * [效果设计](Compose/design.md)
     * [Jetpack Compose进阶](Compose/advanced.md)
     * [Compose Multiplatform](Compose/multiplatform.md)
   * **<font color=orange>Flutter</font>**
