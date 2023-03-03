@@ -64,11 +64,15 @@ Image(painter = painterResource(id = R.drawable.xxx), contentDescription = null)
 
 ## bitmap配置
 
-bitmap配置接收`androidx.compose.ui.graphics.ImageBitmap`类型参数，主要作用是直接绘制一些图像，比如从一个数组中读取信息绘制出二维码来。
+bitmap配置接收`androidx.compose.ui.graphics.ImageBitmap`类型参数，主要作用是直接绘制一些位图，一种简单的使用方式如下：
+
+```
+Image(bitmap = ImageBitmap.imageResource(id = R.drawable.xxx), contentDescription = null)
+```
 
 ## imageVector配置
 
-imageVector配置接收`androidx.compose.ui.graphics.vector.ImageVector`类型参数，它在使用上并没有`ImageBitmap`那么麻烦，反而还很类似`painterResource`：
+imageVector配置接收`androidx.compose.ui.graphics.vector.ImageVector`类型参数，主要作用是绘制一些矢量图，它在使用上也是很类似`painterResource`：
 
 ```
 // 从资源目录下读取矢量图资源
@@ -109,3 +113,40 @@ Image(alpha: Float = 1.0f)
 ## colorFilter配置
 
 colorFilter配置接收`androidx.compose.ui.graphics.ColorFilter`类型参数，其主要作用，按照官方文档注释的说法，是“修改图片上每个像素的颜色”。`ColorFilter`目前对外提供的函数有`tint`、`colorMatrix`以及`lighting`这三个，从它们各自的注释来看，`ColorFilter`总体上似乎是用来给图片加一些简单特效的。不过通常情况下，开发者很少会用到这个配置，因此其默认值是`null`。
+
+## Icon组件
+
+Icon组件实际上可以被视为简化版的Image组件，它的声明API也类似地有以下三种：
+
+```
+// 传入Painter类型参数的声明API
+@Composable
+fun Icon(
+    painter: Painter,
+    contentDescription: String?,
+    modifier: Modifier = Modifier,
+    tint: Color = LocalContentColor.current.copy(alpha = LocalContentAlpha.current)
+) { ··· }
+
+// 传入位图的声明API
+@Composable
+@NonRestartableComposable
+fun Icon(
+    bitmap: ImageBitmap,
+    contentDescription: String?,
+    modifier: Modifier = Modifier,
+    tint: Color = LocalContentColor.current.copy(alpha = LocalContentAlpha.current)
+) { ··· }
+
+//  传入矢量图的声明API
+@Composable
+@NonRestartableComposable
+fun Icon(
+    imageVector: ImageVector,
+    contentDescription: String?,
+    modifier: Modifier = Modifier,
+    tint: Color = LocalContentColor.current.copy(alpha = LocalContentAlpha.current)
+) { ··· }
+```
+
+除去`Modifier`之外，其他配置几乎不用再多介绍了，Image组件怎么用，Icon组件也跟着怎么用。唯一需要注意的是，Icon组件由于其用途的特殊性，最好是使用由UI设计师专门设计制作好的图标，而不是随便传一张图片进去。

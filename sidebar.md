@@ -105,8 +105,7 @@
     * **<font color=blue>基础组件</font>**
     * [Text](Compose/widgets_text.md)
     * [Image](Compose/widgets_image.md)
-    * [Icon]()
-    * [Button]()
+    * [Button](Compose/widgets_button.md)
     * [Slider]()
     * [TextField]()
     * [AlertDialog]()
