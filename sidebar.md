@@ -106,9 +106,9 @@
     * [Text](Compose/widgets_text.md)
     * [Image](Compose/widgets_image.md)
     * [Button](Compose/widgets_button.md)
-    * [Slider]()
-    * [TextField]()
-    * [AlertDialog]()
+    * [Slider](Compose/widgets_slider.md)
+    * [TextField](Compose/widgets_textfield.md)
+    * [AlertDialog](Compose/widgets_alertdialog.md)
     * **<font color=blue>布局组件</font>**
     * [Column](Compose/layouts.md)
     * [Row]()
