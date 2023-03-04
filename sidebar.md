@@ -115,8 +115,8 @@
     * [Spacer](Compose/layouts_spacer.md)
     * [AppBar](Compose/layouts_appbar.md)
     * [Surface](Compose/layouts_surface.md)
-    * [Scaffold](Compose/layouts_scaffold.md)
     * [BottomNavigation](Compose/layouts_bottomnavigation.md)
+    * [Scaffold](Compose/layouts_scaffold.md)
     * [ModalBottomSheetLayout](Compose/laypits_medalbottomsheetlayout.md)
     * **<font color=blue>进阶扩展</font>**
     * [效果设计](Compose/design.md)
