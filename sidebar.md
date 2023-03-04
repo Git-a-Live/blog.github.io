@@ -110,7 +110,7 @@
     * [TextField](Compose/widgets_textfield.md)
     * [AlertDialog](Compose/widgets_alertdialog.md)
     * **<font color=blue>布局组件</font>**
-    * [Column](Compose/layouts.md)
+    * [Column](Compose/layouts_column.md)
     * [Row]()
     * [Surface]()
     * [Box]()

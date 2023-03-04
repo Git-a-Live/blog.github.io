@@ -21,7 +21,7 @@ value表示的是Slider组件的起始值，通常跟下面要介绍到的valueR
 
 ## onValueChange配置
 
-onValueChange用于配置进度条值的监听动作，类似于调用SeekBBar的`setOnSeekBarChangeListener()`。
+onValueChange用于配置进度条值发生变化时的监听动作，类似于调用SeekBBar的`setOnSeekBarChangeListener()`。
 
 ## valueRange配置
 
