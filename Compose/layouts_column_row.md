@@ -25,3 +25,11 @@ inline fun Row(
 ```
 
 如果要在传统的Android UI开发中，给Column和Row找一个对应的东西，大概就是LinearLayout了。实际上，基于Column和Row编写Compose界面的过程，确实跟早期Android开发在`.xml`文件中疯狂嵌套LinerLayout排布控件差不多。不过，传统的View系统在嵌套大量LinearLayout之后很快就会遭遇到性能问题，而Compose则几乎不受影响。此外，Column和Row布局的真正想要高度自定义，最终必须依靠`Modifier`，并且需要提醒的是，某些`Modifier`参数可能还会覆盖掉先前在布局或组件中已经设好的配置。
+
+通过为Column布局设置verticalArrangement，可以获得下图所示的排布方式：
+
+![](pics/compose9.png)
+
+而通过为Row布局设置horizontalArrangement，可以获得下图所示的排布方式：
+
+![](pics/compose10.png)
