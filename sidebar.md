@@ -109,7 +109,7 @@
     * [Slider](Compose/widgets_slider.md)
     * [TextField](Compose/widgets_textfield.md)
     * [AlertDialog](Compose/widgets_alertdialog.md)
-    * **<font color=blue>布局组件</font>**
+    * **<font color=blue>常用布局</font>**
     * [Column和Row](Compose/layouts_column_row.md)
     * [Box](Compose/layouts_box.md)
     * [Spacer](Compose/layouts_spacer.md)
@@ -117,11 +117,16 @@
     * [Surface](Compose/layouts_surface.md)
     * [BottomNavigation](Compose/layouts_bottomnavigation.md)
     * [Scaffold](Compose/layouts_scaffold.md)
-    * [ModalBottomSheetLayout](Compose/laypits_medalbottomsheetlayout.md)
+    * **<font color=blue>效果设计</font>**
+    * [主题样式](Compose/design_theme.md)
+    * [动画](Compose/design_animaion.md)
+    * [手势](Compose/design_gesture.md)
+    * [列表](Compose/design_list.md)
     * **<font color=blue>进阶扩展</font>**
-    * [效果设计](Compose/design.md)
-    * [Jetpack Compose进阶](Compose/advanced.md)
-    * [Compose Multiplatform](Compose/multiplatform.md)
+    * [Compose底层原理概述](Compose/advanced.md)
+    * [自定义布局](Compose/custom_layout.md)
+    * [自定义绘制](Compose/custom_paint.md)
+    * [Compose Multiplatform跨平台开发](Compose/multiplatform.md)
   * **<font color=orange>Flutter</font>**
     * [Flutter简介](Flutter/basic.md)
 * **<font color=red>爬虫技术</font>**
