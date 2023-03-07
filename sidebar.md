@@ -8,15 +8,15 @@
     * [Content Provider](Android/contpro.md)
     * [Service](Android/service.md)
   * **<font color=orange>应用架构</font>**
-    * [从MVC到MVVM](Android/architecture.md)
-    * [ViewModel](Android/viewmodel.md)
-    * [LiveData](Android/livedata.md)
+    * [从MVC到MVI](Android/architecture.md)
+    * [ViewModel组件](Android/viewmodel.md)
+    * [LiveData组件](Android/livedata.md)
     * [Data Binding](Android/databinding.md)
-    * [MVI架构](Android/mvi.md)
   * **<font color=orange>本地数据存储</font>**
     * [键值对数据存储](Android/sp.md)
     * [Jetpack Room](Android/room.md)
-    * [IO操作](Android/io.md)
+    * [IO操作：基础API入门](Android/io.md)
+    * [IO操作：在Android中使用](Android/io2.md)
   * **<font color=orange>序列化</font>**
     * [Serializable](Android/serial.md)
     * [Parcelable](Android/parcel.md)
@@ -30,7 +30,6 @@
     * [自定义View](Android/controller.md)
     * [应用微件Widget](Android/xxx.md)
   * **<font color=orange>编译调试</font>**
-    * [Gradle编译](Android/gradle.md)
     * [应用调试](Android/debug.md)
     * [单元测试](Android/unit.md)
     * [性能优化](Android/perf.md)
@@ -45,6 +44,7 @@
     * [EventBus](Android/eb.md)
     * [RxJava](Android/rxjava.md)
     * [阿里OSS](Android/oss.md)
+    * [腾讯COS](Android/xxx.md)
     * [LeakCanary](Android/leak.md)
     * [Glide](Android/glide.md)
     * [ZXing](Android/zxing.md)
@@ -52,27 +52,30 @@
     * [ObjectBox](Android/objectbox.md)
     * [Hilt](Android/hilt.md)
   * **<font color=orange>Android进阶</font>**
+    * [Java虚拟机基础](Android/jvm.md)
+    * [Android虚拟机基础](Android/art.md)
     * [Android Module开发](Android/mod.md)
     * [Android AIDL开发](Android/aidl.md)
     * [Android NDK开发](Android/ndk.md)
+    * [Gradle构建工具](Android/gradle.md)
     * [混淆、加密与反编译](Android/proguard.md)
     * [热修复技术](Android/hotfix.md)
-  * **<font color=orange>常用功能</font>**
+  * **<font color=orange>其他功能</font>**
     * [音视频播放](Android/msc.md)
-    * [蓝牙通信](Android/bt.md)
-    * [Wifi使用](Android/xxx.md)
+    * [蓝牙功能](Android/bt.md)
+    * [Wifi功能](Android/xxx.md)
+    * [录音功能](Android/xxx.md)
+    * [传感器功能](Android/xx.md)
+    * [串口功能](Android/xxx.md)
   * **<font color=orange>AOSP开发</font>**
-    * [AOSP基本概念](Android/aosp.md)
-    * [Java虚拟机基础](Android/jvm.md)
-    * [Android虚拟机基础](Android/art.md)
-    * [AOSP开发环境搭建](xxx.md)
+    * [AOSP简介](Android/aosp.md)
+* **<font color=red>语言</font>**
   * **<font color=orange>设计模式</font>**
     * [设计模式概述](DesignPattern/概述.md)
     * [创建型设计模式](DesignPattern/创建型设计模式.md)
     * [结构型设计模式](DesignPattern/结构型设计模式.md)
     * [行为型设计模式](DesignPattern/行为型设计模式.md)
     * [《代码整洁之道》总结](DesignPattern/代码整洁之道总结.md)
-* **<font color=red>语言</font>**
   * **<font color=orange>Kotlin进阶</font>**
     * [函数式编程](Kotlin/func.md)
     * [延迟初始化、扩展函数与密封类](Kotlin/late.md)

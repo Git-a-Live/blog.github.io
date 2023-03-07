@@ -36,3 +36,5 @@ MVVM架构最早由Microsoft提出，借鉴了桌面应用程序的MVC思想。M
 ![](pics/arch3.png)
 
 MVVM的ViewModel比MVP的Presenter更进一步，取消了对View的持有，一方面提高了解耦程度，另一方面也不再需要View层编写和实现大量的调用接口。MVVM在Android开发领域主要使用Google的Jetpack组件来具体实现，后面的内容会逐一介绍Android开发实现MVVM架构的核心：ViewModel以及Data Binding。
+
+## MVI架构
