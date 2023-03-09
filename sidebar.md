@@ -55,10 +55,10 @@
     * [Java虚拟机基础](Android/jvm.md)
     * [Android虚拟机基础](Android/art.md)
     * [Android Module开发](Android/mod.md)
-    * [Android AIDL开发](Android/aidl.md)
-    * [Android NDK开发](Android/ndk.md)
     * [Gradle构建工具](Android/gradle.md)
     * [混淆、加密与反编译](Android/proguard.md)
+    * [Android AIDL开发](Android/aidl.md)
+    * [Android NDK开发](Android/ndk.md)
     * [热修复技术](Android/hotfix.md)
   * **<font color=orange>其他功能</font>**
     * [音视频播放](Android/msc.md)
@@ -88,6 +88,8 @@
     * [类的继承](Dart/mixin.md)
     * [导入及构建依赖库](Dart/library.md)
     * [异步方案](Dart/async.md)
+  * **<font color=orange>C/C++进阶</font>**
+  * **<font color=orange>Python进阶</font>**
   * **<font color=orange>MySQL入门</font>**
     * [基础指令](MySQL/basicom.md) 
     * [表的操作](MySQL/tables.md)
