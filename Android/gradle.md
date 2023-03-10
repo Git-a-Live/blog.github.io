@@ -29,6 +29,10 @@ Task是指**不可分割的最小工作单元**，用于执行构建工作（比
 
 具体到Android项目来说，每一个待构建的Module是一个Project，构建一个Project需要执行一系列Task，比如编译、打包这些构建过程的子过程都对应着一个Task。一个apk文件的构建包含以下Task：源码编译、资源文件编译、Lint检查、打包以生成最终的`.apk`文件等等。在通常情况下，IDE在项目创建时提供的Gradle构建脚本文件就能满足开发者基本的构建管理需要，但是如果想让Gradle在构建过程中执行一些开发者自定义的构建逻辑，就需要了解如何编写Task。
 
+Android开发主要参考Google关于如何使用Gradle构建系统的说明文档：https://developer.android.google.cn/studio/build#settings-file
+
+一般的JVM项目开发可能需要参考Gradle官方整套指南：https://docs.gradle.org/current/userguide/userguide.html
+
 ## Gradle工作流程
 
 如下图所示，Gradle的工作流程可划分为初始化、配置和执行三大阶段。
@@ -272,11 +276,9 @@ dependencies {
 
 调用阶段隔离适用于这样一种场景：项目引用的`.aar`依赖库中包含有特定的`.jar`依赖，而项目本身又直接引用了这个`.jar`文件，在编译时就会不可避免地发生冲突。调用阶段隔离就是指让这两个发生冲突的`.jar`依赖，分别使用不同的导入语句，比如一个用`compileOnly`（编译时有效，不参与打包），另一个用`implementation`，这样它们的调用阶段就直接分离了，不会再发生冲突。类似的语句还有`runtimeOnly`（打包时有效，不参与编译）。
 
-### Gradle插件配置
+### Gradle Plugin
 
 Gradle本身只是提供了基本的核心功能，其他的特性比如编译Java源码的能力，或是编译Android工程的能力等等就需要通过插件来实现了。在Gradle中一般有两种类型的插件，分别叫做**脚本插件**和**二进制插件**。脚本插件是一种额外的构建脚本，它会进一步配置构建，可以把它理解为一个普通的`build.gradle`；而二进制插件就是指已经由官方或第三方实现了`org,gradle.api.plugins`接口，并发布成二进制文件的插件。
-
-#### Gradle插件的应用
 
 项目要应用Gradle插件，通常只在项目级`build.gradle`和模块级`build.gradle`当中执行相应的代码。在Gradle 7.0以前，配置插件的代码如下面所示：
 
@@ -318,8 +320,461 @@ plugins {
 
 更多有关Gradle插件的详细介绍，可以参考Gradle官方文档：https://docs.gradle.org/current/userguide/plugins.html
 
-### 创建Gradle Task
+#### Android Plugin for Gradle
 
-#### 为指定Gradle Task动态添加Action
+在Android项目的模块级`build.gradle`文件中，有一段配置内容是一般JVM项目所没有的，类似于下面代码所示：
 
-#### 动态改变Gradle Task依赖关系
+```
+android {
+    namespace 'com.example.app'
+    compileSdk 33
+
+    defaultConfig {
+        applicationId "com.example.app"
+        minSdk 23
+        targetSdk 33
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        vectorDrawables {
+            useSupportLibrary true
+        }
+    }
+
+    ···
+}
+```
+
+这段配置内容来自Android Plugin for Gradle，官方也称之为Android Gradle Plugin（AGP）。显而易见，这是专门用于Android项目的。接下来就介绍如何利用AGP为Android项目配置一些有趣的东西。
+
+##### 更改源码目录
+
+Android项目默认的源码目录是`src/main/java`，通过仿照下面示例代码的操作，就可以更改源码目录了：
+
+```
+android {
+    ...
+    sourceSets {
+        main {
+            // 更改Java / Kotlin代码的存储目录
+            java.srcDirs = ['other/java']
+            // 更改资源文件的存储目录
+            res.srcDirs = ['other/res1', 'other/res2']
+            // 更改AndroidManifest.xml文件的存储目录
+            manifest.srcFile 'other/AndroidManifest.xml'
+            // 更改so文件的存储目录
+            jniLibs.srcDirs = ['other/libs']
+            ...
+        }
+        // 设置插桩测试源码文件的存储目录
+        androidTest {
+            setRoot 'src/tests'
+            ...
+        }
+    }
+}
+```
+
+##### 配置应用签名
+
+虽然Android Studio提供了一种从可视化界面中为正式发布的应用配置签名的简单方式，但开发者也可以在`signingConfigs`代码块中手动配置签名：
+
+```
+android {
+    ...
+    defaultConfig { ... }
+    signingConfigs {
+        release {
+            // 指示开发者使用的keystore文件的路径
+            storeFile file("my-release-key.jks")
+            // 指示开发者使用的keystore文件的密码
+            storePassword "password"
+            // 为签名使用的key设置别名
+            keyAlias "my-alias"
+            // 为签名使用的key设置密码，通常跟keystore文件的密码保持一致
+            keyPassword "password"
+        }
+    }
+
+    buildTypes {
+        release {
+            // 在构建特定变体时调用对应的签名配置
+            signingConfig signingConfigs.release
+            ...
+        }
+    }
+}
+```
+
+为了提高签名配置的保密性，开发者还可以在**项目的根目录下**创建一个名为`keystore.properties`的文件（注意要在`.gitignore`文件当中将其排除掉，否则会被上传到版本控制系统直接公开），其内容类似于下面所示：
+
+```
+storePassword=myStorePassword
+keyPassword=myKeyPassword
+keyAlias=myKeyAlias
+storeFile=myStoreFileLocation
+```
+
+接着按照下面的方式完成签名配置：
+
+```
+// 在执行android代码块之前，需要先对调用keystore.properties文件的一些操作进行初始化
+def keystorePropertiesFile = rootProject.file("keystore.properties")
+def keystoreProperties = new Properties()
+
+android {
+    ...
+    defaultConfig { ... }
+    signingConfigs {
+        config {
+            keyAlias keystoreProperties['keyAlias']
+            keyPassword keystoreProperties['keyPassword']
+            storeFile file(keystoreProperties['storeFile'])
+            storePassword keystoreProperties['storePassword']
+        }
+    }
+    ···
+}
+```
+
+##### 压缩项目代码
+
+Android Studio通过使用ProGuard规则文件的`R8`来缩减代码。对于新项目，Android Studio将使用Android SDK的`tools/proguard/folder`中的默认设置文件`proguard-android.txt`。如需进一步缩减代码，开发者应尝试使用位于同一位置的`proguard-android-optimize.txt`文件。具体配置方式如下：
+
+```
+android {
+    ···
+    buildTypes {
+        release {
+            // 
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    ...
+}
+...
+```
+
+通常情况下，缩减代码往往是跟混淆配合使用的。限于篇幅，这里不对代码混淆等内容展开介绍，更多关于缩减代码的说明，可参考Google官方文档：https://developer.android.google.cn/studio/build/shrink-code#shrink-code
+
+##### 配置产品变体
+
++ **配置构建类型**
+
+Android Studio默认提供有`release`和`debug`两种项目构建类型，它们的配置方式如下列代码所示：
+
+```
+android {
+    defaultConfig {
+        ...
+    }
+    buildTypes {
+        release {
+            ···
+        }
+
+        debug {
+            ···
+        }
+    }
+}
+```
+
+更多与构建类型相关的API，可以查看Google官方文档：https://developer.android.google.cn/reference/tools/gradle-api/7.3/com/android/build/api/dsl/BuildType
+
++ **配置产品变体**
+
+产品变体的配置主要是在`productFlavors`代码块中进行，同时还需要搭配`flavorDimensions`一起使用，如下列代码所示：
+
+```
+android {
+    defaultConfig { ··· }
+    buildTypes { ··· }
+    ···
+
+    // 配置变体维度，这一步骤是必需的，否则编译时会遇到“All flavors must now belong to a named flavor dimension”的报错；
+    // 此外，变体维度不能出现相同的名称；变体维度是有优先级的，越靠近flavorDimensions属性的维度，构建变体时的优先级就越高。
+    // 如果给定的模块仅指定一个变体维度，那么AGP就会自动将该模块的所有产品变体都分配给该维度。
+    flavorDimensions "your_custom_dimension_name_1", "your_custom_dimension_name_2", ···, "your_custom_dimension_name_N"
+
+    productFlavors {
+        // 变体名称可以自定义
+        flavor1 {
+            // 不同变体使用的维度可以是相同的，但是其他配置不能完全一样
+            dimension "your_custom_dimension_name_1"
+            ···
+        }
+        flavor2 {
+            dimension your_custom_dimension_name_2"
+            ···
+        }
+        ···
+    }
+}
+```
+
+在配置完产品变体，并执行过Gradle同步操作之后，Android Studio的`build - Select Build Variant...`当中就会出现格式为`<product-flavor><Build-Type>`的变体选项（如下图所示），而不再只是默认的`release`和`debug`。同一个项目中，产品变体的总数等于`构建类型总数 × 变体维度总数 × 变体名称总数`，通过简单的排列组合就能轻松计算出来了。Gradle在打包这些变体时，其命名方式为：`app-高优先级变体维度的变体名称-低优先级变体维度的变体名称-项目构建类型.apk`。
+
+![](pics/gradle3.png)
+
+此外，Google官方在文档中提到，`productFlavors`跟`defaultConfig`都属于`ProductFlavor`类。这意味着`productFlavors`代码块里配置的产品变体，是支持使用`defaultConfig`代码块中的那些属性的，比如`applicationId`和`versionName`。这样不同的产品变体就可以配置不同的`applicationId`和`versionName`，至少能让它们一起安装到同一台设备上而不会相互覆盖。
+
+不同产品变体有什么作用呢？举一个简单的例子，假设有个开发者开发了一款App，但是TA想同时上架免费版和付费版的，如果没有掌握配置产品变体的技巧，那么TA可能就会采用同时维护两个分支（或两套代码）的方案分别编译打包，这就不够优雅了。而在了解如何配置产品变体之后，TA就可以在同一个项目中给不同变体编写不同的业务逻辑，编译打包时也只需要选择对应的变体即可。
+
+若要为特定产品变体或测试类型配置依赖项，可以在`Implementation`关键字前面加上产品变体或测试类型的名称作为前缀，如以下面代码所示：
+
+```
+dependencies {
+    // 为free这一产品变体添加mylibrary模块依赖
+    freeImplementation project(":mylibrary")
+
+    // 为本地测试添加一个远程依赖
+    testImplementation 'junit:junit:4.12'
+
+    // 为插桩测试添加一个远程依赖
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.5.1'
+}
+```
+
+更多与`productFlavors`相关的API，可以查看Google官方文档：https://developer.android.google.cn/reference/tools/gradle-api/7.3/com/android/build/api/dsl/ProductFlavor
+
+##### 配置出包名称
+
+前面在介绍配置产品变体的时候曾提到，Gradle在打包不同产品变体时，其命名方式为：`app-高优先级变体维度的变体名称-低优先级变体维度的变体名称-项目构建类型.apk`。如果开发者想要自定义打包出来的apk文件名称，那就需要参考下面示例代码的操作了：
+
+```
+// 没有其他产品变体时的操作
+android {
+    defaultConfig { ··· }
+    buildTypes { ··· }
+    ···
+
+    applicationVariants.all { variant ->
+        variant.outputs.all {
+            outputFileName = "XYZ.apk"
+        }
+    }
+}
+
+// 有其他产品变体时的操作
+android {
+    defaultConfig { ··· }
+    buildTypes { ··· }
+    ···
+
+    variantFilter { variant ->
+        // 在这里获取变体名称列表
+        def names = variant.flavors*.name
+        applicationVariants.all { variant2 ->
+            // variant使用不同引用名称是为了防止作用域被覆盖
+            variant2.outputs.all {
+                // 这里可以对变体名称或者构建类型进行判断，从而执行不同的命名逻辑
+                if (···) {
+                    outputFileName = "XXX.apk"
+                } else if (···) {
+                    outputFileName = "YYY.apk"
+                } else {
+                    outputFileName = "ZZZ.apk"
+                }
+            }
+        }
+    }
+}
+```
+
+### Gradle Task
+
+前文已经提到过，Task是Gradle构建系统当中一个非常重要的概念，下面就开始介绍Task的一些重要内容。当然，这些内容主要来源于https://docs.gradle.org/current/userguide/more_about_tasks.html#sec:configuring_tasks
+
+#### 创建Task
+
+定义一个Gradle Task的方式有以下几种：
+
+```
+// 在tasks集合当中增加一个Task，Gradle构建时通常会自动执行到
+tasks.register('thisIsATaskName') {
+    ···
+}
+
+// 在tasks集合中增加一个Task，并指定其所属的类型（如Copy），
+// 这样该Task就可以直接被赋予指定类型任务提供的默认行为。
+tasks.register('thisIsATaskName', SomeClassType) {
+    ···
+}
+```
+
+> 注意，上面示例代码中所提到`tasks`集合，实际上是一个`TaskContainer`对象，其底层实现是一个`Set`。
+
+[Gradle官方文档](https://docs.gradle.org/current/userguide/more_about_tasks.html#sec:defining_tasks)提到，除了`tasks.register`之外，开发者还可以使用`tasks.create`来创建Gradle Task，但是这种方式目前正逐渐被废弃，目前保留的唯一原因就是为了向下兼容。
+
+在创建Task阶段，开发者通过`tasks.register`往`tasks`集合里面添加Task。而如果想要设法持有该Task，通常使用以下两种方式：
+
+```
+// 定义一个变量持有该Task，然后在其他位置使用该变量
+def myTask = tasks.register('thisIsATaskName') {
+    ···
+}
+
+// 从tasks集合中检索该Task的名称，然后获取到该Task执行相应操作
+tasks.named('thisIsATaskName').get()···
+```
+
+> 注意，两种方式实际上返回的都是同一种类型的对象——`TaskProvider<T>`。此外，在调用`tasks.named`方法时，如果`tasks`集合没有找到指定名称的Task，那么就会直接抛出异常，并且有可能会中断其他Task的执行。
+
+持有Task引用之后，还可以通过以下方式来配置Task，这样就实现了Task的创建与配置的分离：
+
+```
+// 通过检索特定Task来进行配置
+def myCopy = tasks.named('myCopy')  {
+    from 'resources'
+    into 'target'
+}
+
+// 通过调用configure方法来进行配置
+myCopy.configure {
+    include('**/*.txt', '**/*.xml', '**/*.properties')
+}
+```
+
+如果看过Gradle官方提供的一些例子，就会发现Task的闭包里面有时会出现`doFirst`和`doLast`这样的代码块，这两种代码块要在**执行阶段**才会被调用，而Task里面位于`doFirst`和`doLast`代码块以外的业务逻辑，则是在**配置阶段**调用。
+
+> 如果仅仅是对项目的Gradle文件做了`Sync Now`操作，那显然还只是配置阶段而已。Task被执行的重要标志，就是在IDE中看到类似于`> Task :app:hello`的日志被打印输出）。以Android Studio为例，Gradle窗口中可见的所有Task，都是要在双击之后才会从初始化到执行阶段完整地运行一遍。
+
+#### Task间的依赖关系
+
+Gradle Task间可以存在依赖关系，即Task A执行与否可能取决于Task B是否执行。这种依赖关系在时序上就体现为某个Task必须在特定Task执行之后才能执行。Gradle设置Task间的依赖关系可以参考下面的示例代码。
+
+跨Project的依赖关系配置：
+
+```
+project('project-a') {
+    tasks.register('taskX')  {
+        // 注意，dependsOn通常会跟doLast搭配使用以确保依赖关系的时序性
+        dependsOn ':project-b:taskY'
+        doLast {
+            println 'taskX'
+        }
+    }
+}
+
+project('project-b') {
+    tasks.register('taskY') {
+        doLast {
+            println 'taskY'
+        }
+    }
+}
+```
+
+通过Task引用配置依赖关系：
+
+```
+def taskX = tasks.register('taskX') {
+    doLast {
+        println 'taskX'
+    }
+}
+
+def taskY = tasks.register('taskY') {
+    doLast {
+        println 'taskY'
+    }
+}
+
+taskX.configure {
+    dependsOn taskY
+}
+```
+
+更多用法，详见[Gradle官方文档](https://docs.gradle.org/current/userguide/more_about_tasks.html#sec:adding_dependencies_to_tasks)。
+
+#### Task执行顺序
+
+在某些场景下，各个Task的执行顺序是很有讲究的，比如下面列出的一些情形：
+
++ `build`不能在`clean`之前执行；
++ `validate`必须在`build`之前执行；
++ 短耗时验证任务（比如单元测试）应当在长耗时验证任务（比如集成测试）之前执行；
++ 汇总性质的任务要在其他分项任务执行之后才能运行。
+
+由此可以引申出两种顺序安排规则：`must run after`和`should run after`。
+
+对于`must run after`的情形，可以参考下面的示例代码：
+
+```
+def taskX = tasks.register('taskX') {
+    doLast {
+        println 'taskX'
+    }
+}
+def taskY = tasks.register('taskY') {
+    doLast {
+        println 'taskY'
+    }
+}
+taskY.configure {
+    mustRunAfter taskX
+}
+```
+
+对于`should run after`的情形，则基本上跟`must run after`大同小异：
+
+```
+taskY.configure {
+    shouldRunAfter taskX
+}
+```
+
+需要注意的是，`should run after`的强制性低于`must run after`和`dependsOn`，如果出现了下面这种情况，`should run after`就会被忽略掉：
+
+```
+taskX.configure { dependsOn(taskY) }
+taskY.configure { dependsOn(taskZ) }
+taskZ.configure { shouldRunAfter(taskX) }
+
+// Output of gradle -q taskX
+> gradle -q taskX
+taskZ
+taskY
+taskX
+```
+
+#### Finalizer Task
+
+在Gradle当中，有一种稍微特殊一些的Task，它们的声明方式类似于下面的示例代码：
+
+```
+def taskX = tasks.register('taskX') {
+    doLast {
+        println 'taskX'
+    }
+}
+def taskY = tasks.register('taskY') {
+    doLast {
+        println 'taskY'
+    }
+}
+
+// 调用finalizedBy方法即可将一个Task声明成finalizer
+taskX.configure { finalizedBy taskY }
+```
+
+这种被称为finalizer的Task，从它的实际用途来看，就是发挥一种类似“兜底”的作用。按照Gradle官方的说法，当一个Task被声明成finalizer之后，**无论在它之前的Task运行成功还是失败，最后都一定会执行到**，不会因为其他Task抛出异常而被阻断。可以发现，这套逻辑跟`try - catch - finally`基本上是一样的，理解这点对如何运用好finalizer是非常重要的。
+
+> Gradle官方文档描述finalizer task使用场景的原文如下：
+> 
+> Finalizer tasks are useful in situations where the build creates a resource that has to be cleaned up regardless of the build failing or succeeding. An example of such a resource is a web container that is started before an integration test task and which should be always shut down, even if some of the tests fail.
+
+#### Task执行结果一览
+
+当Gradle执行一个Task的时候，它会通过一些工具类的API，在控制台输出该Task的执行结果，作为其标记。这些标记和含义均已在下表列出：
+
+|结果|含义说明|
+|:-----:|:-----:|
+|`EXECUTED`或没有标记|表明Task已经执行，但是只有设置过Task action或是只包含一些依赖的，才会输出`EXECUTED`，否则就没有任何提示|
+|`UP-TO-DATE`|表明Task的输出产物没有变化，这种情形通常就是指Task执行过程中没有发生增量变更|
+|`FROM-CACHE`|表明当前Task的输出产物来源于上一次Task执行|
+|`SKIPPED`|表明Task被跳过了而未执行，通常出现在Task已经显式排除，或是未满足触发执行条件的情形当中|
+|`NO-SOURCE`|表明Task不需要执行它的action，通常出现在Task有输入输出，但是没有对应资源文件的情形，比如JavaCompile这个Task找不到`.java`文件来编译|
