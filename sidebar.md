@@ -61,16 +61,16 @@
     * [构建制品安全：应用加固](Android/xxx.md)
     * [Android AIDL开发](Android/aidl.md)
     * [Android NDK开发](Android/ndk.md)
+    * [音视频编解码：基础API入门](Android/msc.md)
     * [音视频编解码：音频部分](Android/xxx.md)
     * [音视频编解码：视频部分](Android/xxx.md)
     * [热修复技术](Android/hotfix.md)
   * **<font color=orange>其他功能</font>**
-    * [音视频播放](Android/msc.md)
-    * [蓝牙功能](Android/bt.md)
+    * [蓝牙功能](Android/bluetooth.md)
     * [Wifi功能](Android/wifi.md)
-    * [录音功能](Android/audio.md)
     * [传感器功能](Android/sensor.md)
     * [串口/USB功能](Android/usb.md)
+    * [NFC功能](Android/xxx.md)
   * **<font color=orange>AOSP开发</font>**
     * [AOSP简介](Android/aosp.md)
 * **<font color=red>语言</font>**
