@@ -76,9 +76,9 @@ Android平台支持蓝牙网络堆栈，能让设备以无线方式与其他蓝�
 
 ```
 // 调用系统服务，判断是否存在BluetoothAdapter
-fun checkBluetoothAvailability(context: Context): Boolean {
+fun Context.checkBluetoothAvailability(): Boolean {
     return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-        val bluetoothManager: BluetoothManager? = context.getSystemService(BluetoothManager::class.java)
+        val bluetoothManager: BluetoothManager? = getSystemService(BluetoothManager::class.java)
         bluetoothManager != null && bluetoothManager.adapter != null
     } else {
         // 注意，BluetoothAdapter.getDefaultAdapter()目前已经被标记为废弃
@@ -111,7 +111,7 @@ fun Activity.enableBluetooth() {
     }
 
     // 对于Android 6.0 ~ Android 11的设备，可以直接请求开启蓝牙，不需要额外授权
-    bluetoothManager?.adapter?.let {
+    getSystemService(BluetoothManager::class.java)?.adapter?.let {
         if (!it.isEnabled) {
             // 如果不需要返回结果，就用startActivity()，否则用startActivityForResult()
             startActivity(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
@@ -122,6 +122,15 @@ fun Activity.enableBluetooth() {
 
 如果要让应用监听蓝牙启动状态并执行相应的业务逻辑，可以创建一个BroadcastReceiver专门监听`BluetoothAdapter.ACTION_STATE_CHANGED`这个广播。该广播包含有`EXTRA_STATE`和 `EXTRA_PREVIOUS_STATE`这两个字段，分别表示新旧两种状态。它们返回的状态值有`STATE_TURNING_ON`、`STATE_ON`、`STATE_TURNING_OFF`以及`STATE_OFF`这四种，开发者可以根据这四种状态来编写对应的业务逻辑。
 
+除了`BluetoothAdapter.ACTION_REQUEST_ENABLE`可以开启蓝牙之外，`BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE`这个Intent也能做同样的事，唯一的区别就是后者会提示用户设备会在一段时间（比如默认120s）内处于可被发现的状态：
+
+```
+val discoverableIntent: Intent = Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE).apply {
+    // 这里传入的是保持可见性的时间，单位为秒，如果设为0就表示一直可见
+    putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300)
+}
+```
+
 如果要**在应用中**关闭蓝牙（注意不是让用户在系统任务栏中关闭），那么业务逻辑上就要有一些调整了：
 
 ```
@@ -129,7 +138,7 @@ fun Activity.disableBluetooth() {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         if (ActivityCompat.checkSelfPermission(this,
                 Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(arrayOf(Manifest.permission.BLUETOOTH_CONNECT), 114514)
+            requestPermissions(arrayOf(Manifest.permission.BLUETOOTH_CONNECT), REQUEST_CODE)
         }
     }
 
@@ -137,7 +146,7 @@ fun Activity.disableBluetooth() {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
         BluetoothAdapter.getDefaultAdapter()
     } else {
-        bluetoothManager?.adapter
+        getSystemService(BluetoothManager::class.java)?.adapter
     }?.let {
         if (it.isEnabled) {
             it.disable()
@@ -148,7 +157,86 @@ fun Activity.disableBluetooth() {
 
 ### 查找设备
 
+查找蓝牙设备需要用到`BluetoothAdapter`。上一节内容已经初步介绍过如何利用`BluetoothAdapter`来开启和关闭蓝牙，这一节将介绍如何依靠它来查找其他可用的蓝牙设备。
+
+“设备发现”是利用蓝牙查找设备过程当中一个很基础也很重要的概念。它是指在本地区域内（通常不会超过100米范围）扫描、搜索其他启用蓝牙的设备，并请求相关信息的过程。启用蓝牙的设备，必须处于可被检测的状态才能被其他设备所检测发现，从而执行后续的其他步骤。当两个未配对过的设备首次建立蓝牙连接时，用户会接收到一个配对请求；而已经配对过的设备，则会直接基于已保存的蓝牙MAC地址等信息，建立RFCOMM通道进行数据传输和通信。
+
+#### 查找已配对过的设备
+
+对于已经配对过的设备，Android提供了`BluetoothAdapter.getBondedDevices()`，用于返回一个包含有`BluetoothDevice`对象的集合。如下面代码所示：
+
+```
+fun Activity.getBondedBluetoothDevices(): Set<BluetoothDevice> {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        if (ActivityCompat.checkSelfPermission(this,
+                Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(arrayOf(Manifest.permission.BLUETOOTH_CONNECT), REQUEST_CODE)
+        }
+    }
+    return if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+        BluetoothAdapter.getDefaultAdapter()
+    } else {
+        getSystemService(BluetoothManager::class.java)?.adapter
+    }?.bondedDevices ?: emptySet()
+}
+```
+
+`BluetoothDevice`对象包含了蓝牙设备的名称、MAC地址以及类型等属性，这些属性在后面介绍如何建立蓝牙连接进行通信时会用到。
+
+#### 发现其他设备
+
+要发现周围的蓝牙设备，就要调用`BluetoothAdapter.startDiscovery()`，可以参考下面的示例代码：
+
+```
+fun Activity.startBluetoothDiscovery() {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        if (ActivityCompat.checkSelfPermission(this,
+                    Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(arrayOf(Manifest.permission.BLUETOOTH_CONNECT), REQUSET_CODEREQUSET_CODE)
+        }
+    }
+
+    // 如果要主动取消发现设备，就执行cancelDiscovery()
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+        BluetoothAdapter.getDefaultAdapter()
+    } else {
+        getSystemService(BluetoothManager::class.java)?.adapter
+    }?.startDiscovery()
+}
+```
+
+由于发现设备是一个耗时过程（一次扫描大约耗费12秒），因此从启动扫描到获取结果必然是异步的。Android提供的方案是让应用监听`BluetoothDevice.ACTION_FOUND`这个广播，从广播返回的结果中获取扫描发现的设备：
+
+```
+val receiver = object : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+        intent.action?.let {
+            if (BluetoothDevice.ACTION_FOUND == it) {
+                intent.apply {
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+                        getParcelableExtra<BluetoothDevice>(BluetoothDevice.EXTRA_DEVICE)
+                    } else {
+                        getParcelableExtra(BluetoothDevice.EXTRA_DEVICE, BluetoothDevice::class.java)
+                    }?.let { device -> 
+                        // TODO: 获取到BluetoothDevice对象
+                    }
+                }
+            }
+        }
+    }
+}
+
+// 注册广播接收器
+registerReceiver(receiver, IntentFilter(BluetoothDevice.ACTION_FOUND))
+```
+
+如果要监听蓝牙扫描状态，同样使用广播接收器，监听`ACTION_SCAN_MODE_CHANGED`广播，然后获取`EXTRA_SCAN_MODE`和`EXTRA_PREVIOUS_SCAN_MODE`这两个参数，里面包含的结果有`SCAN_MODE_CONNECTABLE_DISCOVERABLE`、`SCAN_MODE_CONNECTABLE`以及`SCAN_MODE_NONE`这三种，分别表示设备处于可检测状态、未处于可检测状态但能收到连接还有既不处于可检测状态也不能收到连接。
+
 ### 连接设备
+
+
+### 数据传输
+
 
 ## 低功耗蓝牙
 
