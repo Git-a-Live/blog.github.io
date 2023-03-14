@@ -135,12 +135,8 @@ val discoverableIntent: Intent = Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVER
 
 ```
 fun Activity.disableBluetooth() {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        if (ActivityCompat.checkSelfPermission(this,
-                Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(arrayOf(Manifest.permission.BLUETOOTH_CONNECT), REQUEST_CODE)
-        }
-    }
+    // 检查授权步骤省略
+    ···
 
     // 尽管Android 6.0以下和Android 6.0+的设备获取BluetoothAdapter的方式不同，但它们都要调用被废弃的disable()方法才能主动关闭蓝牙
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
@@ -167,12 +163,9 @@ fun Activity.disableBluetooth() {
 
 ```
 fun Activity.getBondedBluetoothDevices(): Set<BluetoothDevice> {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        if (ActivityCompat.checkSelfPermission(this,
-                Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(arrayOf(Manifest.permission.BLUETOOTH_CONNECT), REQUEST_CODE)
-        }
-    }
+    // 检查授权步骤省略
+    ···
+
     return if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
         BluetoothAdapter.getDefaultAdapter()
     } else {
@@ -189,12 +182,8 @@ fun Activity.getBondedBluetoothDevices(): Set<BluetoothDevice> {
 
 ```
 fun Activity.startBluetoothDiscovery() {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        if (ActivityCompat.checkSelfPermission(this,
-                    Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(arrayOf(Manifest.permission.BLUETOOTH_CONNECT), REQUSET_CODEREQUSET_CODE)
-        }
-    }
+    // 检查授权步骤省略
+    ···
 
     // 如果要主动取消发现设备，就执行cancelDiscovery()
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
@@ -234,6 +223,95 @@ registerReceiver(receiver, IntentFilter(BluetoothDevice.ACTION_FOUND))
 
 ### 连接设备
 
+蓝牙连接采用的是C/S模式。对于单台设备而言，它必须同时实现Server和Client两套机制，才能正常地跟其他设备进行连接。无论是作为Server还是Client，设备都得获取到`BluetoothSocket`。Server一侧负责接受连接请求并从连接中获得socket信息；Client一侧负责开启RFCOMM通道并提供socket信息。
+
+当两台设备在同一RFCOMM通道上各自持有一个已处于连接状态的`BluetoothSocket`时，就可以认为它们已经建立连接，这时两台设备就能进行数据传输了。当然，本节内容主要讨论如何连接蓝牙设备，数据传输会在下一节内容展开。
+
+#### 作为Server监听连接请求
+
+Server端需要关注两样东西：`BluetoothServerSocket`和`BluetoothSocket`。前者用来监听连接请求，并在接收请求的时候向Client返回一个`BluetoothSocket`；后者用于蓝牙通信，数据传输的操作都将基于它来进行。如果Server只专注于一对一通信，那么在获得`BluetoothSocket`之后就可以把`BluetoothServerSocket`给关闭了，否则应该继续保留其存在和运行。
+
+Server监听连接请求的操作可以参考下面的示例代码：
+
+```
+// 第一步：在已经开启蓝牙功能的前提下，创建BluetoothServerSocket对象
+val bluetoothServerSocket = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+    BluetoothAdapter.getDefaultAdapter()
+} else {
+     context.getSystemService(BluetoothManager::class.java)?.adapter
+}?.listenUsingInsecureRfcommWithServiceRecord(STRING_NAME, UUID)
+
+// 第二步：使用循环开启连接请求监听，如果监听到有请求连接并确认接受，就可以获得一个BluetoothSocket对象
+var shouldLoop = true
+while (shouldLoop) {
+    val bluetoothSocket = try {
+        bluetoothServerSocket?.accept()
+    } catch (e: Exception) {
+        // TODO: 处理异常，并停止监听
+        shouldLoop = false
+        null
+    }
+
+    bluetoothSocket?.let {
+        // 这里对获取到的BluetoothSocket对象进行处理
+        action(it)
+                
+        // 第三步：如果只进行一对一通信，在获得BluetoothSocket对象之后即可关闭监听
+        bluetoothServerSocket?.close()
+        shouldLoop = false
+   }
+}
+```
+
+注意，上面开启监听的步骤不能在主线程中进行，可以选择开启一个子线程或者协程来处理。
+
+#### 作为Client发起连接请求
+
+Client端需要关注`BluetoothDevice`和`BluetoothSocket`，前者代表的是待连接的目标设备，后者的用途跟Server端的基本一样，但是要主动调用`connect()`发起连接请求，具体可以参考下面的示例代码：
+
+```
+// 第一步：从已配对设备列表或扫描结果当中选择一个BluetoothDevice对象，用于创建BluetoothSocket
+var bluetoothSocket: BluetoothSocket? = null
+try {
+    // 如果检测到目标设备未绑定过，则首先发起绑定请求
+    if (BluetoothDevice.BOND_NONE == bluetoothDevice.bondState) {
+        bluetoothDevice.createBond()
+        return
+    }
+    // 配对绑定过的设备，其BluetoothDevice.uuids通常不会为空
+    bluetoothDevice.uuids?.randomOrNull()?.uuid?.let { id ->
+        // 此处必须使用目标设备的UUID来创建BluetoothSocket，否则会连接失败
+        bluetoothSocket = bluetoothDevice.createRfcommSocketToServiceRecord(id)
+    }
+} catch (e: Exception) {
+    ···
+}
+
+// 第二步：取消设备扫描搜索任务（如果有的话），否则会影响后面的连接步骤
+bluetoothAdapter?.cancelDiscovery()
+
+// 第三步：通过BluetoothSocket，对目标设备发起连接请求，注意要在主线程以外执行该逻辑
+try {
+     bluetoothSocket?.let {
+        // 调用connect方法时，当前线程会被阻塞，直到连接成功或抛出异常
+        it.connect()
+        // 由于connect()方法会阻塞流程，因此这里通常可以串行拿到连接状态
+        if (it.isConnected) {
+            ···
+        }
+    }
+} catch (e: Exception) {
+    ···
+    // 如果发生异常，应当关闭BluetoothSocket
+    bluetoothSocket?.close()
+}
+```
+
+对于从未配对过的两台设备而言，在Client调用`BluetoothDevice.createBond()`发起连接请求时，两边的设备会**自动**弹出类似下图所示的配对请求对话框：
+
+![](pics/bluetooth2.png)
+
+如果对方一直没有操作，那么连接请求会被阻塞，直到对方同意或拒绝配对，或是配对过程超时自动断开连接。
 
 ### 数据传输
 
