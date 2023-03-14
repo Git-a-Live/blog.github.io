@@ -315,6 +315,7 @@ try {
 
 ### 数据传输
 
+两台设备建立起蓝牙连接之后，它们就可以通过`BluetoothSocket`进行数据传输了。如果看过`BluetoothSocket`的源码，就可以发现这个类是非常简单的，里面涉及到数据流的部分主要就是`getInputStream()`和`getOutpotStream`。这两个数据流将承担蓝牙通信数据传输的任务，对`InputStream`调用`read()`方法来读取数据，对`OutputStream`调用`write()`方法来写入数据。当然，这些操作不能在主线程上进行。Google官方的建议是专门用一个子线程来同时承载数据读写操作，其中用一个循环来专门负责持续地从`InputStream`中读取数据，而写入数据则可以提供另外的方法来执行。
 
 ## 低功耗蓝牙
 
