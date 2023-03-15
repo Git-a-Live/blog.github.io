@@ -1,10 +1,10 @@
 ## 蓝牙技术简介
 
-蓝牙（Bluetooth）是一种无线技术标准，可实现固定设备、移动设备和楼宇个人域网之间的短距离数据交换。蓝牙技术具有十分广泛的应用，它具有耗电量低、成本低、安全性、稳定性、易用性等优点，在物联网设备上的占有率非常高。目前蓝牙技术可以分为传统蓝牙（Bluetooth Classic）和低功耗蓝牙（Bluetooth Low Energy，BLE）两种，它们的主要区别如下：
+蓝牙（Bluetooth）是一种无线技术标准，可实现固定设备、移动设备和楼宇个人域网之间的短距离数据交换。蓝牙技术具有十分广泛的应用，它具有耗电量低、成本低、安全性、稳定性、易用性等优点，在物联网设备上的占有率非常高。目前蓝牙技术可以分为传统经典蓝牙（Bluetooth Classic）和低功耗蓝牙（Bluetooth Low Energy，BLE）两种，它们的主要区别如下：
 
 ![](pics/bluetooth.svg)
 
-+ 传统蓝牙也被称为Bluetooth基本速率/增强数据速率（BR/EDR），是一种低功率无线电，可在2.4GHz非授权工业、科学和医疗（ISM）频段的79个频道上进行数据传输。它支持点对点设备通信，并且主要用于实现无线音频流，目前已成为支撑无线扬声器、耳机和车载娱乐系统等技术的标准无线电协议。传统蓝牙还能应用于包括移动打印在内的其他数据传输场景。
++ 经典蓝牙也被称为Bluetooth基本速率/增强数据速率（BR/EDR），是一种低功率无线电，可在2.4GHz非授权工业、科学和医疗（ISM）频段的79个频道上进行数据传输。它支持点对点设备通信，并且主要用于实现无线音频流，目前已成为支撑无线扬声器、耳机和车载娱乐系统等技术的标准无线电协议。传统蓝牙还能应用于包括移动打印在内的其他数据传输场景。
 
 + 低功耗蓝牙是为非常低的功率操作而设计的。BLE在2.4GHz非授权ISM频段的40个信道上传输数据，支持多种通信拓扑结构，目前已从点对点通信扩展到广播通信。 此外，基于[Bluetooth mesh](https://www.bluetooth.com/learn-about-bluetooth/recent-enhancements/mesh/)，蓝牙还支持创建可靠的、大规模的设备网络。尽管蓝牙最初以其设备通信功能而闻名，但现在BLE也被广泛用于设备定位技术当中，以满足人们对**室内高精度定位服务**日益增长的需求。
 
@@ -61,10 +61,10 @@ Android平台支持蓝牙网络堆栈，能让设备以无线方式与其他蓝�
 如果开发者的应用项目将蓝牙作为关键功能，那么还需要参考下面的方式声明应用需要用到蓝牙功能，并指定使用的蓝牙类型：
 
 ```
-<!-- 声明使用传统蓝牙 -->
+<!-- 声明需要调用到经典蓝牙 -->
 <uses-feature android:name="android.hardware.bluetooth" android:required="true"/>
 
-<!-- 声明使用低功耗蓝牙 -->
+<!-- 声明需要调用到低功耗蓝牙 -->
 <uses-feature android:name="android.hardware.bluetooth_le" android:required="true"/>
 ```
 
@@ -315,8 +315,309 @@ try {
 
 ### 数据传输
 
-两台设备建立起蓝牙连接之后，它们就可以通过`BluetoothSocket`进行数据传输了。如果看过`BluetoothSocket`的源码，就可以发现这个类是非常简单的，里面涉及到数据流的部分主要就是`getInputStream()`和`getOutpotStream`。这两个数据流将承担蓝牙通信数据传输的任务，对`InputStream`调用`read()`方法来读取数据，对`OutputStream`调用`write()`方法来写入数据。当然，这些操作不能在主线程上进行。Google官方的建议是专门用一个子线程来同时承载数据读写操作，其中用一个循环来专门负责持续地从`InputStream`中读取数据，而写入数据则可以提供另外的方法来执行。
+两台设备建立起蓝牙连接之后，它们就可以通过`BluetoothSocket`进行数据传输了。如果看过`BluetoothSocket`的源码，就可以发现这个类是非常简单的，里面涉及到数据流的部分主要就是`getInputStream()`和`getOutpotStream`。这两个数据流将承担蓝牙通信数据传输的任务，对`InputStream`调用`read()`方法来读取数据，对`OutputStream`调用`write()`方法来写入数据。当然，这些操作不能在主线程上进行。Google官方的建议是专门用一个子线程来同时承载数据读写操作，其中用一个循环来专门负责持续地从`InputStream`中读取数据，而写入数据则可以提供另外的方法来执行。具体可以参考下面的示例代码：
+
+```
+// 在协程中发送数据
+coroutineScope.launch(Dispatchers.IO) {
+    try {
+        bluetoothSocket?.outputStream?.write(byteArray)
+    } catch (e: Exception) {
+        // TODO: 注意调用write方法时必须使用try-catch捕获随时可能出现的异常
+    }
+}
+
+// 在协程中监听数据传入
+coroutineScope.launch(Dispatchers.IO) {
+    val buffer = ByteArray(1024)
+    while (true) {
+        try {
+            bluetoothSocket?.inputStream?.apply {
+                if (available() != 0) {
+                    read(buffer)
+                }
+            }
+        } catch (e: Exception) {
+            // TODO: 注意调用read方法时也要使用try-catch来捕获随时可能出现的异常
+        }
+    }
+}
+```
 
 ## 低功耗蓝牙
 
-## BLE音频
+低功耗蓝牙（Bluetooth Low Energy）是蓝牙4.0版本起开始支持的一项蓝牙技术规范。由于经典蓝牙被Apple限制数据传输接口（需要经过MFI认证），而且功耗偏高，目前在移动互联网应用中已被逐渐边缘化。需要注意的是，蓝牙4.0版本支持单双模，单模就是通常意义上的BLE，主打低功耗、快连接和长距离的优势；而双模则是既支持BLE又能兼容经典蓝牙，后者的主要优势在于大数据和高速率。在对功耗要求不是极为严苛的情形下，使用双模蓝牙是比较理想的选择。
+
+Android为BLE提供了平台级的支持，并且还有相应的API供开发者使用，从而完成蓝牙的四大必需功能。
+
+### 基本概念
+
+在BLE中有以下重要概念需要被开发者所了解：
+
++ **profile**
+
+profile表示BLE设备的配置文件。Bluetooth SIG（Bluetooth Special Interest Group）为BLE设备定义了许多profile，作为通用的标准。每份profile都是一个规范，用于指导设备在特定应用场合下如何工作。需要注意的是，BLE设备可以同时实现多个profile，比如一个健康手环同时包含有心率监测和电量检测的功能，而这两个功能遵循的是各自的规范。
+
++ **GATT（Generic Attribute Profile）**
+
+GATT直接翻译过来就是“通用属性配置文件”，其规范作用主要针对BLE连接当中传输的简短数据片段（被称作“属性（attributes）”）。目前现有的全部BLE应用配置文件都是基于GATT，所以值得高度关注。
+
++ **ATT（Attribute Protocol）**
+
+GATT的实现建立在ATT的基础上，类似于TCP/IP，两者的关系可以描述为GATT/ATT。ATT针对BLE设备做过优化，尽可能使用较少的字节数进行数据传输，以便能在这些设备上运行。每个属性都会使用UUID作为唯一标识，它们经过ATT传输时所采用的格式，就包括了下面要介绍到的characteristic和service这两种。
+
++ **characteristic**
+
+characteristic直译过来就是特征。一个characteristic可以被理解成类型，其概念跟编程语言中的class类似。characteristic包含一个value和若干个descriptor，当然某些情形下可能只有value。
+
++ **descriptor**
+
+descriptor直译过来就是描述符，其作用是定义一些用于描述characteristic value的属性。例如指定一些人类可读可理解的描述信息，描述一个value的可接受范围或是其度量单位等。
+
++ **service**
+
+service代表一些characteristic的集合。比如一个心率检测的服务可能就包含有心率测量之类的characteristic。
+
+在BLE网络拓扑中，有中央和外围的概念，也有server和client的概念。位于网络拓扑中央的设备负责扫描和监听广播，外围设备则发出广播。serve和client跟前文介绍的概念有所差异，主要是指GATT server和GATT client，server负责生产数据，而client负责消费数据。
+
+在权限配置方面，BLE跟经典蓝牙并无二致，如果忘记要给BLE配置哪些权限，可以回过头再看一遍[权限配置](Android/bluetooth?id=权限配置)这一节内容。另外，由于Android设备通常只有一种蓝牙硬件，因此设置BLE跟[设置经典蓝牙](Android/bluetooth?id=设置蓝牙)的操作步骤也基本相同，这里不再重复。
+
+### 查找BLE设备
+
+在Android应用中调用查找BLE设备的API比较简单，如下面代码所示：
+
+```
+// 应用授权检查过程省略
+···
+
+// 启用蓝牙功能步骤省略
+····
+
+// 创建扫描结果回调
+val scanCallback = object :ScanCallback() {
+    override fun onScanResult(callbackType: Int, result: ScanResult?) {
+        // ScanResult里包含有BluetoothDevice对象等重要属性
+        result?.let {
+            ···
+        }
+    }
+
+    override fun onScanFailed(errorCode: Int) {
+        ···
+    }
+
+    override fun onBatchScanResults(results: MutableList<ScanResult>?) {
+        ···
+    }
+}
+
+// 启动BLE设备扫描任务
+bluetoothAdapter.bluetoothLeScanner?.startScan(scanCallback)
+
+// 仅扫描特定类型的BLE设备，使用回调
+bluetoothAdapter.bluetoothLeScanner?.startScan(
+    arrayListOf<ScanFilter>(···),
+    ScanSettings.Builder(). ··· .build(),
+    scanCallback
+)
+
+// 扫描特定类型的BLE设备，使用PendingIntent，Android 8.0起支持
+val callbackIntent: PendingIntent = ···
+bluetoothAdapter.bluetoothLeScanner?.startScan(
+    arrayListOf<ScanFilter>(···),
+    ScanSettings.Builder(). ··· .build(),
+    callbackIntent
+)
+
+// 在获得扫描结果或扫描达到一定时限后应当主动关闭扫描任务，避免无端消耗电量
+bluetoothAdapter.bluetoothLeScanner?.stopScan(scanCallback)
+
+// 如果使用PendingIntent，则传入之前创建的PedingIntent对象来关闭扫描任务，Android 8.0起支持
+bluetoothAdapter.bluetoothLeScanner?.stopScan(callbackIntent)
+```
+
+> 注意，Google官方文档提示开发者，同一个应用在同一时刻只能扫描BLE设备或经典蓝牙设备，**不能一起扫描**。
+
+针对过滤BLE设备类型的扫描方式，这里对`ScanFilter`和`ScanSettings`做一些简单介绍。两种数据类型的对象都是通过[Builder模式](DesignPattern/创建型设计模式?id=三、builder)创建出来的，并没有什么构造方法可以直接调用，具体可以参考下面的示例代码：
+
+```
+// Scanfilter的构建方式
+ScanFilter.Builder()
+    .setAdvertisingDataType(···)            // 设置广播数据类型过滤条件，传入的值来源于ScanRecord.DATA_TYPE_XXX，API 33以上才能使用
+    .setAdvertisingDataTypeWithData(···)    // 作用同上，但还要传入原始数据和原始数据的掩码，两者数组长度必须一致，否则无法正确匹配
+    .setDeviceAddress(···)                  // 设置BLE设备MAC地址的过滤条件
+    .setDeviceName(···)                     // 设置BLE设备名称的过滤条件
+    .setManufacturerData(···)               // 设置BLE设备生产厂商的过滤条件
+    .setServiceUuid(···)                    // 设置服务UUID的过滤条件，可以是全部匹配，也可以是部分匹配
+    .setServiceSolicitationUuid(···)        // 设置服务请求UUID的过滤条件，可以是全部匹配，也可以是部分匹配
+    .setServiceData(···)                    // 设置服务数据的过滤条件
+    .build()
+
+// ScanSettings的构造方式
+ScanSettings.Builder()
+    .setCallbackType(···)                   // 设置BLE设备扫描的回调类型，传入的值来源于ScanSettings.CALLBACK_TYPE_XXX
+    .setScanMode(···)                       // 设置BLE设备扫描模式，传入的值来源于ScanSettings.SCAN_MODE_XXX
+    .setLegacy(···)                         // 设置扫描结果是否仅返回传统广播，设为false才能调用setPhy(···)
+    .setMatchMode(···)                      // 设置BLE设备扫描匹配模式，传入的值来源于ScanSettings.MATCH_MODE_XXX
+    .setNumOfMatches(···)                   // 设置BLE设备扫描匹配数量，传入的值来源于ScanSettings.MATCH_NUM_XXX
+    .setPhy(···)                            // 设置在本次扫描期间所使用的用物理层，传入的值来源于BluetoothDevice.PHY_LE_XXX，
+                                               或是ScanSettings.PHY_LE_ALL_SUPPORTED
+    .setReportDelay(···)                    // 设置获得扫描结果后延迟上报的时长，默认5000ms，设为0则表示立即上报
+    .build()
+```
+
+### 连接到GATT server
+
+让应用连接到GATT server的方式实际上非常简单：
+
+```
+// 应用授权检查过程省略
+···
+
+// 启用蓝牙功能步骤省略
+····
+
+// 获取BluetoothDevice对象过程省略
+···
+
+// 创建一个BluetoothGattCallback的回调实例，并在其中编写相应的GATT client操作
+val bluetoothGattCallback = object :BluetoothGattCallback() {
+    override fun onConnectionStateChange(gatt: BluetoothGatt?, status: Int, newState: Int) {
+        ···
+    }
+
+    override fun onServicesDiscovered(gatt: BluetoothGatt?, status: Int) {
+        ···
+    }
+
+    // 要重写的方法较多，此处省略
+    ···
+}
+
+// 从BluetoothDevice中获取BluetoothGatt实例，并基于该实例进行GATT client的操作
+var bluetoothGatt: BluetoothGatt? = bluetoothDevice?.connectGatt(context, isAutoConnect, bluetoothGattCallback, ···)
+
+// 不再使用BLE设备时，应当主动关闭BluetoothGatt，以便系统可以释放资源
+bluetoothGatt?.close()
+bluetoothGatt = null
+```
+
+#### BluetoothGattCallback的使用
+
+这里要重点介绍一下`BluetoothGattCallback`这个回调，因为它包含的回调方法实在太多了，而且许多重要的操作（比如BLE属性的读写）都要在这些回调方法中执行，所以有必要专门留出一定的篇幅给它。下表是`BluetoothGattCallback`所持有的一些重要的回调方法：
+
+|回调方法|用途说明|
+|:-----:|:-----:|
+|`onCharacteristicChanged`|当characteristic被修改，且调用过`BluetoothGatt.setCharacteristicNotification()`，允许接受相关通知时会被触发|
+|`onCharacteristicRead`|当调用`BluetoothGatt.readCharacteristic()`需要返回结果时会被触发|
+|`onCharacteristicWrite`|当调用`BluetoothGatt.writeCharacteristic()`需要指示结果时会被触发|
+|`onConnectionStateChange`|当GATT client与GATT server间的连接状态发生改变时会被触发|
+|`onDescriptorRead`|当调用`BluetoothGatt.readDescriptor()`需要返回结果时会被触发|
+|`onDescriptorWrite`|当调用`BluetoothGatt.writeDescriptor()`需要指示结果时会被触发|
+|`onMtuChanged`|当调用`BluetoothGatt.requestMtu()`，请求对MTU（Maximum Transmission Unit）长度进行更改时会被触发|
+|`onPhyRead`|当调用`BluetoothGatt.readPhy()`需要返回结果时会被触发|
+|`onPhyUpdate`|当调用`BluetoothGatt.setPreferredPhy()`，或是远程设备更改了物理层信息于是返回结果时会被触发|
+|`onReadRemoteRssi`|当调用`BluetoothGatt.readRssi()`需要返回结果时会被触发|
+|`onReliableWriteCompleted`|当调用`BluetoothGatt.executeReliableWrite()`并完成之后会被触发|
+|`onServiceChanged`|当远程设备的服务发生变化，而GATT数据库尚未进行更新时就会被触发，表明接收到了服务发生变化的事件|
+|`onServicesDiscovered`|当远程设备的service、characteristic以及descriptor的列表发生变化（比如新的service被发现）时会被触发|
+
+> 注意，上表列出的回调方法仅用于说明其触发时机和用途，因为实际上有许多同名方法已经确定会在API 33当中被废弃掉，这里为节约篇幅没有全部列出。更多详细说明，可以访问[https://developer.android.google.cn/reference/android/bluetooth/BluetoothGattCallback](https://developer.android.google.cn/reference/android/bluetooth/BluetoothGattCallback)。
+
+### BLE数据传输
+
+在执行读写操作之前，有必要先获得BLE设备上的服务列表：
+
+```
+val services: List<BluetoothGattService?> = bluetoothGatt?.services ?: emptyList()
+```
+
+#### 读取BLE属性
+
+首先来看如何从GATT服务中获取想要的信息：
+
+```
+services.forEach { bluetoothGattService ->
+    // 获取BluetoothGattService的类型，有SERVICE_TYPE_PRIMARY和SERVICE_TYPE_SECONDARY两种
+    val type: Int = bluetoothGattService.type
+
+    // 获取当前服务的UUID
+    val serviceUUID: UUID = bluetoothGattService.uuid
+
+    // 获取当前服务所包含的属性列表
+    val characteristics: List<BluetoothGattCharacteristic?>? = bluetoothGattService.characteristics
+
+    // 获取当前服务所包含的其他服务列表
+    val includedServices: List<BluetoothGattService?>? = bluetoothGattService.includedServices
+
+    // 根据UUID获取特定属性
+    val someCharacteristic: BluetoothGattCharacteristic? = bluetoothGattService.getCharacteristic(UUID)
+
+    // 为当前服务增加属性
+    bluetoothGattService.addCharacteristic(···)
+
+    // 为当前服务增加服务
+    bluetoothGattService.addService()(···)
+}
+```
+
+接着来看如何读取特定信息：
+
+```
+bluetoothGatt?.let {
+    // 注意readCharacteristic()被调用之后，其结果会异步传递到BluetoothGattCallback的相关回调方法
+    it.readCharacteristic(characteristic)
+
+    // 跟readCharacteristic()一样，结果也是异步传递到相关回调方法中
+    it.readDescriptor(descriptor)
+
+    // RSSI指Received Signal Strength Indication，即接收信号强度指示，主要用在基于蓝牙4.X协议的定位服务中
+    it.readRssi()
+
+    // 读取设备物理层相关信息
+    it.readPhy()
+}
+```
+
+#### 写入BLE属性
+
+```
+bluetoothGatt?.let {
+    // 启动可靠写入，表示信息写入过程是原子操作
+    it.beginReliableWrite()
+
+    // 将信息写入特定的BluetoothGattCharacteristic对象当中，有相应的异步回调
+    it.writeCharacteristic(···)
+
+    // 将信息写入特定的BluetoothGattDescriptor对象当中，同样有相应的异步回调
+    it.writeDescriptor(···)
+
+    // 放弃可靠写入，当开发者通过验证发现写入的信息不是预期的内容时可以调用
+    it.abortReliableWrite()
+
+    // 执行可靠写入，当开发者通过验证发现写入的信息符合预期时可以调用
+    it.executeReliableWrite()
+}
+```
+
+#### 接收GATT通知
+
+BLE应用通常会要求在设备上的特定特征发生变化时收到通知，而这也可以通过下面示例代码中调用`BluetoothGatt.setCharacteristicNotification()`来实现：
+
+```
+// 调用setCharacteristicNotification()后，结果同样会异步传到相应的回调方法中
+bluetoothGatt?.setCharacteristicNotification(characteristic, enabled)
+```
+
+### BLE音频
+
+前面的内容曾提到，BLE为了降低功耗，通常只会传输规模较小的数据，像音频这样比较大型的数据流一般都会切换到经典蓝牙模式当中去传输。但是从Android 13开始，Android平台会直接支持BLE的音频功能——当然设备本身也要支持BLE音频才行。
+
+根据Google官方的说法，BLE音频的使用场景大致可以分为四种：
+
+1. 具有通话功能或支持VoIP的应用，且要求通话延迟低、电量消耗低以及音频质量高；
+2. 游戏应用，要求低延迟语音传输和高保真音频播放；
+3. 多媒体播放应用，要求能让用户在系统设置中更改偏好使用的设备；
+4. 无障碍服务，主要是能让佩戴助听器的用户通过BLE音频来使用麦克风并拨打电话。
+
+Google官方在文档中还给出了一些支持BLE音频功能开发的API，但是介绍得不多，这里也不做赘述。更多详细资料，可以访问[https://developer.android.google.cn/guide/topics/connectivity/ble-audio/overview](https://developer.android.google.cn/guide/topics/connectivity/ble-audio/overview)。
