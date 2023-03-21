@@ -60,4 +60,4 @@ Simple Traversal of UDP through NAT。前者是向下兼容的，会包含后者
 
 ## Android平台上的WebRTC
 
-Google官方曾开发了针对Android平台的[WebRTC库](https://mvnrepository.com/artifact/org.webrtc/google-webrtc)，但是在2018年7月发布最后一个版本1.0.23995之后就直接弃坑了（WTF？）。不过幸运的是，Android平台的WebRTC库开发并没有就此永远终止，还是有开发者决定沿着Google开辟出来的道路继续走下去，并产出了许多令人惊喜的成功，其中就包括了后面要介绍的、目前维护最活跃的一个webRTC库——[WebRTC Android by Stream](https://github.com/GetStream/webrtc-android)。
+Google官方曾开发了针对Android平台的[WebRTC库](https://mvnrepository.com/artifact/org.webrtc/google-webrtc)，但是在2018年7月发布最后一个版本1.0.23995之后就直接弃坑了（WTF？）。不过幸运的是，Android平台的WebRTC库开发并没有就此永远终止，还是有开发者决定沿着Google开辟出来的道路继续走下去，并产出了许多令人惊喜的成功，其中就包括了后面要介绍的、目前维护最活跃的一个webRTC库——[WebRTC Android by Stream](https://github.com/GetStream/webrtc-android)。当然，中国大陆境内也有一些WebRTC产品，比如腾讯的[TRTC](https://cloud.tencent.com/document/product/647/49327)、阿里的[音视频通信RTC](https://www.aliyun.com/product/rtc)，还有声网的[Agora RTC](https://www.xfyun.cn/solutions/Real-Time-Communication-agora)等等。不过这些都主要面向商业使用，个人开发者通常不会花大价钱去购买这些服务。

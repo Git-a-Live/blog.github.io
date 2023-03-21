@@ -1,360 +1,8 @@
-NDK（Native Development Kit，原生开发套件）是Android应用开发里面一项非常重要的技术，它的主要用途有：（1）直接调用系统底层代码以提升设备性能；（2）重复使用C/C++库。NDK的大致工作流程为：首先在Android Studio中将C/C++代码编译到Native Library，然后将Native Library通过Gradle打包进APK中，最后通过JNI（Java Native Interface）框架去调用Native Library中的C/C++函数，从而执行特定功能。由于NDK是建立在JNI基础上的开发技术（主要是增加了打包和编译相关的配置），因此有必要先简单了解JNI究竟为何物。
+在大致了解什么是[JNI](Android/jni)之后，本节内容就要介绍开发者如何用NDK将C/C++源码，结合进Android项目最终输出的apk文件等制品当中。
 
-## JNI
+## 准备工作
 
-JNI是Java与其他语言（尤其是C/C++）通信的桥梁。当出现一些仅靠Java无法处理的任务时，JNI技术就可以派上用场了。比如要使用Java语言不支持的某些依赖于操作系统平台特性的功能，整合以前使用非Java语言开发的系统，或是需要调用底层硬件提升运行效率等等。需要注意的是，JNI是双向的，即Java代码可以通过JNI访问Native代码，反过来Native代码也可以通过JNI访问Java代码。
-
-由于JNI常用于Java与C/C++交互的场景，因此后面的Native代码在不做特殊说明的情况下均默认指代C/C++代码。Native代码在Android应用中的基本载体是`.so`文件，这是一种Linux下的可执行共享库文件，其文件格式称为ELF（Executable and Linking Format）文件格式。如果直接打开一个`.so`文件，那么可能会看到一堆二进制代码甚至是乱码，因此需要使用一些特定工具（比如极为昂贵的[IDA Pro](https://hex-rays.com/IDA-pro/)）才能将其反编译成具有一定可读性的内容（所以`.so`文件在某种程度上也可以起到防破解的作用）。
-
-### Native方法注册
-
-Native方法注册分为两种，一种是针对NDK开发所使用的静态注册，另一种则是针对Framework开发所使用的动态注册。值得注意的是，无论是静态注册还是动态注册，两者都是大同小异，它们都需要**一个Java类声明要用C/C++实现的Native方法，并加载`.so`文件（亦即动态库），同时还需要在若干C/C++文件中实现Native方法的具体业务逻辑**。两者的主要区别只在于：静态注册要求开发者**通过固定格式的方法名**关联起Java类当中声明的Native方法和实现具体逻辑的C/C++文件；而动态注册主要是通过`JNINativeMethod`这一[结构体](/CPP/complex?id=结构体)数组来动态添加映射关系进行关联，方法名没有强制的格式要求，比较灵活，但是用起来比静态注册要复杂。
-
-#### 静态注册
-
-以Android Studio提供的NDK模板项目为例来初步了解静态注册的方式。首先来看用于声明Native方法和加载`.so`文件的Java类，在模板项目中它是MainActivity：
-
-```
-class MainActivity : AppCompatActivity() {
-
-    private lateinit var binding: ActivityMainBinding
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-
-        // Example of a call to a native method
-        binding.sampleText.text = stringFromJNI()
-    }
-
-    /**
-     * A native method that is implemented by the 'myapplication' native library,
-     * which is packaged with this application.
-     */
-    external fun stringFromJNI(): String
-
-    companion object {
-        // Used to load the 'myapplication' library on application startup.
-        init {
-            System.loadLibrary("myapplication")
-        }
-    }
-}
-```
-
-注意MainActivity中两处重要的代码，第一处是`external fun stringFromJNI(): String`，第二处是`System.loadLibrary("myapplication")`。
-
-`external fun stringFromJNI(): String`的作用就是声明Native方法。可以看到，声明方式只是在普通方法的基础上加了修饰符`external`（Java中是`native`），它表示该方法不是在Kotlin/Java中实现的，需要在Java层以外进行访问或实现，因此使用该修饰符标记的方法跟接口或抽象类中的抽象方法一样，不需要加上方法体。
-
-`System.loadLibrary("myapplication")`的作用就是加载名为myapplication的动态库。这里需要提前说明的是，C/C++代码在被构建工具编译成`.so`文件之后，其命名格式为`lib + 自定义Native Library名 + .so`，比如本例中动态库在构建完成后得到的是"libmyapplication.so"文件。之所以要这样命名，主要是为了遵循Linux上约定俗成的规则。通过加载动态库，也就是`.so`文件，Java类中声明的Native方法才能被正常调用。在一般情况下，`System.loadLibrary()`会放在一个类的初始化方法中调用，这样在类开始加载的时候就会顺带加载动态库，避免由于写到别的方法中可能忘记调用引发问题。
-
-在大致介绍Java类之后，现在再来看一下模板项目中真正涉及到C/C++代码的部分。下面这份`native-lib.cpp`文件位于项目的`src/main/cpp`目录下，其内容为：
-
-```
-#include <jni.h>
-#include <string>
-
-extern "C" JNIEXPORT jstring JNICALL
-Java_com_example_myapplication_MainActivity_stringFromJNI(
-        JNIEnv* env,
-        jobject /* this */) {
-    std::string hello = "Hello from C++";
-    return env->NewStringUTF(hello.c_str());
-}
-```
-
-在这份C++代码文件里，由于是要实现声明在Java类中的Native方法，因此首先要导入`jni.h`这个头文件。如果打开`jni.h`，可以看到里面定义了很多内容，例如C/C++里的数据类型和Java中的数据类型的关联映射（上面的`jstring`和`jobject`都表示这种关联类型），`JNINativeMethod`、`JNIEnv`结构体等等。所有涉及到Java/Kotlin代码与C/C++代码交互的源码文件，都必须导入`jni.h`，否则会无法编译。
-
-接下来是`extern "C"`这个修饰词，它的作用是修饰一句或一段C++代码，让编译器以处理C语言代码的方式来处理修饰过的C++代码，在本例中它的作用就是防止被修饰的函数在编译之后被改变名字导致无法识别。这么做的原因是C++支持函数重载，而C语言不支持，一个函数被C语言和C++编译后在符号库中的名称自然也就不一样，比如函数`void foo(int s, int y)`被C++编译后的符号库名称可能为“_foo_int_int”，而被C语言编译后是“_foo”，**在静态注册中，必须使用该修饰词以确保Native方法在编译之后仍能被Java层代码识别引用，而动态注册可以不使用**。`extern "C"`修饰一句C++代码只要直接放在该句代码前面即可，而修饰一段C++代码就要加上一对`{}`把它们包裹起来。
-
-再来看关键字`JNIEXPORT`，它被定义在`jni.h`中，作用类似于Java中的`public`修饰符，使该函数可以被外部调用。`JNIEXPORT`在`jni.h`里面代表的是`__attribute__ ((visibility ("default")))`这样一个宏，如果不想让一个函数被外部调用，那么可以定义一个宏`__attribute__ ((visibility ("hidden")))`来修饰函数。
-
-`JNICALL`跟`JNIEXPORT`一样也是个宏定义，它用来表示函数的调用规范。需要注意的是，该关键字在不同操作平台上所代表的宏可能是不一样的，比如在Linux上它代表的是一个空的宏，而Windows里面定义为`__stdcall`。在Android项目中这个关键字可以去掉（但是没必要），而非Android项目就不能随便删除了，因为开发者不能保证项目不会在Linux以外的平台被编译。
-
-`Java_com_example_myapplication_MainActivity_stringFromJNI`这一长串的JNI函数名，通过固定格式与Java层声明的Native方法`stringFromJNI`建立起关联，这就是静态注册的关键步骤。JNI函数的命名格式为
-
-```
-Java_<PackageName>_<ClassName>_<MethodName>
-```
-
-由于`.`在C++中有特殊用途，因此都要被替换成`_`。如果上述PackageName、ClassName以及MethodName里面任何一个部分带有`_`，都要转换成`1`，相当于一个转义符。Java层在调用Native方法时，虚拟机就会根据这种命名规则来查找和调用C/C++文件里的具体实现函数。
-
-在本例中，除了函数名变长以外，JNI函数的参数列表跟Natrive方法相比还多了两个东西：一个`JNIEnv`类型指针的env参数和一个`jobject`类型的“空”参数。JNIEnv会在后面进行详细介绍，这里只是简单说明一下，它的作用是代表Java环境，通过JNIEnv*就可以对Java端的代码进行操作。`jobject`类型参数用于指代调用该Native方法的对象，可以发现它是“空”的，没有任何名称，只有旁边的注释写了一个“this”，如果是在Android Studio上，可以看到它所实际指代的对象，本例中的指代对象如下图所示：
-
-![](pics/ndk.png)
-
-为什么这个参数是“空”的？因为在Java语言里，**类当中的方法**（包括Java静态方法和Kotlin的伴生对象函数，Kotlin顶层函数不属于任何一个类）在被调用时，系统都会自动地**隐式传递**一个参数进去（所以不是在类方法内部就不能调用它），尽管这个隐式参数在Java/Kotlin里面可以直接通过`this`调用，但传递的时候它并没有被赋予名称，所以当C/C++在实现Native方法时，虽然确实需要表明该方法实际上有几个入参，但由于没有显式名称，而且一般也用不到这个`this`参数，于是就直接置空了。此外，如果开发者自行为这个“空”参数加个显式名称然后尝试调用它的方法或变量，会发现它什么都调不出来，因为`jni.h`里面根本没有为`jobject`类型的对象定义任何东西。
-
-最后就是函数内部的具体实现了，这些主要是C/C++编程的内容，因此不作展开，可以参考[C++入门](/CPP/helloworld)部分的内容。
-
-#### 动态注册
-
-静态注册根据固定格式方法名将JNI函数与Java方法关联起来，但是这很容易导致JNI函数名称过长，另一方面，如果项目中的包名、类名或方法名被更改，那么原有的JNI函数也将不得不一同随之修改名称，影响范围比较大。此外，Native方法在初次调用时，还需要虚拟机先查找一番再通过JNIEnv*指针跟JNI函数建立关联，影响效率。为了避免上述缺点，动态注册方式就出现了。动态注册的核心有两个，**一是利用`JNINativeMethod`这种结构体来记录Native方法和JNI函数的关联关系，二是在`JNI_OnLoad`函数当中直接或间接调用`env->RegisterNatives`实现注册逻辑**。
-
-首先来看`JNINativeMethod`，它被定义于`jni.h`中，具体定义如下：
-
-```
-typedef struct {
-    const char* name; // Native方法名
-    const char* signature; // Native方法的签名信息
-    void*       fnPtr; // JNI函数名
-} JNINativeMethod;
-```
-
-可以注意到，和静态注册不同，`JNINativeMethod`结构体并没有对JNI函数名做强制的格式要求，因此开发者可以直接在C/C++文件中定义和使用更为简洁的函数名，这样就避免了静态注册导致函数名过长的问题。此外，由于`JNINativeMethod`结构体不包含任何有关Java层包名和类名的信息，因此只要不改变Native方法名，无论Java层如何改动都不会影响到这些注册信息，于是就解决了静态注册不够灵活的问题。
-
-有多少个Native方法，就要构建多少个类似的结构体。通常的做法是利用一个`JNINativeMethod`类型的数组对这些结构体进行统一管理，比如Android系统Frameworks层的MediaRecorder在`android_media_MediaRecoder.cpp`里是这样组织的：
-
-```
-static const JNINativeMethod gMethods[] = {
-    {"setCamera",            "(Landroid/hardware/Camera;)V",    (void *)android_media_MediaRecorder_setCamera},
-    {"setVideoSource",       "(I)V",                            (void *)android_media_MediaRecorder_setVideoSource},
-    {"setAudioSource",       "(I)V",                            (void *)android_media_MediaRecorder_setAudioSource},
-    {"setPrivacySensitive",  "(Z)V",                            (void *)android_media_MediaRecorder_setPrivacySensitive},
-    {"isPrivacySensitive",  "()Z",                             (void *)android_media_MediaRecorder_isPrivacySensitive},
-    ··· // 其他相似的内容省略，下文同
-};
-```
-
-从上面的例子可以看到，`JNINativeMethod`结构体的Native方法名称及其签名信息都是字符串（虽然它们实际上是char指针类型的），而JNI函数名需要通过强制转换变成void指针类型。这里要注意的是，Native方法签名信息是有格式要求的，具体内容会在后面进行介绍。
-
-通过`JNINativeMethod`数组实现Native方法与JNI函数的关联和统一管理后，接下来就是要完成对这个数组的注册工作。仍以MediaRecorder的`android_media_MediaRecoder.cpp`文件为例，在定义完`JNINativeMethod`数组之后，紧接着就是定义了下面这个函数：
-
-```
-// This function only registers the native methods, and is called from
-// JNI_OnLoad in android_media_MediaPlayer.cpp
-int register_android_media_MediaRecorder(JNIEnv *env)
-{
-    return AndroidRuntime::registerNativeMethods(env,
-                "android/media/MediaRecorder", gMethods, NELEM(gMethods));
-}
-```
-
-这个函数的注释表明，该函数执行的是Native方法的注册工作，并且在位于`android_media_MediaPlayer.cpp`的`JNI_OnLoad`函数中被调用。但是`register_android_media_MediaRecorder`函数内部只是执行了一句代码，将`JNIEnv`对象指针、Native方法所属类的路径、`JNINativeMethod`数组指针以及`JNINativeMethod`数组中包含的待注册Native方法数量作为参数，传入`AndroidRuntime::registerNativeMethods`函数并获取返回值。而`AndroidRuntime::registerNativeMethods`函数又通过调用位于`JNIHelp.cpp`中的`jniRegisterNativeMethods`函数，才真正执行了`env->RegisterNatives`这句代码实现注册。也就是说，这种经过好几个中介的间接调用，跟一开始就在`register_android_media_MediaRecorder`函数或`JNI_OnLoad`函数里执行`env->RegisterNatives`的效果是一样的。
-
->注意，`env->RegisterNatives`是C++中指针对象调用方法的形式，等效于`object.method()`，所以`env->RegisterNatives`可以视为`jnienvObject.RegisterNatives`。
-
-最后再来看看`JNI_OnLoad`函数，它的大致内容如下：
-
-```
-jint JNI_OnLoad(JavaVM* vm, void* /* reserved */)
-{
-    JNIEnv* env = NULL;
-    jint result = -1;
-
-    if (vm->GetEnv((void**) &env, JNI_VERSION_1_4) != JNI_OK) {
-        ALOGE("ERROR: GetEnv failed\n");
-        goto bail;
-    }
-    assert(env != NULL);
-
-    ···
-
-    if (register_android_media_MediaRecorder(env) < 0) {
-        ALOGE("ERROR: MediaRecorder native registration failed\n");
-        goto bail;
-    }
-
-    ···
-
-    /* success -- return valid version number */
-    result = JNI_VERSION_1_4;
-
-bail:
-    return result;
-}
-
-```
-
-如果仔细阅读源码可以发现，`JNI_OnLoad`函数也不过是调用了`register_android_media_MediaRecorder`函数，并没有做更多的事情，那么实现它的意义在哪里？这里就要说明一下`JNI_OnLoad`函数的调用时机，它是在Java类调用`System.loadLibrary`方法之后被调用的，因此所有要执行注册功能的函数都必须统一集中到`JNI_OnLoad`里面运行。至此，动态注册的流程就已经结束了。整个动态注册的流程与静态注册相比复杂得多，因此需要开发者掌握一定的C/C++编程技能。
-
-### JNI重要数据结构
-
-#### 数据类型转换与方法签名
-
-Java中有`int`、`double`以及`String`等数据类型，尽管它们在Native代码中也存在相似的类型，但是还需要进行专门的映射和转换，这种工作就是在`jni.h`中完成的。下表所展示的，就是Java中的数据类型在`jni.h`中对应的定义名称以及所映射的Native类型。
-
-|Java类型|jni.h定义|C/C++类型|签名格式|
-|:-----:|:-----:|:-----:|:-----:|
-|byte|jbyte|signed char|B|
-|char|jchar|unsigned short|C|
-|double|jdouble|double|D|
-|float|jfloat|float|F|
-|int|jint|int|I|
-|short|jshort|short|S|
-|long|jlong|long long|J|
-|boolean|jboolean|unsigned char|Z|
-|void|void|void|V|
-|所有对象|jobject|class _jobject|<font color=red>L<class名称>;|
-|Class|jclass|class _jclass|<font color=red>Ljava/lang/Class;|
-|String|jstring|class _jstring|<font color=red>Ljava/lang/String;|
-|Throwable|jthrowable|class _jthrowable|<font color=red>Ljava/lang/Throwable;|
-|Object[]|jobjectArray|class _jobjectArray|<font color=red>[L<class名称>;|
-|bytep[]|jbyteArray|class _jbyteArray|[B|
-|char[]|jcharArray|class _jcharArray|[C|
-|double[]|jdoubleArray|class _jdoubleArray|[D|
-|float[]|jfloatArray|class _jfloatArray|[F|
-|int[]|jintArray|class _jintArray|[I|
-|short[]|jshortArray|class _jshortArray|[S|
-|long[]|jlongArray|class _jlongArray|[J|
-|boolean[]|jbooleanArray|class _jbooleanArray|[Z|
-
-Native方法在进行动态注册时需要构建`JNINativeMethod`结构体，里面就包含有方法签名的信息。方法签名的格式为`(参数签名格式···)返回值签名格式`，多个参数的签名格式直接并排，不需要依赖空格等符号进行分隔。比如MediaRecorder的Native方法`setCamera`，其方法签名为`(Landroid/hardware/Camera;)V`，那么在Java类MediaRecorder.java里对应的就是`public native void setCamera(Camera c);`。若某个Native方法为`fun foo(a: Int, b: Flaot, c: String): Demo`，且Demo类的定位路径为`com.example.app.Demo`，那么其方法签名就应当是`(IFS)Lcom/example/app/Demo;`。<font color=red>注意，这里不需要考虑`this`这个隐参数，显式参数有几个就填几个签名格式。</font>
-
-如果不想因为手动编辑方法签名可能导致错误，可以先执行`javac .java文件所在路径`命令，在同一路径下生成一份对应的`.class`文件，或是直接在Android Studio编译完项目之后的`app/build`目录下查找已经输出的`.class`文件，然后再执行`javap -s -p .class文件所在路径`命令，最后终端会打印出这个`.class`文件所对应的类里面所有的方法、成员以及它们各自的描述信息。
-
-仍以Android Studio提供的NDK模板项目为例，在编译完成之后，在`build/tmp/kotlin-classes`目录下就可以找到`MainActivity.class`文件，然后复制其**绝对路径**，到终端里执行`javap`的指令，最后就会得到类似于下面的打印结果：
-
-```
-Compiled from "MainActivity.kt"
-public final class com.example.myapplication.MainActivity extends androidx.appcompat.app.AppCompatActivity {
-  public static final com.example.myapplication.MainActivity$Companion Companion;
-    descriptor: Lcom/example/myapplication/MainActivity$Companion;
-  private com.example.myapplication.Data Binding.ActivityMainBinding binding;
-    descriptor: Lcom/example/myapplication/Data Binding/ActivityMainBinding;
-  public com.example.myapplication.MainActivity();
-    descriptor: ()V
-
-  protected void onCreate(android.os.Bundle);
-    descriptor: (Landroid/os/Bundle;)V
-
-  public final native java.lang.String stringFromJNI();
-    descriptor: ()Ljava/lang/String;
-
-  static {};
-    descriptor: ()V
-}
-```
-
-对于类当中的成员（field），descriptor部分的信息会展示其类型，而类方法则是展示其方法签名。通过这种方式拿到的方法签名是最为稳妥的，而且也更容易了解到各种各样的签名格式。
-
-#### JNIEnv
-
-JNIEnv是Java环境在Native世界的代表，通过JNIEnv*这一指针就可以在Native世界中访问Java世界的代码，包括调用Java方法和操作Java变量及对象等。JNIEnv只在创建它的线程中有效，无法跨线程传递，因此不同线程的JNIEnv是彼此独立的。在C语言和C++下，JNIEnv的定义是不同的，这里继续查看`jni.h`文件里的内容：
-
-```
-#if defined(__cplusplus)
-// C++中JNIEnv的类型
-typedef _JNIEnv JNIEnv;
-typedef _JavaVM JavaVM;
-#else
-// C中JNIEnv的类型
-typedef const struct JNINativeInterface* JNIEnv;
-typedef const struct JNIInvokeInterface* JavaVM;
-#endif
-```
-
-先来看JNIEnv在C++环境下的定义：
-
-```
-/*
- * C++ object wrapper.
- *
- * This is usually overlaid on a C struct whose first element is a
- * JNINativeInterface*.  We rely somewhat on compiler behavior.
- */
-struct _JNIEnv {
-    /* do not rename this; it does not seem to be entirely opaque */
-    const struct JNINativeInterface* functions;
-
-#if defined(__cplusplus)
-
-    jint GetVersion()
-    { return functions->GetVersion(this); }
-
-    jclass DefineClass(const char *name, jobject loader, const jbyte* buf,
-        jsize bufLen)
-    { return functions->DefineClass(this, name, loader, buf, bufLen); }
-
-    jclass FindClass(const char* name)
-    { return functions->FindClass(this, name); }
-
-    jmethodID FromReflectedMethod(jobject method)
-    { return functions->FromReflectedMethod(this, method); }
-
-    jfieldID FromReflectedField(jobject field)
-    { return functions->FromReflectedField(this, field); }
-
-    ··· // 限于篇幅省略部分内容
-
-    /* added in JNI 1.6 */
-    jobjectRefType GetObjectRefType(jobject obj)
-    { return functions->GetObjectRefType(this, obj); }
-#endif /*__cplusplus*/
-};
-```
-
-`_JNIEnv`是一个结构体，里面最重要的工作就是调用`JNINativeInterface`提供的方法。`JNIEnv`封装了一系列`JNINativeInterface`方法并对外提供调用，常用的`JNIEnv`方法有：
-
-|函数名称|用途|
-|:-----:|:-----:|
-|FindClass|找到Java层中指定名称的类|
-|GetFieldID|获得Java层中的字段|
-|GetMethodID|获得Java层中的方法|
-|GetStaticMethodID|获得Java层中的静态方法|
-|NewObject|创建Java类中的对象|
-|NewString|创建Java类中的String对象|
-|NewArray|创建类型为Type的数组对象|
-|GetField|获得类型为Type的字段|
-|SetField|设置类型为Type的字段|
-|CallMethod|调用返回值类型为Type的类方法|
-|CallStaticMethod|调用返回值类型为Type的静态方法|
-
-最后再来看一下`JNINativeInterface`结构体的定义：
-
-```
-/*
- * Table of interface function pointers.
- */
-struct JNINativeInterface {
-    void*       reserved0;
-    void*       reserved1;
-    void*       reserved2;
-    void*       reserved3;
-
-    jint        (*GetVersion)(JNIEnv *);
-
-    jclass      (*DefineClass)(JNIEnv*, const char*, jobject, const jbyte*,
-                        jsize);
-    jclass      (*FindClass)(JNIEnv*, const char*);
-
-    jmethodID   (*FromReflectedMethod)(JNIEnv*, jobject);
-    jfieldID    (*FromReflectedField)(JNIEnv*, jobject);
-    /* spec doesn't show jboolean parameter */
-    jobject     (*ToReflectedMethod)(JNIEnv*, jclass, jmethodID, jboolean);
-
-    ···
-
-    /* added in JNI 1.6 */
-    jobjectRefType (*GetObjectRefType)(JNIEnv*, jobject);
-};
-```
-
-`JNINativeInterface`结构体中定义了许多和JNIEnv结构体对应的函数指针，通过这些函数指针的定义，就能够定位到虚拟机中的JNI函数表，从而实现JNI层在虚拟机中的函数调用，进而实现Java世界的方法调用。
-
-#### JNI引用类型
-
-和Java的引用类型一样，JNI也有引用类型，分别是**本地引用**（Local References），**全局引用**（Global Refenrences）以及**弱全局引用**（Weak Global References）。
-
-+ **本地引用**
-
-本地引用是JNI中最常见的引用类型，比如`JNIEnv`提供的函数所返回的引用基本上都是本地引用。本地引用的主要特点有（1）当JNI函数返回时就会被自动释放；（2）只在创建它的线程中有效，不能跨线程使用；（3）受JVM管理。
-
-+ **全局引用**
-
-全局引用和本地引用大相径庭，其主要特点有（1）不会被自动释放，必须手动操作，且不会被GC回收，因为不受JVM管理；（2）可以跨线程使用。全局引用类型的对象通常需要开发者在代码中手动调用`JNIEnv.NewGlobalRef`函数来创建，以及`JNIEnv.DeleGlobalRef`函数来释放清理。
-
-+ **弱全局引用**
-
-弱全局引用跟全局引用相比有一个不同点，即可以被GC回收，回收之后会指向NULL。弱全局引用类型的对象通常使用`JNIEnv.NewWeakGlobalRef`函数来创建，以及`JNIEnv.DeleteWeakGlobalRef`函数来释放。在使用弱全局引用对象的时候，往往还需要先调用`JNIEnv.IsSameObject`函数来判断该对象是否已被GC回收，没有被回收才能进行后续的调用。
-
-## NDK编译构建
-
-### 准备工作
-
-C/C++源码在不同的构建方式下可能会输出不同格式的构建结果，比如`.so`、`.exe`或者`.dll`等。对于NDK开发来说，就是要利用专门的构建工具将C/C++源码编译生成`.so`文件。NDK开发的主要构建方式有CMake和ndk-build，两者的相同点是都要编写[Makefile](https://makefiletutorial.com/)文件——正如Gradle之于Android项目，Maven之于Java项目那样，Makefile就是C/C++项目的Gradle和Maven。理解这一点，才能准确把握Makefile的使用方式。
+C/C++源码在不同的构建方式下可能会输出不同格式的构建结果，比如`.so`、`.exe`或者`.dll`等。对于NDK开发来说，就是要利用专门的构建工具将C/C++源码编译生成`.so`文件。NDK开发的主要构建方式有CMake和ndk-build，两者的相同点是都要编写脚本文件，不同点就是它们编写的脚本类型完全不一样。
 
 NDK开发首先必须要安装NDK工具。在Android Studio Arctic Fox（2020.3.1 Patch 3）版本上，通过File - Settings... - Appearance & Behavior - System Settins - Android SDK - SDK Tools可以查看和下载NDK工具，如下图所示：
 
@@ -364,77 +12,331 @@ NDK开发首先必须要安装NDK工具。在Android Studio Arctic Fox（2020.3.
 
 ![](pics/ndk3.png)
 
-### 构建Native Libray
+## 构建Native Libray
 
-#### 基于CMake的构建方式
+目前构建Native Library主要有两种构建方式，一种是基于CMake脚本，另一种则是基于ndk-build构建系统。需要注意的是，在这两种方式之外，Google其实还提供了一个实验性的C/C++构建系统——[Ninja](https://developer.android.google.cn/studio/build/cxx-ninja)。这是一个可以自定义的C/C++构建系统，虽然官方对其介绍不多，但是值得关注（前提是Google不会直接弃坑）。由于Ninja并不是本节内容的重点，所以接下来的内容将主要对前面两种构建方式进行介绍。当然，如果未来Ninja成为Google主推的C/C++构建系统，那么本文也会及时更新以反映这一变化。
+
+### 基于CMake脚本构建
+
+CMake脚本的优势在于，使用很少的脚本文件和命令就能完成NDK构建，而且在JetBrains公司针对C/C++开发的一款IDE——[CLion](https://www.jetbrains.com/clion/)中也使用CMake作为构建系统，因此学习CMake的使用，至少能通吃JetBrains家的三款IDE。最重要的是，CMake是跨平台的。
+
+但CMake也需要开发者对CMake脚本有相当程度的了解才能熟练运用，这里只是先介绍一些Android NDK开发中基本的CMake配置，更多详细内容可以参考[Google官方文档](https://developer.android.google.cn/studio/projects/configure-cmake)和[CMake官方教程](https://cmake.org/cmake/help/latest/guide/tutorial/index.html)。
+
+#### 创建CMake构建脚本
 
 在基于CMake的构建方式下，编写好的C/C++源码文件需要放在module的`src/main/cpp`目录当中，然后在同一路径下创建名为`CMakeLists.txt`的文本文件，参照Android Studio提供的NDK示例项目：
 
 ![](pics/ndk4.png)
 
->注意，CMake的脚本文件必须命名为“CMakeLists”，而且文件格式为`.txt`。如果是通过Android Studio窗口新建C++项目，那么IDE会自动完成上述步骤。
+>注意，CMake的脚本文件必须命名为`CMakeLists`，而且文件格式为`.txt`。如果是通过Android Studio窗口新建C++项目，那么IDE会自动完成上述步骤。尽管脚本可以放在项目任何位置，但是为了方便，通常会将脚本跟源码文件放在同一个目录下，就和IDE默认的操作一样。
 
-[Google官方指南中](https://developer.android.google.cn/studio/projects/configure-cmake?hl=zh-cn)介绍有如何在`CMakeLists.txt`里编写CMake脚本内容，最基本的配置参考如下：
+#### 配置CMake脚本
+
+[Google官方指南中](https://developer.android.google.cn/studio/projects/configure-cmake?hl=zh-cn)介绍有如何在`CMakeLists.txt`里编写CMake脚本内容，最基本的配置参考如下（英文注释已经翻译）：
 
 ```
-# Sets the minimum version of CMake required to build your native library.
-# This ensures that a certain set of CMake features is available to
-# your build.
+# 设置构建Native Library所需CMake工具的最低版本，以确保能够使用一些特定的CMake功能
+cmake_minimum_required(VERSION X.Y.Z)
 
-cmake_minimum_required(VERSION X.X.X)
-
-# Specifies a library name, specifies whether the library is STATIC or
-# SHARED, and provides relative paths to the source code. You can
-# define multiple libraries by adding multiple add_library() commands,
-# and CMake builds them for you. When you build your app, Gradle
-# automatically packages shared libraries with your APK.
-
-add_library( # Specifies the name of the library. Uses lowercase letters.
+# 指定Native Library的名称和属性（STATIC或SHARED），并提供C/C++源码文件的相对路径。
+# 开发者可以通过多次调用add_library来构建多个Native Library，CMake在构建时会将它们全部包含进来。
+# 项目通过Gradle执行编译打包任务时，这些共享的Native Library也会被自动打包进apk文件里。
+# CMake编译出来的so文件，命名格式为“lib<your_library_name>.so”，也就是自动加一个“lib”前缀。
+add_library( # 指定库名的时候要用下划线和小写字母来命名
              name_of_your_library
 
-             # Sets the library as a shared library. Uses uppercase letters.
+             # 设置Native Library为静态（static）库或者共享（shared）库时要用大写字母
              SHARED
 
-             # Provides a relative path to your source file(s).
+             # 此处提供源码文件的相对路径
              src/main/cpp/xxx.cpp
              src/main/cpp/yyy.cpp
              src/main/cpp/zzz.cpp )
 
-# Specifies a path to native header files.
-
+# 指定头文件所在路径，以便CMake在编译时能够找到头文件
 include_directories(src/main/cpp/directory_of_header_files/)
 ```
 
-Android NDK自身也提供了一系列Native API和Native库，如果要在项目中调用它们，可以在`CMakeLists.txt`里面参照以下方式进行添加：
+> 注意，调用`add_executable`命令可以将C/C++源码编译成`.exe`文件，不过这是可选操作——因为创建成`.so`文件并将它们打包到apk里面已经可以满足大多数项目的要求了。此外，如果开发者重命名或移除了CMake脚本中的库，需要重新同步Gradle或是清理项目。
+
+##### 添加NDK API
+
+Android NDK自身也提供了一系列Native API和Native Library，如果要在项目中调用它们，可以在`CMakeLists.txt`里面参照以下方式进行添加：
 
 ```
-# Searches for a specified prebuilt library and stores the path as a
-# variable. Because CMake includes system libraries in the search path by
-# default, you only need to specify the name of the public NDK library
-# you want to add. CMake verifies that the library exists before
-# completing its build.
-
-find_library( # Defines the name of the path variable that stores the
-              # location of the NDK library. Uses lowercase letters.
+# 将预构建好的Native Library所在的搜索路径保存到一个变量中，变量名由开发者自己定义。
+# 由于这些Android平台提供的Native Library已经位于CMake默认的搜索路径中，开发者只需要指定要添加的库名即可。
+# CMake会在完成构建之前，检验开发者指定的Native Library是否存在。
+find_library( # 为存储Native Library路径的变量自定义一个名称，使用小写字母
               log-lib
 
-              # Specifies the name of the NDK library that
-              # CMake needs to locate. Uses lowercase letters.
+              # 指定Native Library的库名，以便CMake进行搜索定位，使用小写字母
               log )
 
-# Specifies libraries CMake should link to your target library. You
-# can link multiple libraries, such as libraries you define in this
-# build script, prebuilt third-party libraries, or system libraries.
-
-target_link_libraries( # Specifies the target library.
+# 下面的命令用于指定CMake关联到开发者自己native库的系统库，以便开发者自己的Native Library能够调用系统库里的函数
+target_link_libraries( # 指定目标Native Library
                        name_of_your_library
 
-                       # Links the log library to the target library.
+                       # 将指定的Native Library关联到目标Native Library
                        ${log-lib} )
 ```
 
-更多配置可以参考Google官方指南，这里只对最基本的配置进行介绍。如果对CMake工具还想做进一步了解，可以访问[CMake命令的官方文档](https://cmake.org/cmake/help/latest/manual/cmake-commands.7.html)。
+NDK还以源码形式包含了一些库，这些库也可以关联进来，如下面所示：
 
-在编写好`CMakeLists.txt`之后，还要将Native库关联到Gradle中以便在编译时
+```
+# 首先以静态库的形式添加进来
+add_library( app-glue
+             STATIC
+             ${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c )
 
-#### 基于NDK-build的构建方式
+# 然后调用target_link_libraries进行关联
+target_link_libraries( native-lib 
+                       app-glue 
+                       ${log-lib} )
+```
+
+##### 添加其他预构建库
+
+添加预构建库的步骤与添加其他要构建的原生库的步骤相似。不过由于这些库已被构建，因此开发者需要使用`IMPORTED`标志来告知CMake不需要编译它们，只要将此库导入到项目中即可：
+
+```
+add_library( imported-lib
+
+             # 预构建库使用的库类型为SHARED
+             SHARED
+
+             # 导入必须使用IMPORTED标志取代源码文件的路径
+             IMPORTED )
+```
+
+接着，使用`set_target_properties()`命令指定库的路径，如下面代码所示。某些库会针对特定的CPU架构或应用二进制接口 (ABI) 提供单独的软件包，并将其整理到单独的目录中。此方法既有助于库充分利用特定的CPU架构，又能让开发者只使用所需的库版本。
+
+如果开发者打算向CMake构建脚本添加库的多个ABI版本，但是又不想为每个版本重复编写相似的多个命令，可以使用`ANDROID_ABI`路径变量（此变量使用的是NDK支持的一组默认ABI），或是手动配置Gradle，只使用一组特定的ABI。
+
+```
+add_library(...)
+set_target_properties( # 指定要导入的预构建库
+                       imported-lib
+
+                       # 指定开发者想要定义的一些参数
+                       PROPERTIES IMPORTED_LOCATION
+
+                       # 指定要导入的预构建库的路径
+                       imported-lib/src/${ANDROID_ABI}/libimported-lib.so )
+```
+
+最后，为了让CMake能够在编译时找到预构建库里的头文件，还需要使用`include_directories()` 命令：
+
+```
+add_library(···)
+set_target_properties(···)
+
+include_directories( imported-lib/directory_of_header_files/ )
+```
+
+##### 包含其他CMake项目
+
+如果开发者想要构建多个CMake项目，并在Android项目中包含这些CMake项目的输出，那么可以使用一个`CMakeLists.txt`文件（即关联到Gradle的那个文件）作为**顶级 CMake构建脚本**，然后添加其他CMake项目作为其依赖项。
+
+以下代码将展示一个顶级CMake构建脚本如何会使用`add_subdirectory()`命令，将另一个`CMakeLists.txt`文件指定为构建依赖项，然后关联其输出，就像直接处理任何其他预构建库一样：
+
+```
+# 设置被依赖的CMake项目源码文件所在路径，此处例子用了一个名为lib_src_DIR的变量保存该路径
+set( lib_src_DIR ../gmath )
+
+# 设置被依赖的CMake项目输出制品的路径，此处例子用了一个名为lib_build_DIR的变量保存该路径
+set( lib_build_DIR ../gmath/outputs )
+
+# 此处用了一个MAKE_DIRECTORY的变量保存
+file(MAKE_DIRECTORY ${lib_build_DIR})
+
+# 添加被依赖的CMake项目的CMakeLists.txt作为依赖项
+add_subdirectory( # 指定被依赖的CMake项目的CMakeLists.txt文件所在路径
+                  ${lib_src_DIR}
+
+                  # 指定存放输出制品的路径
+                  ${lib_build_DIR} )
+
+# 将被依赖的CMake项目的输出制品作为预构建库导入当前项目中
+add_library( lib_gmath STATIC IMPORTED )
+set_target_properties( lib_gmath PROPERTIES IMPORTED_LOCATION
+                       ${lib_build_DIR}/${ANDROID_ABI}/lib_gmath.a )
+include_directories( ${lib_src_DIR}/include )
+
+# 关联上面配置的预构建库
+target_link_libraries( native-lib ... lib_gmath )
+```
+
+### 基于ndk-build构建
+
+ndk-build跟CMake一样都是采用脚本来编译Native Library，但是ndk-build构建方式通常出现在**早期**进行NDK开发的Android项目中（以及只会用ndk-build这一种构建工具的开发者的项目里面）。换句话说，现在CMake是NDK开发的主流构建工具——不信的话可以在Android Studio中新建一个Native项目，看看IDE默认提供的构建工具是什么。
+
+ndk-build使用两个脚本：`Android.mk`和`Application.mk`。这两个都是[Makefile](https://makefiletutorial.com/)文件——这种文件就是一般意义上真正用来执行C/C++源码编译工作的核心——而且通常都位于`src/main/jni`目录当中。实际上，运行ndk-build脚本相当于执行以下命令：
+
+```
+$GNUMAKE -f <ndk>/build/core/build-local.mk
+<parameters>
+```
+
+$GNUMAKE指向GNU Make 3.81或更高版本，<ndk>则指向NDK安装目录。开发者可以根据这些信息从其他Shell脚本或是自己编写的Make文件中调用ndk-build构建工具。
+
+更多有关ndk-build的详细资料，可以参考[Google官方文档](https://developer.android.google.cn/ndk/guides/ndk-build)。
+
+#### `Android.mk`脚本
+
+按照Google官方文档的说法，`Android.mk`脚本的主要作用就是**为构建系统描述开发者项目中的源文件和共享库**，定义那些`Application.mk`脚本、构建系统以及环境变量所**未曾定义的项目级设置**，或是覆盖/替换掉特定模块的项目级设置。
+
+`Android.mk`脚本的语法允许开发者将源文件组织成模块，比如一个静态库、共享库或是独立的可执行文件。每个`Android.mk`脚本当中都可以定义若干个模块，并且不同模块间可能会用到相同的源文件。构建系统只会将共享库打包进apk文件中，而静态库是可以生成共享库的。
+
+##### 基本结构
+
+`Android.mk`脚本首先必须定义`LOCAL_PATH`变量，如下面所示。该变量表示源文件在开发树（development tree）中的位置，示例中的**宏函数**`my-dir`将返回`Android.mk`所在的路径。
+
+```
+LOCAL_PATH := $(call my-dir)
+```
+
+接着声明`CLEAR_VARS`变量，这个变量的值由构建系统提供，指向一个特殊的GNU Makefile，用于清理`LOCAL_PATH`以外的`LOCAL_XXX`变量。需要注意的是，由于构建系统是在单一GNU Make执行任务的上下文（里面所有变量都是全局变量）中解析所有的构建控制文件，该变量的值必须保留。在每个模块被声明之前，开发者都必须声明（或重新声明）`CLEAR_VARS`，以清理先前定义过的`LOCAL_XXX`变量。
+
+```
+include $(CLEAR_VARS)
+```
+
+下一行是定义`LOCAL_MODULE`变量，用于存储要构建的模块名。每定义一个模块，都必须声明一次该变量，并且不同模块使用的名称不能重复，也不能包含空格。构建系统在生成`.so`库时，会自动为模块名添加`lib`前缀——如果模块名一开始就用了`lib`前缀，那么构建时就不会再添加。
+
+```
+LOCAL_MODULE := hello-jni
+```
+
+紧接着是定义`LOCAL_SRC_FILES`变量，用于指示要参与构建的C/C++源文件列表：
+
+```
+LOCAL_SRC_FILES := hello-jni.c
+```
+
+最后是调用`BUILD_SHARED_LIBRARY`变量，指示构建系统将所有源文件连接到一起。这个变量指向一个GNU Makefile脚本，用于收集最近一次`include`操作以来开发者所定义的所有`LOCAL_XXX`变量的信息，从而确定要构建的内容和构建方式。
+
+```
+include $(BUILD_SHARED_LIBRARY)
+```
+
+经过上面步骤，一个`Android.mk`脚本的基本结构大致如下：
+
+```
+LOCAL_PATH := $(call my-dir)
+
+#################################
+                                #
+include $(CLEAR_VARS)           #
+                                #
+LOCAL_MODULE := hello-jni       #
+                                #
+LOCAL_SRC_FILES := hello-jni.c  #
+                                #
+#################################
+
+include $(BUILD_SHARED_LIBRARY)
+```
+
+注意上面用`#`字符包围的语句，在`Android.mk`脚本当中就是用于定义一个模块的，它们可以重复出现，从而定义多个模块。而此范围之外的其他语句只能出现一次，且顺序固定。
+
+##### 脚本语法
+
+在介绍`Android.mk`脚本能用到哪些变量和函数宏之前，有必要先了解一下构建系统所保留的一些变量名和函数宏名：
+
++ 以`LOCAL_`、`TARGET_`、`BUILD_`、`PREBUILD_`、`PRIVATE_`、`NDK_`以及`APP`开头的所有变量名称；
++ 小写名称，例如`my-dir`。
+
+如果开发者需要在`Android.mk`脚本中定义自己的变量名，最稳妥的方案就是使用大写和下划线进行命名，且名称中不带有上述开头，比如使用`MY_`作为名称前缀。下面内容只是简单整理了一些脚本语法，更多详细信息可以访问[https://developer.android.google.cn/ndk/guides/android_mk](https://developer.android.google.cn/ndk/guides/android_mk)。
+
+###### include变量
+
+include变量是指调用时均采用`include $(XXX)`语法的变量（注意要跟函数宏区分），具体如下表所示：
+
+|变量名|用途描述|
+|:-----:|:-----:|
+|`CLEAR_VARS`|用于清理除`LOCAL_PATH`外的所有`LOCAL_XXX`变量|
+|`BUILD_EXECUTABLE`|收集开发者在`LOCAL_XXX`变量中提供的模块所有信息，确定如何根据指定的源文件构建**目标可执行文件**|
+|`BUILD_SHARED_LIBRARY`|收集开发者在`LOCAL_XXX`变量中提供的模块所有信息，确定如何根据指定的源文件构建**目标`.so`文件**|
+|`BUILD_STATIC_LIBRARY`|收集开发者在`LOCAL_XXX`变量中提供的模块所有信息，确定如何根据指定的源文件构建**目标`.a`文件**|
+|`PREBUILT_SHARED_LIBRARY`|使用该变量进行构建时，`LOCAL_SRC_FILES`变量必须指向一个已经构建好的`.so`文件|
+|`PREBUILT_STATIC_LIBRARY`|使用该变量进行构建时，`LOCAL_SRC_FILES`变量必须指向一个已经构建好的`.a`文件|
+
+> 注意，除`CLEAR_VARS`之外，其余include变量只能在`Android.mk`脚本的最后一行调用。
+
+###### 目标信息变量
+
+目标信息变量都是以`TARGET_`开头的变量，其调用语法为：
+
+```
+ifeq ($(TARGET_XXX),api_level_or_cpu_arch)
+    # ... do something ...
+endif
+```
+
+可以发现，目标信息变量用在条件控制的执行流程当中。
+
+下表是常用的目标信息变量：
+
+|变量名|用途描述|
+|:-----:|:-----:|
+|`TARGET_ARCH`|构建时限定**CPU架构**条件，其值为`arm`、`arm64`、`x86`或`x86_64`其中之一|
+|`TARGET_PLATFORM`|构建时限定**API level**条件，其值格式为`android-xx`，例如`android-22`表示API level 22的Android 5.1|
+|`TARGET_ARCH_ABI`|构建时限定**ABI**条件，其值为`armeabi-v7a`、`arm64-v8a`、`x86`或`x86_64`其中之一|
+|`TARGET_ABI`|构建时**同时限定API level与ABI**条件，格式为`android-xx-ABI代号`，如`android-22-arm64-v8a`表示在Android 5.1上运行的64位ARM设备|
+
+> 关于ABI的更多详细资料，可以参考[https://developer.android.google.cn/ndk/guides/abis](https://developer.android.google.cn/ndk/guides/abis)。
+
+###### 模块描述变量
+
+模块描述变量就是以`LOCAL_`开头的一系列变量，用于描述模块。这些变量的调用语法为`LOCAL_XXX := ···`。具体有哪些变量详见下表：
+
+|变量名|用途描述|
+|:-----:|:-----:|
+|`LOCAL_PATH`|指定当前文件的路径，必须在`Android.mk`脚本开头定义此变量，且定义操作只需一次|
+|`LOCAL_MODULE`|存储模块名称，指定的名称在所有模块名称中必须唯一，并且不得包含任何空格|
+|`LOCAL_MODULE_FILENAME`|**可选变量**，用于替换构建系统为其生成的文件默认使用的名称（`libxxx`），通常没必要用，而且也不能替换文件路径或文件扩展名|
+|`LOCAL_SRC_FILES`|指示构建系统生成模块时所用的源文件列表，通常建议使用相对路径，并且路径分隔符必须使用`/`。若要一次性指示多个源文件，各文件之间使用`\`进行分隔|
+|`LOCAL_CPP_EXTENSION`|**可选变量**，为C++源文件指定`.cpp`以外的文件扩展名，比如`.cxx`，可参考[Google官方文档](https://developer.android.google.cn/ndk/guides/android_mk#local_cpp_extension)了解具体用法|
+|`LOCAL_CPP_FEATURES`|**可选变量**，用于指明代码依赖于何种特定的C++功能，可参考[Google官方文档](https://developer.android.google.cn/ndk/guides/android_mk#local_cpp_features)了解具体用法|
+|`LOCAL_C_INCLUDES`|**可选变量**，指定相对于NDK`root`目录的路径列表，以便在编译所有源文件时添加到`include`搜索路径中，可参考[Google官方文档](https://developer.android.google.cn/ndk/guides/android_mk#local_c_includes)了解具体用法|
+|`LOCAL_CFLAGS`|**可选变量**，设置在构建C/C++源文件时构建系统要传递的编译器标记，可参考[Google官方文档](https://developer.android.google.cn/ndk/guides/android_mk#local_cflags)了解具体用法|
+|`LOCAL_CPPFLAGS`|**可选变量**，用于在**只构建C++源文件**的情形中传递一组可选编译器标记|
+|`LOCAL_STATIC_LIBRARIES`|用于存储当前模块依赖的静态库模块列表。若当前模块是共享库或可执行文件，此变量将强制把这些库链接到生成的二进制文件，否则仅用于指示一些信息|
+|`LOCAL_SHARED_LIBRARIES`|用于列出此模块在运行时依赖的共享库模块。此信息在链接时是必需的，用于将其他相应信息嵌入到生成的文件中|
+|`LOCAL_WHOLE_STATIC_LIBRARIES`|`LOCAL_STATIC_LIBRARIES`的变体，表示链接器应将相关的库模块视为完整归档，可参考[Google官方文档](https://developer.android.google.cn/ndk/guides/android_mk#local_whole_static_libraries)了解具体用法|
+|`LOCAL_LDLIBS`|用于列出在构建共享库或可执行文件时使用的**额外**链接器标记，可参考[Google官方文档](https://developer.android.google.cn/ndk/guides/android_mk#local_ldlibs)了解具体用法|
+|`LOCAL_LDFLAGS`|用于列出构建系统在构建共享库或可执行文件时使用的**其他**链接器标记，可参考[Google官方文档](https://developer.android.google.cn/ndk/guides/android_mk#local_ldflags)了解具体用法|
+|`LOCAL_ALLOW_UNDEFINED_SYMBOLS`|此变量默认设为false，且**对静态库无效**。若构建系统在尝试构建共享库时遇到未定义的引用，将会抛出“未定义的符号”，可用来捕获源代码中的错误|
+|`LOCAL_ARM_MODE`|将此变量定义为`arm`，会强制构建系统以32位arm模式生成模块的对象文件。可参考[Google官方文档](https://developer.android.google.cn/ndk/guides/android_mk#local_arm_mode)了解具体用法|
+|`LOCAL_ARM_NEON`|仅在针对`armeabi-v7a`进行编译时才有意义。可参考[Google官方文档](https://developer.android.google.cn/ndk/guides/android_mk#local_arm_neon)了解具体用法|
+|`LOCAL_DISABLE_FORMAT_STRING_CHECKS`|默认情况下，构建系统会在编译代码时保护格式字符串，若`printf`函数中使用了非常量格式字符串，就会强制引发编译器错误。**此保护默认启用**，不建议关闭|
+|`LOCAL_EXPORT_CFLAGS`|用于记录一组C/C++编译器标记，可参考[Google官方文档](https://developer.android.google.cn/ndk/guides/android_mk#local_export_cflags)了解具体用法|
+|`LOCAL_EXPORT_CPPFLAGS`|与`LOCAL_EXPORT_CFLAGS`相同，但仅适用于C++标记|
+|`LOCAL_EXPORT_C_INCLUDES`|与`LOCAL_EXPORT_CFLAGS`相同，但仅用于C include路径|
+|`LOCAL_EXPORT_LDFLAGS`|与`LOCAL_EXPORT_CFLAGS`相同，但适用于链接器标记|
+|`LOCAL_EXPORT_LDLIBS`|与`LOCAL_EXPORT_CFLAGS`相同，用于指示构建系统将特定系统库的名称传递到编译器。可参考[Google官方文档](https://developer.android.google.cn/ndk/guides/android_mk#local_export_ldlibs)了解具体用法|
+|`LOCAL_SHORT_COMMANDS`|当模块有很多源文件和依赖的静态库或共享库时，将此变量设置为true，可强制构建系统将@语法用于包含中间对象文件或链接库的归档。可参考[Google官方文档](https://developer.android.google.cn/ndk/guides/android_mk#local_short_commands)了解具体用法|
+|`LOCAL_THIN_ARCHIVE`|构建静态库时将此变量设置为true，可生成一个不含对象文件，而只包含它通常包含的实际对象的文件路径库的文件，即瘦归档。可参考[Google官方文档](https://developer.android.google.cn/ndk/guides/android_mk#local_thin_archive)了解具体用法|
+|`LOCAL_FILTER_ASM`|用于定义一个shell命令，供构建系统用于过滤根据开发者为`LOCAL_SRC_FILES`指定的文件所提取或生成的**汇编文件**。可参考[Google官方文档](https://developer.android.google.cn/ndk/guides/android_mk#local_filter_asm)了解具体用法|
+
+###### NDK函数宏
+
+宏是C/C++当中一个非常重要的概念，它本身是一种预处理指令，作用是用一个标识符替换源代码中的字符串文本。函数宏顾名思义，就是用来标识一个函数的，其调用语法为`$(call xxx)`。下表列出了NDK提供的一些函数宏：
+
+|函数宏|用途描述|
+|:-----:|:-----:|
+|`my-dir`||
+|`all-subdir-makefiles`|返回位于当前`my-dir`路径下所有子目录中的`Android.mk`文件列表。默认情况下，NDK只在`Android.mk`脚本所在目录中进行查找|
+|`this-makefile`|返回当前Makefile（构建系统从中调用函数）的路径|
+|`parent-makefile`|返回inclusion tree中父级Makefile的路径，包含当前Makefile的路径|
+|`grand-parent-makefile`|返回inclusion tree中祖父级Makefile的路径，包含当前父级Makefile的路径|
+|`import-module`|按模块名称来查找和include指定模块的`Android.mk`文件，调用方式为`$(call import-module,<name>)`，其中\<name>部分代表的是模块名称当中包含的某种标记|
+
+#### `Application.mk`脚本
+
+##### 基本结构
+
+##### 脚本语法
+
+## 关联Gradle
