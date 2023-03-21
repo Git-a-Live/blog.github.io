@@ -335,8 +335,129 @@ endif
 
 #### `Application.mk`脚本
 
-##### 基本结构
+`Application.mk`用于指定ndk-build的**项目级**设置。跟`Android.mk`相比，它的语法实际上要简单得多，其中包含的许多参数也具有**模块等效项**，例如，`Application.mk`里的`APP_CFLAGS`对应于`Android.mk`里的`LOCAL_CFLAGS`。此外，无论何种情况下，针对模块的选项（也就是`Android.mk`脚本里面的配置）都具备高优先级，可以覆盖应用级选项（也就是`Application.mk`里面的配置）。在两者同时使用等效标记的情况下，针对模块的标记将后出现在命令行中，因此它们可能会替换掉项目级设置。
 
-##### 脚本语法
+由于`Application.mk`脚本的语法非常简单（跟`Android.mk`的[目标信息变量](Android/ndk?id=目标信息变量)用法基本一样），所以这里只列出了脚本中用到的变量，并对其用途做一些简单介绍：
+
+|变量名|用途说明|
+|:-----:|:-----:|
+|`APP_ABI`|用于指定构建系统要生成代码的ABI。默认情况下，NDK会为所有未被弃用的ABI生成代码，详情可参阅[Google官方文档](https://developer.android.google.cn/ndk/guides/application_mk#app_abi)|
+|`APP_ASFLAGS`|用于声明要传递给项目中每个汇编源文件（`.s`和`.S`文件）编译器的标记|
+|`APP_ASMFLAGS`|用于声明所有[YASM](http://yasm.tortall.net/)源文件（`.asm`文件，仅限于`x86/x86_64`）要传递给YASM的标记|
+|`APP_BUILD_SCRIPT`|用于声明`Android.mk`脚本的所在目录。默认情况下，ndk-build假定`Android.mk`位于`src/main/jni/`中，如需从其他位置加载 `Android.mk`文件，需要设置为其绝对路径|
+|`APP_CFLAGS`|用于声明要为项目中的所有C/C++编译传递的标记|
+|`APP_CLANG_TIDY`|若要为项目中的所有模块启用clang-tidy，可将此标记设置为true，默认处于停用状态|
+|`APP_CLANG_TIDY_FLAGS`|用于声明要为项目中的所有clang-tidy执行传递的标记|
+|`APP_CONLYFLAGS`|用于声明要为项目中的所有C编译传递的标记，而这些标记不会用于C++代码|
+|`APP_CPPFLAGS`|用于声明要为项目中的所有C++编译传递的标记，而这些标记不会用于C代码|
+|`APP_CXXFLAGS`|与`APP_CPPFLAGS`相同，但编译过程中将出现在`APP_CPPFLAGS`之后，可能会被`APP_CPPFLAGS`覆盖|
+|`APP_DEBUG`|若要构建可调试的应用，可将此标记设置为true|
+|`APP_LDFLAGS`|用于声明关联可执行文件和共享库时所要传递的标记|
+|`APP_MANIFEST`|用于声明`AndroidManifest.xml`文件的**绝对路径**，默认情况下将使用`$(APP_PROJECT_PATH)/AndroidManifest.xml`（如果存在的话）|
+|`APP_MODULES`|用于显式声明要构建的模块列表，对应于`LOCAL_MODULE`|
+|`APP_OPTIM`|**可选变量**，只能设为`release`或`debug`，默认情况下将构建发布二进制文件。详情可参阅[Google官方文档](https://developer.android.google.cn/ndk/guides/application_mk#app_optim)|
+|`APP_PLATFORM`|用于声明构建此应用所面向的API level，对应于应用的 minSdkVersion。若未指定，ndk-build将以NDK所能支持的最低API level为目标|
+|`APP_PROJECT_PATH`|设置项目根目录的**绝对路径**|
+|`APP_SHORT_COMMANDS`|对应于`LOCAL_SHORT_COMMANDS`|
+|`APP_STL`|用于设置此应用所使用的C++标准库，默认情况下使用system STL，其他选项包括`c++_shared`、`c++_static`和`none`。更多内容可参阅[Google官方文档](https://developer.android.google.cn/ndk/guides/cpp-support#hr)|
+|`APP_STRIP_MODE`|用于设置要为此应用中的模块传递给`strip`的参数，默认为 `--strip-unneeded`，设置为`none`可避免剥离模块中的所有二进制文件。更多模式可参阅[官方文档](https://sourceware.org/binutils/docs/binutils/strip.html)|
+|`APP_THIN_ARCHIVE`|对应于`LOCAL_THIN_ARCHIVE`，要为项目中的所有静态库使用瘦归档，可将此变量设置为true|
+|`APP_WRAP_SH`|要被include在此应用中的[wrap.sh]()文件的路径，每个ABI都存在此变量的变体，如`APP_WRAP_SH_armeabi-v7a`和`APP_WRAP_SH_x86`等|
+
+更多详细内容，可以参考[https://developer.android.google.cn/ndk/guides/application_mk](https://developer.android.google.cn/ndk/guides/application_mk)。
 
 ## 关联Gradle
+
+在介绍完如何编写CMake和ndk-build脚本构建Native Library之后，接下来就是最后一步了，那就是让Android项目的Gradle构建系统在编译打包的同时，调用这些NDK脚本。如果开发者需要将Native Library项目添加到Gradle脚本中作为构建依赖项，就得向Gradle提供CMake或ndk-build脚本文件的路径。在构建应用时，Gradle会运行CMake或ndk-build，并将共享库与打包进应用当中。Gradle还会通过构建脚本来了解要将哪些文件添加到Android项目里面，以便开发者可以从Project视图中找到`src/main/cpp`目录并访问这些文件。
+
+> 注意，如果在将CMake或ndk-build脚本文件关联到Gradle之后要对C/C++源文件进行更改，开发者需要从菜单栏中依次选择Build - Refresh Linked C++ Projects并执行，以便同步更改。
+
+尽管[Google官方文档](https://developer.android.google.cn/studio/projects/gradle-external-native-builds#link-with-ui)提到可以通过IDE的可视化窗口来完成NDK与Gradle的关联，但经过实践发现，在Android Studio Electric Eel | 2022.1.1 Patch 2上面并没有这个配置方式，因此只能作罢，采用直接手动配置Gradle的方式来完成关联。此外，如果开发者手头上已经有现成的`.so`文件（预构建库），那么就直接放到`src/main/jniLibs`目录下，Gradle里面什么都不用配置，通常就可以直接调用了。
+
+### 指定ABI
+
+默认情况下，Gradle会针对NDK所支持的每一种应用二进制接口 (ABI) ，将Native Library构建为单独的`.so`文件，并将这些文件全部打包到应用中。如果开发者希望Gradle仅构建和打包针对特定ABI配置的Native Library，可以在模块级`build.gradle`文件中使用`ndk.abiFilters`来指定这些配置，如下列代码所示：
+
+```
+android {
+    ...
+    defaultConfig {
+        ...
+        // 也可以在各个产品变体的配置代码块里面单独配置相应的ABI
+        ndk {
+            // 指定ABI，如果支持多种ABI就使用英文逗号分隔
+            abiFilters 'x86', 'x86_64', 'armeabi', 'armeabi-v7a', 'arm64-v8a'
+        }
+    }
+    ···
+}
+```
+
+### CMake添加配置
+
+CMake在模块级`build.gradle`文件中的配置方式可参考下面的示例代码：
+
+```
+android {
+    ...
+    defaultConfig {...}
+    buildTypes {...}
+
+    // 使用externalNativeBuild代码块进行配置，当然externalNativeBuild也可以放在defaultConfig里面
+    externalNativeBuild {
+
+        // 如果是CMake，就用cmake代码块进行配置
+        cmake {
+
+            // 此处配置了CMakeLists.txt文件的相对路径
+            path file('src/main/cpp/CMakeLists.txt')
+
+            // 此处配置了CMake工具的版本
+            version '3.22.1'
+
+            // 此处可配置一些可选参数
+            arguments "-DANDROID_ARM_NEON=TRUE", "-DANDROID_TOOLCHAIN=clang"
+
+            // 此处可配置C编译器所用到的参数
+            cFlags "-D__STDC_FORMAT_MACROS"
+
+            // 此处可配置C++编译器所用到的参数
+            cppFlags "-fexceptions", "-frtti"
+
+            // 此处可指定不同产品变体所要构建打包的Native Library，如果不配置就默认全部构建打包
+            targets "native-lib-paid",
+                  "my-executible-paid"
+        }
+    }
+}
+```
+
+更多有关cmake代码块中`argument`（工具链参数）的内容，可以参阅[https://developer.android.google.cn/ndk/guides/cmake#variables](https://developer.android.google.cn/ndk/guides/cmake#variables)。
+
+### ndk-build添加配置
+
+ndk-build添加配置的操作跟CMake相似，只不过里面有些参数可能需要调整，参考下面的示例代码：
+
+```
+android {
+    ...
+    defaultConfig {...}
+    buildTypes {...}
+
+    // 使用externalNativeBuild代码块进行配置，当然externalNativeBuild也可以放在defaultConfig里面
+    externalNativeBuild {
+
+        // 如果是ndk-build，就用ndkBuild代码块进行配置
+        ndkBuild {
+
+            // 此处配置了Android.mk文件的相对路径
+            path file('src/main/jni/Android.mk')
+
+            // 此处配置了输出`.so`文件的存放目录
+            buildStagingDirectory "./outputs/ndk-build"
+        }
+    }
+}
+```
+
+事实上，按照Google官方文档提供的信息，ndkBuild代码块能够配置的东西很少，基本上就是示例代码中所展示的那两个配置，可见ndk-build确实已经被Google逐渐边缘化了。更多详细信息，可参阅[https://developer.android.google.cn/reference/tools/gradle-api/8.0/com/android/build/api/dsl/NdkBuild](https://developer.android.google.cn/reference/tools/gradle-api/8.0/com/android/build/api/dsl/NdkBuild)。
