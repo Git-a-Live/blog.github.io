@@ -55,14 +55,16 @@
     * [FFmpeg](Android/ffmpeg.md)
     * [AAudio](Android/aaudio.md)
     * [Oboe](Android/oboe.md)
+    * [腾讯地图](Android/xxx.md)
+    * [高德地图](Android/xxx.md)
   * **<font color=orange>Android进阶</font>**
     * [Java虚拟机基础](Android/jvm.md)
     * [Android虚拟机基础](Android/art.md)
     * [Android Module开发](Android/mod.md)
     * [Gradle构建工具](Android/gradle.md)
     * [构建制品安全：代码混淆](Android/proguard.md)
-    * [构建制品安全：逆向工程](Android/xxx.md)
-    * [构建制品安全：应用加固](Android/xxx.md)
+    * [构建制品安全：逆向工程](Android/reverse.md)
+    * [构建制品安全：应用加固](Android/app_shell.md)
     * [Android AIDL开发](Android/aidl.md)
     * [Android NDK开发：JNI部分](Android/jni.md)
     * [Android NDK开发：NDK部分](Android/ndk.md)
@@ -72,10 +74,10 @@
     * [热修复技术](Android/hotfix.md)
   * **<font color=orange>其他功能</font>**
     * [蓝牙功能](Android/bluetooth.md)
-    * [Wifi功能](Android/wifi.md)
     * [传感器功能](Android/sensor.md)
     * [串口/USB功能](Android/usb.md)
-    * [NFC功能](Android/xxx.md)
+    * [NFC功能](Android/nfc.md)
+    * [Wifi功能](Android/wifi.md)
   * **<font color=orange>AOSP开发</font>**
     * [AOSP简介](Android/aosp.md)
 * **<font color=red>语言</font>**
