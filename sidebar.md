@@ -64,8 +64,8 @@
     * [Android NDK开发：JNI部分](Android/jni.md)
     * [Android NDK开发：NDK部分](Android/ndk.md)
     * [音视频编解码：基础API入门](Android/msc.md)
-    * [音视频编解码：音频部分](Android/xxx.md)
-    * [音视频编解码：视频部分](Android/xxx.md)
+    * [音视频编解码：音频部分](Android/audio.md)
+    * [音视频编解码：视频部分](Android/video.md)
     * [热修复技术](Android/hotfix.md)
   * **<font color=orange>其他功能</font>**
     * [蓝牙功能](Android/bluetooth.md)
