@@ -1,5 +1,7 @@
 Android开发中，图片、音频、视频以及文档是最基础的多媒体文件，之前已经介绍了图片，接下来主要介绍音视频的播放。 由于篇幅所限，仅涉及如何从SD卡中读取音视频文件并实现最基础的播放停止功能，音视频解码等更深入的技术并不会涉及。
 
+## MediaPlayer
+
 音频和视频在读取和播放等操作上有着非常相似的地方，所以只要掌握其中一种，另外一种也很容易就能理解并运用。 先来看看如何从SD卡中读取并播放音频。
 
 在Android中播放音频，一般是通过MediaPlayer类来实现的。MediaPlayer的工作流程如下：
@@ -87,3 +89,13 @@ MediaPlayer还有以下常用方法：
 >isPlaying() //判断当前MediaPlayer对象是否在播放视频
 
 >getDuration() //获取载入的视频文件时长
+
+## AudioManager
+
+## MediaRecorder
+
+## AudioRecorder
+
+## AudioTrack
+
+## ExoPlayer
