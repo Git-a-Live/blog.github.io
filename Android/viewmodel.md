@@ -10,6 +10,37 @@
 
 注意，如果下文不做特殊说明，ViewModel默认表示MVVM中的ViewModel层概念，而`ViewModel`或者`ViewModel`类用于描述Google Jetpack组件库中MVVM的ViewModel具体实现。
 
+### ViewModel的恢复
+
+前面的内容已经提到，`ViewModel`的生命周期可以一直持续到Activity/Fragment被彻底销毁为止，一个有意思的问题出现了：为什么在页面旋转这种情形下，Activity/Fragment已经执行过`onDestroy()`了，`ViewModel`还能继续保留？
+
+这个问题的答案是：页面旋转属于**配置更改**进行销毁重建，而非结束页面。在这种情况下，Activity/Fragment的行为会发生很大改变，虽然还是正常走销毁重建的生命周期，但是中间已经动了不少手脚。
+
+在屏幕发生旋转前销毁Activity时，`ComponentActivity`调用`onRetainNonConfigurationInstance()`方法，将要销毁的Activity的`mViewModelStore`转化为`NonConfigurationInstances`对象；接着调用Activity的`retainNonConfigurationInstances()`方法，最终在`ActivityThread`的`performDestroyActivity()`方法里面，将数据保存到`ActivityClientRecord`当中。
+
+在Activity重建并启动时，`ActivityThread`调用`performLaunchActivity()`方法，将存储在`ActivityClientRecord`中的`lastNonConfigurationInstances`通过Activity的`attach()`方法传递到对应的Activity中；然后通过`getLastNonConfigurationInstance()`恢复`mViewModelStore`实例对象，最后根据对应的key拿到销毁前对应的`ViewModel`实例。
+
+`ViewModel`的`onCleared()`方法，并不是每次Activity执行`onDestroy()`的时候都一定会触发。因为`ViewModel`实例保存在`ViewModelStore`里面，而只有`ViewModelStore`调用`clear()`之后，才会真正触发`ViewModel`的`onCleared()`。`ViewModelStore`调用`clear()`的时候，还会先判断本次销毁是否属于配置变更，这就是为什么`ViewModel`不一定会执行`onCleared()`的根本原因，如下列代码所示：
+
+```
+// 在ComponentActivity的构造方法中执行清理逻辑
+getLifecycle().addObserver(new LifecycleEventObserver() {
+    @Override
+    public void onStateChanged(@NonNull LifecycleOwner source,
+            @NonNull Lifecycle.Event event) {
+        if (event == Lifecycle.Event.ON_DESTROY) {
+            // Clear out the available context
+            mContextAwareHelper.clearAvailableContext();
+            // And clear the ViewModelStore
+            if (!isChangingConfigurations()) {
+                // 判断是否因为配置变化而发生销毁重建，如果是的话就不执行清理操作，重建后可以正常恢复ViewModel实例
+                getViewModelStore().clear();
+            }
+        }
+    }
+});
+```
+
 ## ViewModel的基本使用
 
 ### 继承抽象类
