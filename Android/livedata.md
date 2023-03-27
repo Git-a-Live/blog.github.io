@@ -48,9 +48,9 @@ myViewModel.liveData.observe(this) { it: T ->
 }
 ```
 
-`observe()`方法需要传两个参数，除了`LifecycleOwner`类型参数之外还有一个`Observer`回调（在上面代码中已经优化成lambda表达式），这就是之前提到的“观察器”。`Observer`是一个泛型接口，它会传递`LiveData`的`value`属性，供观察者使用。当数据发生变化的时候，`Observer`就会被调用，观察`LiveData`的LifecycleOwner也就自动接收到更新后的数据。跟 Presenter相比，ViewModel一方面不用持有View层接口，另一方面只要ViewModel在内部修改`MutableLiveData`，观察`LiveData`的View层就会自动响应。
+`observe()`方法需要传两个参数，除了`LifecycleOwner`类型参数之外还有一个`Observer`回调（在上面代码中已经优化成lambda表达式），这就是之前提到的“观察器”。`Observer`是一个泛型接口，它会传递`LiveData`的`value`属性，供观察者使用。当数据发生变化的时候，`Observer`就会被调用，观察`LiveData`的LifecycleOwner也就自动接收到更新后的数据。跟Presenter相比，ViewModel一方面不用持有View层接口，另一方面只要ViewModel在内部修改`MutableLiveData`，观察`LiveData`的View层就会自动响应。
 
-到目前为止，MVVM在Android开发上的实现方案还是比较令人满意的。但是如果仔细观察就会发现，当`ViewModel`包含有太多`MutableLiveData`时，对应的`Livedata`也会非常多，这就给`LiveData`的使用带来比较大的麻烦，也促使了后面将要谈到的MVI架构的产生。除此之外，`LiveData`在设计上还存在一些缺陷（比如[这篇博客](https://juejin.cn/post/6844903846624362510)所提到的问题），在极为复杂的使用场景下可能会带来一些意想不到的问题，因此Google官方推荐使用Flow来替换`LiveData`。尽管如此，对于简单的业务而言，`LiveData`的使用也比[RxJava](Android/rxjava)要轻量得多，特别是在那些无法使用Kotlin Flow的纯Java开发的Android项目中，它还有用武之地。
+到目前为止，MVVM在Android开发上的实现方案还是比较令人满意的。但是如果仔细观察就会发现，当`ViewModel`包含有太多`MutableLiveData`时，对应的`Livedata`也会非常多，这就给`LiveData`的使用带来比较大的麻烦，也促使了MVI架构的产生。除此之外，`LiveData`在设计上还存在一些缺陷（比如[这篇博客](https://juejin.cn/post/6844903846624362510)所提到的问题），在极为复杂的使用场景下可能会带来一些意想不到的问题，因此Google官方推荐使用Flow来替换`LiveData`。尽管如此，对于简单的业务而言，`LiveData`的使用也比[RxJava](Android/rxjava)要轻量得多，特别是在那些无法使用Kotlin Flow的纯Java开发的Android项目中，它还有用武之地。
 
 ### MediatorLiveData
 

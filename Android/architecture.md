@@ -38,3 +38,13 @@ MVVM架构最早由Microsoft提出，借鉴了桌面应用程序的MVC思想。M
 MVVM的ViewModel比MVP的Presenter更进一步，取消了对View的持有，一方面提高了解耦程度，另一方面也不再需要View层编写和实现大量的调用接口。MVVM在Android开发领域主要使用Google的Jetpack组件来具体实现，后面的内容会逐一介绍Android开发实现MVVM架构的核心：ViewModel以及Data Binding。
 
 ## MVI架构
+
+MVVM基于观察者模式的数据订阅，将MVP当中纷繁复杂的View层和Presenter层接口全部抛弃，进一步提高了界面与业务逻辑两个层次的解耦程度。但是MVVM并不是Android应用架构的终极解决方案——或者说前端从来没有最好的解决方案——它也存在一些缺点。尤其是大量使用[LiveData](Android/livedata)带来的复杂度剧增问题。
+
+MVI架构就是在这样的情形下出现的。MVI中“M”跟之前提到的架构Model层有所差异，它指的是UI状态，如页面加载状态和控件位置等；“I”是指Intent（意图），但它跟Android四大基本组件里的`Intent`并不是一个东西。用户的任何操作都能被包装成Intent，然后发送给Model层进行数据请求。MVI架构跟MVVM确实有很多相似的地方，但它**更强调数据的单项流动和数据源的唯一性**，而MVVM的核心部分就是双向数据绑定。下图就是MVI架构的一个示意图：
+
+![](pics/arch4.webp)
+
+从上图当中可以看到，数据变化在ViewModel层被转换成了UI State；View层通过订阅UI State，在页面状态发生改变时会自动刷新；用户在View层的操作事件以Intent形式被传递到ViewModel当中改变UI State，进而触发新一轮的界面刷新。在整个过程中，引起界面变化的动因只有一个，那就是UI State；数据的传递方向只有从ViewModel到View。实现MVI架构的关键有两点：一是如何封装UI State，二是如何对UI State实施集中管理。UI State的封装可以考虑使用一个定义有多种状态的data class；UI State的订阅方式，可以用单个`LiveData`包装这个data class，也可以使用`Flow`来传递这个data class。
+
+在MVVM架构中，开发者通常会使用多个数据流，即一个State对应一个`LiveData`，而MVI中则是单个数据流。单个数据流的优点主要在于方便，减少模板代码，可以有效地降低ViewModel与View的通信成本，同时UI State集中管理可以轻松地实现类似`MediatorLiveData`的效果。
