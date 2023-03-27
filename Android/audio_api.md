@@ -144,6 +144,12 @@ var mediaPlayer: MediaPlayer? = MediaPlayer().apply {
 
 Android多媒体框架支持捕获和编码各种常见的音频和视频格式。如果设备硬件支持，开发者可以使用`MediaRecorder`的相关API来录制音频。本节内容主要介绍如何使用 `MediaRecorder`实现基本的录音功能。更多关于`MediaRecorder`的详细资料，尤其是`MediaMuxer`的使用，可以参阅[Google官方文档](https://developer.android.google.cn/guide/topics/media/mediarecorder)。
 
+需要注意的是，调用录音功能必须申请录音权限：
+
+```
+<uses-permission android:name="android.permission.RECORD_AUDIO" />
+```
+
 ### `MediaRecorder`的基本使用
 
 首先来看如何初始化以及启动录音：
@@ -220,8 +226,265 @@ mediaRecorder?.apply {
 mediaRecorder = null
 ```
 
-## AudioRecorder
+## AudioRecord
 
-## AudioManager
+`AudioRecord`是比`MediaRecorder`更偏向底层的Android API。按照[Google官方文档](https://developer.android.google.cn/reference/kotlin/android/media/AudioRecord?hl=en)的说法，`AudioRecord`用于管理应用层的音频资源，以便从平台硬件录制音频。之所以说它偏向底层，一个重要的原因就是`AudioRecord`采集到的音频是原始的[PCM](Android/audio?id=编解码)数据，开发者可以比较灵活地处理这些原始音频。
+
+在简单了解`AudioRecord`之后，下面就要开始介绍如何使用`AudioRecord`。在此之前，同样地，不要忘记申请录音权限：
+
+```
+<uses-permission android:name="android.permission.RECORD_AUDIO" />
+```
+
+### `AudioRecord`对象构造
+
+`AudioRecord`通常采用[Builder模式](DesignPattern/创建型设计模式?id=builder)来构建一个实例对象，如下面代码所示：
+
+```
+AudioRecord.Builder()
+    .setAudioSource(AudioSource.MIC)                    // 配置音频源
+    .setAudioFormat(AudioFormat.Builder()
+        .setEncoding(AudioFormat.ENCODING_PCM_16BIT)    // 配置音频数据编码格式
+        .setSampleRate(16000)                           // 配置采样频率，单位Hz
+        .setChannelMask(AudioFormat.CHANNEL_IN_STEREO)  // 配置输入声道
+        .build())
+    .setBufferSizeInBytes(1024)                         // 配置音频数据缓冲区大小，单位byte
+    .setContext(context)                                // 配置录音上下文，Android S开始可用
+    .setPrivacySensitive(true)                          // 配置录音功能隐私保护，仅在音频源为AudioSource.VOICE_COMMUNICATION
+                                                        // 或AudioSource.CAMCORDER时设为true，Android R开始可用
+    .build()
+```
+
+当然，`AudioReord`也提供了一个包含若干入参的构造方法：
+
+```
+// 传入音频源、采样频率（单位Hz）、声道、编码格式以及缓冲区大小（单位byte）
+AudioRecord(
+    AudioSource.MIC,
+    16000,
+    AudioFormat.CHANNEL_IN_STEREO,
+    AudioFormat.ENCODING_PCM_16BIT,
+    1024
+)
+```
+
+### 音频录制基本操作
+
+在构建好`AudioRecord`对象之后，就可以调用相应的API进行录音了。首先来看如何开启录音：
+
+```
+try {
+    if (!isReady) {
+        ···
+        return
+    }
+    // 开启录音只需要调用startRecording()
+    audioRecord?.startRecording()
+} catch (e: Exception) {
+    ···
+}
+```
+
+接着来看如何停止录音：
+
+```
+try {
+    if (!isRecording) {
+        ···
+        return
+    }
+    audioRecord?.run {
+        // 停止录音调用stop()
+        stop()
+        // 不要忘记释放AudioRecord资源
+        release()
+    }
+    audioRecord = null
+} catch (e: Exception) {
+    ···
+}
+```
+
+### 音频流数据处理
+
+`AudioRecord`使用的最关键部分就是在录音过程中读取音频流数据，然后对其进行处理。由于音频流数据读取和后续处理会涉及到I/O操作，通常会把这一步骤放到子线程中去执行。
+
+```
+// 获取AudioRecord最小缓冲区大小，可能会根据采样频率等配置有所变化
+val minBufferSize = AudioRecord.getMinBufferSize(16000,
+        AudioFormat.CHANNEL_IN_STEREO, AudioFormat.ENCODING_PCM_16BIT)
+
+// 构建一个缓冲区Byte数组
+val audioData = ByteArray(minBufferSize)
+
+// 用一个变量来承接读取数据流时的状态
+var code = AudioRecord.ERROR_INVALID_OPERATION
+
+// 循环读取音频流数据
+while (true) {
+    // 将音频流数据读取到ByteArray类型的audioData当中，并返回状态值
+    code = read(audioData, 0, minBufferSize)
+
+    // 将填满的audioData传递到下一步流程中，比如利用FileOutputStream输出到磁盘文件
+    if (AudioRecord.ERROR_INVALID_OPERATION != code) {
+        handleBuffer(audio)
+    }
+}
+```
 
 ## AudioTrack
+
+[AudioTrack](https://developer.android.google.cn/reference/kotlin/android/media/AudioTrack?hl=en)也是一个偏向底层的API，其主要作用是管理和播放应用层的音频资源，尤其适用于流媒体以及VoIP语音电话等场景当中。`AudioTrack`由于比`MediaPlayer`（后者的底层实现就是`AudioTrack`）更为接近底层，没有专门的解码器，因此能支持的音频格式就少了很多，只有已经解码的PCM流以及`.wav`音频能直接播放。
+
+`AudioTrack`支持两种播放模式，一种是流（Streaming）模式，另一种则是固定（Static）模式。前者适用于时长较长、码率较高因而可能会大量占用内存的音频资源，或是需要按照队列顺序接收和播放音频流数据的场景；后者适用于较为短小且对实时性要求较高的音频资源，比如点击音效等。
+
+下面这张示意图展示了`AudioTrack`是如何工作的：
+
+![](pics/audioapi.webp)
+
+下面这张示意图中，每一个音频流对应着一个`AudioTrack`实例，每个`AudioTrack`会在创建时注册到 `AudioFlinger`中，由`AudioFlinger`把所有的`AudioTrack`进行混合（Mixer），然后输送到`AudioHardware`中进行播放。目前Android同时最多可以创建32个音频流，也就是说，Mixer最多会同时处理32个`AudioTrack`的数据流。
+
+![](pics/audioapi2.webp)
+
+需要注意的是，播放音频是耗时操作，如果没有特殊说明，均默认是在子线程当中进行。
+
+### `AudioTrack`对象构造
+
+和`AudioRecord`类似，`AudioTrack`对象额度构建方式也有两种，一种是通过Builder模式构建，另一种则是直接使用构造方法，如下面代码所示：
+
+```
+// 使用Builder模式构建AudioTrack对象
+val audioTrack = AudioTrack.Builder()
+
+    // 配置播放模式，传入MODE_STREAM或MODE_STATIC
+    .setTransferMode(AudioTrack.MODE_STREAM)
+
+    // 配置音频格式
+    .setAudioFormat(AudioFormat.Builder()
+        .setChannelMask(AudioFormat.CHANNEL_IN_STEREO)
+        .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+        .setSampleRate(44100)
+        .build())
+
+    // 配置音频播放时的缓冲区大小
+    .setBufferSizeInBytes(1024)
+
+    // 配置音频属性
+    .setAudioAttributes(AudioAttributes.Builder()
+        .setLegacyStreamType(AudioManager.STREAM_MUSIC)
+        .build())
+
+    // 配置性能模式，Android O开始可用。可传入PERFORMANCE_MODE_NONE / LOW_LATENCY / POWER_SAVING
+    .setPerformanceMode(AudioTrack.PERFORMANCE_MODE_LOW_LATENCY)
+
+    // 配置封装模式，Android R开始可用。可传入ENCAPSULATION_MODE_NONE / ELEMENTARY_STREAM，用于封装音频数据
+    .setEncapsulationMode(AudioTrack.ENCAPSULATION_MODE_ELEMENTARY_STREAM)
+
+    // 配置启用或关闭卸载播放模式，Android Q开始可用。主要用于流播放，
+    // 需要配合调用AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA)
+    .setOffloadedPlayback(true)
+
+    .build()
+
+// 使用构造方法创建AudioTrack对象
+val audioTrack = AudioTrack(
+    AudioAttributes.Builder(). ··· .build(),
+    AudioFormat.Builder(). ··· .build(),
+    // 缓冲区大小，单位byte
+    1024,
+    // 播放模式
+    AudioTrack.MODE_STREAM,
+    // 一个Int类型的会话ID
+    sessionId
+)
+```
+
+### 流播放模式
+
+流播放模式需要`AudioTrack`对象在一个循环中一边读取音频流数据，以便执行播放操作，如下面代码所示：
+
+```
+// 获取AudioRecord最小缓冲区大小，可能会根据采样频率等配置有所变化
+val minBufferSize = AudioRecord.getMinBufferSize(16000,
+        AudioFormat.CHANNEL_IN_STEREO, AudioFormat.ENCODING_PCM_16BIT)
+
+// 构建一个缓冲区Byte数组
+val audioData = ByteArray(minBufferSize)
+
+// 用一个变量来承接读取数据流时的状态
+var code = AudioRecord.ERROR_INVALID_OPERATION
+
+DataInputStream(···).use {
+    var readCount = 0
+    // 循环读取音频流数据
+    while (it.available() > 0) {
+        readCount = it.read(audio)
+        if (readCount != 0 && readCount != -1) {
+            audioTrack?.run {
+                // 在播放前应检查AudioTrack对象是否已初始化
+                if (state == AudioTrack.STATE_INITIALIZED) {
+                    // 执行播放音频流的操作
+                    play()
+                }
+
+                // 将音频流数据写入ByteArray类型的audioData当中
+                write(audioData, 0, readCount)
+            }
+        }
+    }
+}
+```
+
+### 固定播放模式
+
+固定播放模式跟流播放模式不同，需要`AudioTrack`对象先一次性读取音频数据，再执行播放操作，如下面代码所示：
+
+```
+DataInputStream(···).use {
+    var readCount = it.read(audio)
+    if (readCount != 0 && readCount != -1) {
+        audioTrack?.run {
+            // 注意要先将音频流数据写入ByteArray类型的audioData当中
+            write(audioData, 0, audioData.size)
+
+            if (state == AudioTrack.STATE_INITIALIZED) {
+                // 写入之后才能执行播放音频流的操作
+                play()
+            }
+        }
+    }
+}
+```
+
+### `AudioTrack`释放资源
+
+`AudioTrack`对象释放资源比较简单：
+
+```
+audioTrack?.run {
+    // 调用stop()时，AudioTrack会将缓冲区里的音频流数据播放完再停止
+    stop()
+
+    // 如果想立即停止播放，可以采用pause() + flush()直接清空缓冲区
+    if (needed) {
+        pause()
+        flush()
+    }
+
+    release()
+}
+```
+
+可以注意到，所有音频功能的实例对象都提供了`release()`方法来释放资源，这已经是标准操作了。
+
+### 缓冲区与帧
+
+在前文示例代码中，计算缓冲区分配大小的时候会经常用到`AudioTrack.getMinBufferSize()`方法。它决定了应用层需要分配多大的缓冲区。从`AudioTrack.getMinBufferSize()`开始追溯，可以发现在底层的代码中有一个很重要的概念：帧（Frame）。帧用来描述数据量的多少，一帧就等于一个采样点的采样位数 × 声道数。另外，在目前的声卡驱动程序中，其内部缓冲区也是采用帧作为单位来分配和管理的。需要注意的是，`AudioTrack.getMinBufferSize()`会综合考虑硬件的情况（比如是否支持传入的采样率，以及硬件本身的延迟情况等）后，得出一个最小缓冲区的大小。一般分配的缓冲大小会是它的整数倍。
+
+## 附录：音频配置API
+
++ **AudioManager**：[https://developer.android.google.cn/reference/kotlin/android/media/AudioManager?hl=en](https://developer.android.google.cn/reference/kotlin/android/media/AudioManager?hl=en)
+
++ **AudioFormat**：[https://developer.android.google.cn/reference/kotlin/android/media/AudioFormat?hl=en](https://developer.android.google.cn/reference/kotlin/android/media/AudioFormat?hl=en)
+
++ **AudioAttributes**：[https://developer.android.google.cn/reference/kotlin/android/media/AudioAttributes?hl=en](https://developer.android.google.cn/reference/kotlin/android/media/AudioAttributes?hl=en)
