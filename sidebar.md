@@ -51,6 +51,7 @@
     * [ObjectBox](Android/objectbox.md)
     * [Hilt](Android/hilt.md)
     * [ExoPlayer](Android/exoplayer.md)
+    * [Coil](Android/coil.md)
     * [WebRTC](Android/webrtc_android.md)
     * [LAME](Android/lame.md)
     * [FFmpeg](Android/ffmpeg.md)

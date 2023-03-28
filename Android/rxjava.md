@@ -388,4 +388,7 @@ observable.subscribeOn(···) //指定被观察者产生事件的线程
 
 除了上述的六个固定调度器，RxJava还提供了`Schedulers.from()`方法，接收Executor类型对象来创建自定义线程和调度器。固定调度器能够满足大部分的开发需求，因此通常情况下，开发者并不需要过于深入地研究如何构建自定义调度器。
 
+#### RxJava线程切换原理
+
+前文已经介绍过，RxJava通过`subscribeOn()`和`observeOn()`这两个操作符来实现线程切换。那么RxJava内部究竟是如何实现的？接下来就继续探究。
 

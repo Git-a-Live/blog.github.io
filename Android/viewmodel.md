@@ -20,7 +20,7 @@
 
 在Activity重建并启动时，`ActivityThread`调用`performLaunchActivity()`方法，将存储在`ActivityClientRecord`中的`lastNonConfigurationInstances`通过Activity的`attach()`方法传递到对应的Activity中；然后通过`getLastNonConfigurationInstance()`恢复`mViewModelStore`实例对象，最后根据对应的key拿到销毁前对应的`ViewModel`实例。
 
-`ViewModel`的`onCleared()`方法，并不是每次Activity执行`onDestroy()`的时候都一定会触发。因为`ViewModel`实例保存在`ViewModelStore`里面，而只有`ViewModelStore`调用`clear()`之后，才会真正触发`ViewModel`的`onCleared()`。`ViewModelStore`调用`clear()`的时候，还会先判断本次销毁是否属于配置变更，这就是为什么`ViewModel`不一定会执行`onCleared()`的根本原因，如下列代码所示：
+`ViewModel`的`onCleared()`方法，并不是每次Activity执行`onDestroy()`的时候都一定会触发。因为`ViewModel`实例保存在`ViewModelStore`里面，而只有`ViewModelStore`调用`clear()`之后，才会真正触发`ViewModel`的`onCleared()`。`ViewModelStore`调用`clear()`的时候，还会先判断本次销毁是否属于配置变更，这就是为什么`ViewModel`不一定会执行`onCleared()`的根本原因，如下列源码所示：
 
 ```
 // 在ComponentActivity的构造方法中执行清理逻辑
