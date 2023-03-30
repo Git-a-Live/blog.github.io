@@ -92,7 +92,7 @@
   * **<font color=orange>Kotlin进阶</font>**
     * [函数式编程](Kotlin/func.md)
     * [延迟初始化、扩展函数与密封类](Kotlin/late.md)
-    * [泛型与委托](Kotlin/gen.md)
+    * [泛型](Kotlin/gen.md)
     * [反射](Kotlin/reflection.md)
     * [注解](Kotlin/annnotation.md)
     * [Kotlin协程：线程基础](Kotlin/coroutine.md)
