@@ -328,3 +328,68 @@ init {
 |`getResourceId()`|获取资源引用ID，属性值类型为引用类型|
 |`getDrawable()`|获取Drawable资源，属性值类型为引用类型|
 |`getTextArray()`|获取文本列表，属性值类型为引用类型|
+
+## 番外篇：动态调整View尺寸
+
+这部分内容与自定义View并没有太多关联，但是在实际开发工作中有不少用处，所以值得一写。这里的View并不局限于“UI控件”这一概念，它还包括Dialog乃至Activity或Fragment等所有直接与用户交互的部分。
+
+### 控件尺寸的动态调整
+
+动态调整控件尺寸的一种方式是直接修改控件的`layourParams`参数，如下面代码所示：
+
+```
+// 设置方式一
+controller.layoutParams = XXX.LayoutParams(···)
+
+// 设置方式二
+(controller.layoutParams as XXX.LayoutParams).apply {
+    ···
+}
+```
+
+在上面的示例代码中，**控件从属于哪种父布局，其被转换/赋予的LayoutParams类型前面要加上该父布局的类型名称**，这就是XXX所代表的含义。因此一个控件用到的LayoutParams参数可以有以下几种类型：
+
+|**控件所属父布局**|**对应LayoutParams类型**|
+|:-----:|:-----:|
+|`ConstraintLayout`|`ConstraintLayout.LayoutParams`|
+|`LinearLayout`|`LinearLayout.LayoutParams`|
+|`RelativeLayout`|`RelativeLayout.LayoutParams`|
+|`FrameLayout`|`FrameLayout.LayoutParams`|
+
+不同布局对应的LayoutParams参数有各自的构造方法，但一般来说都是大同小异。
+
+### Dialog尺寸的动态调整
+
+严格来说，Dialog一旦展示，其尺寸就是固定的，因此所谓“动态调整”要在Dialog展示之前完成。Dialog的尺寸调整依赖于一个`WindowManager.LayoutParams`类型的参数，其获取方式为：
+
+```
+val layoutParams: WindowManager.LayoutParams = dialog.window.attributes
+
+// 设置尺寸
+layoutParams.width = xxx
+layoutParams.height = xxx
+
+// 重新设置Dialog属性
+dialog.window.attributes = layoutParams
+```
+
+此外，Dialog的父布局跟子布局之间默认是有一圈padding的，如果想要去掉padding，可以按照下面代码进行操作：
+
+```
+dialog.window.decorView.setPadding(0, 0, 0, 0)
+```
+
+### Activity/Fragment尺寸的动态调整
+
+Activity/Fragment的尺寸调整和Dialog基本一样，都是通过`WindowManager.LayoutParams`类型参数来完成的，其操作方式如下：
+
+```
+val layoutParams: WindowManager.LayoutParams = window.attributes
+
+// 设置尺寸
+layoutParams.width = xxx
+layoutParams.height = xxx
+
+// 重新设置Dialog属性
+window.attributes = layoutParams
+```
